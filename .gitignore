@@ -24,3 +24,8 @@ apps/backend/src/generated/
 
 # Local caches
 .turbo/
+
+# Cloudflare (OpenNext) build output
+.open-next/
+.wrangler/
+.dev.vars

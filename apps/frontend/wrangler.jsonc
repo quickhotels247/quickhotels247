@@ -1,0 +1,22 @@
+// Cloudflare Worker for the Next.js frontend, built by OpenNext
+// (`yarn workspace @quickhotels/frontend cf:build`). Environment values the
+// browser needs (NEXT_PUBLIC_*) are read at build time: set them as build
+// variables in Cloudflare, not here.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "quickhotels247",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-15",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "quickhotels247"
+    }
+  ],
+  "observability": { "enabled": true }
+}
