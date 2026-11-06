@@ -6,9 +6,12 @@ RUN corepack enable
 COPY package.json yarn.lock .yarnrc.yml nx.json ./
 COPY packages ./packages
 COPY apps/backend ./apps/backend
-RUN yarn install --immutable
+# yarn.lock lists every workspace, so each one's package.json must be here for
+# the lockfile to match; only the backend's dependencies are installed.
+COPY apps/frontend/package.json ./apps/frontend/package.json
+RUN yarn workspaces focus @quickhotels/backend
 # The backend's build script runs `prisma generate` first.
-RUN yarn nx run @quickhotels/backend:build
+RUN yarn workspace @quickhotels/backend build
 RUN yarn workspaces focus @quickhotels/backend --production
 
 FROM node:22-alpine

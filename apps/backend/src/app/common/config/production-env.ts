@@ -1,11 +1,6 @@
 // In production, a missing setting must stop the server at startup instead of
-// letting it run half-broken (website calls to localhost, no email). Development keeps working with defaults.
-const REQUIRED_IN_PRODUCTION = [
-  "CORS_ORIGINS",
-  "FRONTEND_URL",
-  "DATABASE_URL",
-  "SMTP_HOST",
-];
+// letting it run half-broken (website calls to localhost). Development keeps working with defaults.
+const REQUIRED_IN_PRODUCTION = ["CORS_ORIGINS", "FRONTEND_URL", "DATABASE_URL"];
 
 // Worth a warning, but the server works without them.
 const RECOMMENDED_IN_PRODUCTION = ["CLERK_SECRET_KEY", "TRUST_PROXY"];
@@ -24,6 +19,10 @@ export function checkProductionEnv(env: NodeJS.ProcessEnv = process.env) {
   for (const name of RECOMMENDED_IN_PRODUCTION) {
     if (!value(name)) warnings.push(`${name} is not set`);
   }
+  // Sign-up codes come from Clerk, so the site runs without email; our own
+  // emails need SMTP (blocked on Render) or the Gmail API settings.
+  const gmail = ["GMAIL_CLIENT_ID", "GMAIL_CLIENT_SECRET", "GMAIL_REFRESH_TOKEN"].every((name) => value(name));
+  if (!value("SMTP_HOST") && !gmail) warnings.push("no email sending configured (GMAIL_* or SMTP_HOST)");
   for (const name of ["CORS_ORIGINS", "FRONTEND_URL"]) {
     if (/localhost|127\.0\.0\.1/.test(value(name))) warnings.push(`${name} points at localhost`);
   }

@@ -22,6 +22,15 @@ describe("checkProductionEnv", () => {
     expect(checkProductionEnv({ ...base, HOTEL_SUPPLIER: "tripjack", TRIPJACK_API_KEY: "key" }).missing).toEqual([]);
   });
 
+  it("starts without email, with a warning until SMTP or Gmail is set", () => {
+    const { SMTP_HOST: _smtp, ...noMail } = base;
+    const ready = { ...noMail, HOTEL_SUPPLIER: "tripjack", TRIPJACK_API_KEY: "key" };
+    expect(checkProductionEnv(ready).missing).toEqual([]);
+    expect(checkProductionEnv(ready).warnings).toContain("no email sending configured (GMAIL_* or SMTP_HOST)");
+    const gmail = { GMAIL_CLIENT_ID: "id", GMAIL_CLIENT_SECRET: "secret", GMAIL_REFRESH_TOKEN: "token" };
+    expect(checkProductionEnv({ ...ready, ...gmail }).warnings).not.toContain("no email sending configured (GMAIL_* or SMTP_HOST)");
+  });
+
   it("checks nothing outside production", () => {
     expect(checkProductionEnv({ NODE_ENV: "development" }).missing).toEqual([]);
   });

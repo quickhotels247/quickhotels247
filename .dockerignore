@@ -5,3 +5,10 @@
 .DS_Store
 docs
 **/.next
+**/.open-next
+**/.wrangler
+**/.turbo
+# Never bake local secrets into an image.
+**/.env
+**/.env.*
+!**/.env.example
