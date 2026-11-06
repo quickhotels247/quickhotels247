@@ -1,0 +1,26 @@
+export const styles = {
+  root: {
+    position: "sticky",
+    top: { xs: 104, md: 76 },
+    zIndex: 3,
+    display: "flex",
+    gap: 0.5,
+    overflowX: "auto",
+    bgcolor: "background.default",
+    borderBottom: 1,
+    borderColor: "divider",
+    scrollbarWidth: "none",
+    "&::-webkit-scrollbar": { display: "none" },
+  },
+  tab: {
+    px: 2,
+    py: 1.5,
+    fontSize: "0.9rem",
+    fontWeight: 600,
+    color: "text.secondary",
+    whiteSpace: "nowrap",
+    borderBottom: 2,
+    borderColor: "transparent",
+    "&:hover": { color: "primary.main", borderColor: "primary.main" },
+  },
+};

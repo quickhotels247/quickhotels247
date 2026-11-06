@@ -1,0 +1,50 @@
+{
+  "name": "@quickhotels/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "prisma generate && nest start --watch",
+    "build": "prisma generate && nest build",
+    "start": "node --env-file-if-exists=.env dist/main.js",
+    "typecheck": "prisma generate && tsc --noEmit",
+    "test": "prisma generate && vitest run",
+    "db:migrate": "prisma migrate deploy",
+    "db:create-admin": "node --env-file-if-exists=.env database/create-admin.mjs",
+    "db:migration": "prisma migrate dev --create-only --name",
+    "db:status": "prisma migrate status",
+    "db:studio": "prisma studio",
+    "tripjack:check": "node --env-file-if-exists=.env scripts/tripjack-check.mjs",
+    "tripjack:trace": "node --env-file-if-exists=.env scripts/tripjack-review-trace.mjs",
+    "tripjack:sync-regions": "nest build && node --env-file-if-exists=.env dist/cli/tripjack-sync-regions.js"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^12.0.8",
+    "@quickhotels/tsconfig": "workspace:*",
+    "@quickhotels/types": "workspace:*",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.15.0",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0",
+    "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.21.1",
+    "@nestjs/common": "^12.1.2",
+    "@nestjs/config": "^12.0.1",
+    "@nestjs/core": "^12.1.2",
+    "@nestjs/platform-express": "^12.1.2",
+    "@nestjs/throttler": "^6.7.1",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "nodemailer": "^10.0.13",
+    "pg": "^8.23.1",
+    "prisma": "7.10.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  }
+}

@@ -1,0 +1,25 @@
+export const styles = {
+  autocomplete: { flex: 1, minWidth: 0 },
+  input: {
+    fontSize: "0.92rem",
+    "& input": { py: 0.25 },
+    "& input::placeholder": { color: "text.secondary", opacity: 1 },
+  },
+  paper: { mt: 1.5, borderRadius: 3, boxShadow: "0 16px 40px -12px rgba(15,23,42,0.3)", minWidth: { sm: 360 } },
+  option: { display: "flex !important", alignItems: "center", gap: 1.5, py: "10px !important" },
+  icon: {
+    flexShrink: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 2,
+    display: "grid",
+    placeItems: "center",
+    color: "primary.main",
+    backgroundColor: "rgba(26, 86, 219, 0.08)",
+    "& svg": { fontSize: 20 },
+  },
+  optionText: { minWidth: 0, flex: 1 },
+  name: { fontWeight: 600, fontSize: "0.92rem" },
+  detail: { fontSize: "0.78rem", color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  count: { flexShrink: 0, fontSize: "0.75rem", color: "text.secondary" },
+};

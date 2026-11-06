@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.nx/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+
+# Yarn 4 (no zero-installs)
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+.env
+.env.*
+!.env.example
+
+# Prisma client, made by `prisma generate`
+apps/backend/src/generated/
+
+# Local caches
+.turbo/

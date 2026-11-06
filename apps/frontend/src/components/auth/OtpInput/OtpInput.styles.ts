@@ -1,0 +1,21 @@
+export const styles = {
+  root: { display: "flex", gap: { xs: 1, sm: 1.5 }, justifyContent: "center" },
+  box: {
+    width: { xs: 44, sm: 52 },
+    height: { xs: 52, sm: 60 },
+    textAlign: "center",
+    fontSize: "1.5rem",
+    fontWeight: 700,
+    fontFamily: "inherit",
+    border: "1.5px solid",
+    borderColor: "divider",
+    borderRadius: 2,
+    bgcolor: "background.paper",
+    color: "text.primary",
+    outline: "none",
+    transition: "border-color 0.15s, box-shadow 0.15s",
+    "&:focus": { borderColor: "primary.main", boxShadow: "0 0 0 3px rgba(26, 86, 219, 0.18)" },
+    "&:disabled": { opacity: 0.6 },
+  },
+  invalid: { borderColor: "error.main" },
+};

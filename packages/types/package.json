@@ -1,0 +1,24 @@
+{
+  "name": "@quickhotels/types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./users": "./users.ts",
+    "./admin": "./admin.ts",
+    "./hotels": "./hotels.ts",
+    "./flights": "./flights.ts",
+    "./checkout": "./checkout.ts",
+    "./bookings": "./bookings.ts",
+    "./flight-checkout": "./flight-checkout.ts",
+    "./travellers": "./travellers.ts",
+    "./wishlist": "./wishlist.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@quickhotels/tsconfig": "workspace:*",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,23 @@
+export const styles = {
+  root: {
+    width: "100%",
+    aspectRatio: "4 / 5",
+    borderRadius: 3,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 1,
+    p: 2,
+    textAlign: "center",
+    textDecoration: "none",
+    color: "common.white",
+    background: "linear-gradient(160deg, #1544b0 0%, #1a56db 60%, #3b82f6 100%)",
+    transition: "transform 0.2s",
+    "&:hover": { transform: "translateY(-2px)" },
+    "&:focus-visible": { outline: "3px solid", outlineColor: "secondary.main", outlineOffset: 2 },
+  },
+  icon: { fontSize: 56, color: "secondary.main" },
+  title: { fontWeight: 800, fontSize: "1.3rem" },
+  text: { fontSize: "0.92rem", opacity: 0.9 },
+};

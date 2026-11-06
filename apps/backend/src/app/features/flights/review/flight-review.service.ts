@@ -1,0 +1,137 @@
+import { randomUUID } from "node:crypto";
+import { BadRequestException, ConflictException, GoneException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import type { FlightReviewStatus, FlightReviewSummary, FlightTravellerDetails } from "@quickhotels/types/flight-checkout";
+import { TERMS_VERSION } from "../../../common/config/terms.js";
+import { hashCheckoutKey, keyMatches } from "../../../common/utils/checkout-key.js";
+import { todayInIndia } from "../../../common/utils/india-dates.js";
+import { FLIGHT_SUPPLIER, type FlightSupplier } from "../../../suppliers/flight-supplier.js";
+import { SupplierError, supplierHttpError } from "../../../suppliers/supplier-error.js";
+import { FlightSearchSessionsRepository } from "../search/flight-search-sessions.repository.js";
+import { FlightReviewRepository, type FlightQuote, type StoredFlightReview } from "./flight-review.repository.js";
+import { checkTravellers } from "./traveller-rules.js";
+
+// Differences under ₹1 are rounding, not a price change.
+const PRICE_TOLERANCE = 1;
+
+// Fare review (flights step F4): re-checks the chosen fares with the
+// supplier, fetches their fare rules, and holds a server-owned quote. Prices
+// never come from the browser. Travellers (F5) and payment (F6) follow.
+@Injectable()
+export class FlightReviewService {
+  private readonly logger = new Logger(FlightReviewService.name);
+  // Reviews in progress, by key hash: repeats share the first.
+  private readonly starting = new Map<string, Promise<FlightReviewSummary>>();
+
+  constructor(
+    @Inject(FLIGHT_SUPPLIER) private readonly supplier: FlightSupplier,
+    private readonly reviews: FlightReviewRepository,
+    private readonly searches: FlightSearchSessionsRepository,
+  ) {}
+
+  // `key` is the browser's random key: the same key returns the same review.
+  create(searchId: string, fares: { trip: string; id: string }[], key: string): Promise<FlightReviewSummary> {
+    const keyHash = hashCheckoutKey(key);
+    const running = this.starting.get(keyHash);
+    if (running) return running;
+    const start = this.start(searchId, fares, keyHash).finally(() => this.starting.delete(keyHash));
+    this.starting.set(keyHash, start);
+    return start;
+  }
+
+  async get(id: string, key: string): Promise<FlightReviewSummary> {
+    return this.summary(await this.open(id, key));
+  }
+
+  // Step F5: travellers and contact, checked against the fare and the trip.
+  async saveTravellers(id: string, key: string, details: FlightTravellerDetails): Promise<FlightReviewSummary> {
+    const review = await this.open(id, key);
+    if (review.expiresAt.getTime() <= Date.now()) {
+      throw new GoneException("The airline's price hold has ended. Please search again for current fares.");
+    }
+    checkTravellers(review.quote, details, todayInIndia());
+    // Optional parts only when filled in; PAN or passport only when asked for.
+    const clean: FlightTravellerDetails = {
+      ...details,
+      travellers: details.travellers.map(({ passport, pan, ...traveller }) => ({
+        ...traveller,
+        ...(review.quote.requirements.passport && passport ? { passport } : {}),
+        ...(review.quote.requirements.pan && pan ? { pan } : {}),
+      })),
+    };
+    await this.reviews.saveTravellers(review.id, clean, TERMS_VERSION);
+    return this.summary((await this.reviews.find(review.id))!);
+  }
+
+  // The review, if the key opens it. Unknown id and wrong key look the same.
+  private async open(id: string, key: string) {
+    const review = await this.reviews.find(id);
+    if (!review || !keyMatches(key, review.keyHash)) throw new NotFoundException("We couldn't find this booking. Please choose your flights again.");
+    return review;
+  }
+
+  private async start(searchId: string, fares: { trip: string; id: string }[], keyHash: string): Promise<FlightReviewSummary> {
+    const existing = await this.reviews.findByKeyHash(keyHash);
+    if (existing) return this.summary(existing);
+
+    const search = await this.searches.find(searchId);
+    if (!search) throw new NotFoundException("We couldn't find that search. Please search again.");
+    if (search.expiresAt.getTime() <= Date.now()) throw new GoneException("These fares have expired. Please search again for current fares.");
+
+    // One fare per list, each from that list of this search.
+    const lists = search.trips.map((trip) => trip.key);
+    const byTrip = new Map(fares.map((fare) => [fare.trip, fare.id]));
+    if (byTrip.size !== fares.length || lists.some((key) => !byTrip.has(key)) || fares.length !== lists.length) {
+      throw new BadRequestException("Choose one flight for each part of your trip.");
+    }
+    const chosen = lists.map((key) => search.trips.find((trip) => trip.key === key)!.options.find((option) => option.id === byTrip.get(key)));
+    if (chosen.some((option) => !option)) throw new BadRequestException("Those flights aren't part of this search. Please choose again.");
+    const shownTotal = chosen.reduce((sum, option) => sum + option!.price.amount, 0);
+
+    const correlationId = randomUUID();
+    let reviewed;
+    try {
+      reviewed = await this.supplier.reviewFlights(chosen.map((option) => option!.id), search.criteria, lists, { correlationId });
+    } catch (error) {
+      if (!(error instanceof SupplierError)) throw error;
+      this.logger.warn(`${error.supplier} flight review failed (${error.code}, ref ${error.correlationId}): ${error.message}`);
+      if (error.code === "SOLD_OUT") throw new ConflictException("Those seats have just sold out. Please choose other flights.");
+      throw supplierHttpError(error, "Confirming your fare");
+    }
+    const rules = await this.supplier.fareRules(reviewed.supplierBookingId, { correlationId });
+
+    const current = reviewed.price.total;
+    const quote: FlightQuote = {
+      criteria: search.criteria,
+      journeys: reviewed.journeys,
+      fares: reviewed.fares,
+      price: reviewed.price,
+      priceChange:
+        Math.abs(current.amount - shownTotal) >= PRICE_TOLERANCE ? { previous: { amount: Math.round(shownTotal * 100) / 100, currency: current.currency }, current } : null,
+      rules,
+      requirements: reviewed.requirements,
+      holdAllowed: reviewed.holdAllowed,
+    };
+    const id = await this.reviews.create({
+      keyHash,
+      searchSessionId: search.id,
+      supplier: this.supplier.name,
+      supplierBookingId: reviewed.supplierBookingId,
+      quote,
+      expiresAt: reviewed.expiresAt,
+    });
+    // Another request with this key won the race; return that review.
+    const stored = id ? await this.reviews.find(id) : await this.reviews.findByKeyHash(keyHash);
+    return this.summary(stored!);
+  }
+
+  private summary(review: StoredFlightReview): FlightReviewSummary {
+    return {
+      reviewId: review.id,
+      status: (review.status === "payment" ? "payment" : "travellers") satisfies FlightReviewStatus,
+      expiresAt: review.expiresAt.toISOString(),
+      ...review.quote,
+      termsVersion: TERMS_VERSION,
+      travellerDetails: review.travellerDetails,
+    };
+  }
+}

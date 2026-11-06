@@ -1,0 +1,25 @@
+export const styles = {
+  root: {
+    display: "flex",
+    alignItems: "center",
+    gap: 1.5,
+    p: 1,
+    borderRadius: 2,
+    color: "text.primary",
+    textDecoration: "none",
+    "&:hover": { bgcolor: "background.paper", color: "primary.main" },
+    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main" },
+  },
+  badge: {
+    flexShrink: 0,
+    width: 44,
+    height: 44,
+    borderRadius: 2,
+    display: "grid",
+    placeItems: "center",
+    bgcolor: "primary.light",
+    color: "primary.main",
+    "& svg": { fontSize: 20, transform: "rotate(45deg)" },
+  },
+  label: { fontWeight: 700, fontSize: "0.92rem" },
+};

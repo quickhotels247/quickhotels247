@@ -1,0 +1,28 @@
+export const styles = {
+  root: (placement: "inline" | "below") => ({
+    display: placement === "inline" ? { xs: "none", md: "flex" } : { xs: "flex", md: "none" },
+    gap: 1,
+    ml: placement === "inline" ? "auto" : 0,
+    pb: placement === "inline" ? 0 : 1.25,
+    overflowX: "auto",
+    scrollbarWidth: "none",
+    "&::-webkit-scrollbar": { display: "none" },
+  }),
+  tab: (active: boolean) => ({
+    flexShrink: 0,
+    gap: 0.75,
+    px: { xs: 1.75, md: 2 },
+    py: 0.9,
+    borderRadius: 999,
+    fontSize: "0.9rem",
+    fontWeight: 600,
+    border: "1px solid",
+    borderColor: active ? "primary.main" : "divider",
+    color: active ? "primary.main" : "text.primary",
+    bgcolor: active ? "primary.light" : "background.paper",
+    transition: "background-color 0.15s, border-color 0.15s, color 0.15s",
+    "&:hover": { borderColor: "primary.main", color: "primary.main" },
+    "&.Mui-focusVisible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+  }),
+  icon: { fontSize: 18 },
+};

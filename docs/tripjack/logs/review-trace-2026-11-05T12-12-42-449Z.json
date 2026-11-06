@@ -1,0 +1,483 @@
+{
+  "host": "https://apitest-hms.tripjack.com",
+  "hid": "100000620177",
+  "stay": {
+    "checkIn": "2026-11-20",
+    "checkOut": "2026-11-21",
+    "rooms": [
+      {
+        "adults": 2
+      }
+    ],
+    "currency": "INR",
+    "nationality": "106"
+  },
+  "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb",
+  "reviewed": 3,
+  "steps": [
+    {
+      "step": "1. listing",
+      "time": "2026-11-05T12:12:38.893Z",
+      "durationMs": 998,
+      "request": {
+        "method": "POST",
+        "url": "https://apitest-hms.tripjack.com/hms/v3/hotel/listing",
+        "body": {
+          "checkIn": "2026-11-20",
+          "checkOut": "2026-11-21",
+          "rooms": [
+            {
+              "adults": 2
+            }
+          ],
+          "currency": "INR",
+          "nationality": "106",
+          "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb",
+          "hids": [
+            100000620177
+          ]
+        }
+      },
+      "httpStatus": 200,
+      "response": {
+        "status": {
+          "success": true,
+          "httpStatus": 200
+        },
+        "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb",
+        "nationality": "106",
+        "totalResults": 1,
+        "hotels": [
+          {
+            "hotelId": "100000620177",
+            "name": "SAIGAL GUEST HOUSE",
+            "options": [
+              {
+                "optionId": "a477fc93-7064-4852-94ae-d1af87540562",
+                "optionType": "SRSM",
+                "roomInfo": [
+                  {
+                    "id": "10028814085",
+                    "name": "Double Room",
+                    "adults": 2,
+                    "children": 0
+                  }
+                ],
+                "inclusions": [],
+                "mealBasis": "Breakfast",
+                "pricing": {
+                  "totalPrice": 2179.2,
+                  "basePrice": 2179.2,
+                  "discount": 0,
+                  "taxes": 0,
+                  "mf": 0,
+                  "mft": 0,
+                  "currency": "INR"
+                },
+                "commercial": {
+                  "type": "NET",
+                  "commission": 0
+                },
+                "compliance": {
+                  "gstType": "NA",
+                  "panRequired": false,
+                  "passportRequired": false,
+                  "ivsfp": false
+                },
+                "cancellation": {
+                  "isRefundable": true,
+                  "penalties": [
+                    {
+                      "from": "2026-11-05T17:42:00",
+                      "to": "2026-11-19T05:59:00",
+                      "amount": 0
+                    },
+                    {
+                      "from": "2026-11-19T05:59:00",
+                      "to": "2026-11-21T00:00:00",
+                      "amount": 2179.2
+                    }
+                  ]
+                }
+              },
+              {
+                "optionId": "1092d78e-ecb0-4908-9294-764d2243ddbf",
+                "optionType": "SRSM",
+                "roomInfo": [
+                  {
+                    "id": "10028814085",
+                    "name": "Double Room",
+                    "adults": 2,
+                    "children": 0
+                  }
+                ],
+                "inclusions": [],
+                "mealBasis": "Room Only",
+                "pricing": {
+                  "totalPrice": 2009.02,
+                  "basePrice": 2009.02,
+                  "discount": 0,
+                  "taxes": 0,
+                  "mf": 0,
+                  "mft": 0,
+                  "currency": "INR"
+                },
+                "commercial": {
+                  "type": "NET",
+                  "commission": 0
+                },
+                "compliance": {
+                  "gstType": "NA",
+                  "panRequired": false,
+                  "passportRequired": false,
+                  "ivsfp": false
+                },
+                "cancellation": {
+                  "isRefundable": true,
+                  "penalties": [
+                    {
+                      "from": "2026-11-05T17:42:00",
+                      "to": "2026-11-19T05:59:00",
+                      "amount": 0
+                    },
+                    {
+                      "from": "2026-11-19T05:59:00",
+                      "to": "2026-11-21T00:00:00",
+                      "amount": 2009.02
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "step": "2. pricing",
+      "time": "2026-11-05T12:12:39.892Z",
+      "durationMs": 517,
+      "request": {
+        "method": "POST",
+        "url": "https://apitest-hms.tripjack.com/hms/v3/hotel/pricing",
+        "body": {
+          "checkIn": "2026-11-20",
+          "checkOut": "2026-11-21",
+          "rooms": [
+            {
+              "adults": 2
+            }
+          ],
+          "currency": "INR",
+          "nationality": "106",
+          "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb",
+          "hid": "100000620177"
+        }
+      },
+      "httpStatus": 200,
+      "response": {
+        "status": {
+          "success": true,
+          "httpStatus": 200
+        },
+        "hotelId": "100000620177",
+        "hotelName": "SAIGAL GUEST HOUSE",
+        "nationality": "106",
+        "options": [
+          {
+            "optionId": "ebcb9ae9-caef-45eb-8f0b-5698a091a3c2",
+            "optionType": "SRSM",
+            "roomInfo": [
+              {
+                "id": "10028814085",
+                "name": "Double Room",
+                "adults": 2,
+                "children": 0
+              }
+            ],
+            "inclusions": [],
+            "mealBasis": "Room Only",
+            "pricing": {
+              "totalPrice": 2009.02,
+              "basePrice": 2009.02,
+              "discount": 0,
+              "taxes": 0,
+              "mf": 0,
+              "mft": 0,
+              "currency": "INR",
+              "gstClaimableAmount": 0
+            },
+            "commercial": {
+              "type": "NET",
+              "commission": 0
+            },
+            "compliance": {
+              "gstType": "NA",
+              "panRequired": true,
+              "passportRequired": false,
+              "ivsfp": false
+            },
+            "cancellation": {
+              "isRefundable": true,
+              "penalties": [
+                {
+                  "from": "2026-11-05T17:42:00",
+                  "to": "2026-11-19T05:59:00",
+                  "amount": 0
+                },
+                {
+                  "from": "2026-11-19T05:59:00",
+                  "to": "2026-11-21T00:00:00",
+                  "amount": 2009.02
+                }
+              ]
+            },
+            "deadlineDateTime": "2026-11-19T05:59:00"
+          },
+          {
+            "optionId": "cdb80231-8f2c-4dbe-9fe2-68cc9898d082",
+            "optionType": "SRSM",
+            "roomInfo": [
+              {
+                "id": "10028814085",
+                "name": "Double Room",
+                "adults": 2,
+                "children": 0
+              }
+            ],
+            "inclusions": [],
+            "mealBasis": "Breakfast",
+            "pricing": {
+              "totalPrice": 2179.2,
+              "basePrice": 2179.2,
+              "discount": 0,
+              "taxes": 0,
+              "mf": 0,
+              "mft": 0,
+              "currency": "INR",
+              "gstClaimableAmount": 0
+            },
+            "commercial": {
+              "type": "NET",
+              "commission": 0
+            },
+            "compliance": {
+              "gstType": "NA",
+              "panRequired": true,
+              "passportRequired": false,
+              "ivsfp": false
+            },
+            "cancellation": {
+              "isRefundable": true,
+              "penalties": [
+                {
+                  "from": "2026-11-05T17:42:00",
+                  "to": "2026-11-19T05:59:00",
+                  "amount": 0
+                },
+                {
+                  "from": "2026-11-19T05:59:00",
+                  "to": "2026-11-21T00:00:00",
+                  "amount": 2179.2
+                }
+              ]
+            },
+            "deadlineDateTime": "2026-11-19T05:59:00"
+          },
+          {
+            "optionId": "6eefbbc8-b0f1-4928-8fdf-db504a584ef5",
+            "optionType": "SRSM",
+            "roomInfo": [
+              {
+                "id": "10025531175",
+                "name": "Deluxe Room",
+                "adults": 2,
+                "children": 0
+              }
+            ],
+            "inclusions": [],
+            "mealBasis": "Room Only",
+            "pricing": {
+              "totalPrice": 2382.26,
+              "basePrice": 2382.26,
+              "discount": 0,
+              "taxes": 0,
+              "mf": 0,
+              "mft": 0,
+              "currency": "INR",
+              "gstClaimableAmount": 0
+            },
+            "commercial": {
+              "type": "NET",
+              "commission": 0
+            },
+            "compliance": {
+              "gstType": "NA",
+              "panRequired": true,
+              "passportRequired": false,
+              "ivsfp": false
+            },
+            "cancellation": {
+              "isRefundable": true,
+              "penalties": [
+                {
+                  "from": "2026-11-05T17:42:00",
+                  "to": "2026-11-19T05:59:00",
+                  "amount": 0
+                },
+                {
+                  "from": "2026-11-19T05:59:00",
+                  "to": "2026-11-21T00:00:00",
+                  "amount": 2382.26
+                }
+              ]
+            },
+            "deadlineDateTime": "2026-11-19T05:59:00"
+          },
+          {
+            "optionId": "52d636eb-490e-4495-addf-5443a1d44e0d",
+            "optionType": "SRSM",
+            "roomInfo": [
+              {
+                "id": "10025531175",
+                "name": "Deluxe Room",
+                "adults": 2,
+                "children": 0
+              }
+            ],
+            "inclusions": [],
+            "mealBasis": "Breakfast",
+            "pricing": {
+              "totalPrice": 2630.25,
+              "basePrice": 2630.25,
+              "discount": 0,
+              "taxes": 0,
+              "mf": 0,
+              "mft": 0,
+              "currency": "INR",
+              "gstClaimableAmount": 0
+            },
+            "commercial": {
+              "type": "NET",
+              "commission": 0
+            },
+            "compliance": {
+              "gstType": "NA",
+              "panRequired": true,
+              "passportRequired": false,
+              "ivsfp": false
+            },
+            "cancellation": {
+              "isRefundable": true,
+              "penalties": [
+                {
+                  "from": "2026-11-05T17:42:00",
+                  "to": "2026-11-19T05:59:00",
+                  "amount": 0
+                },
+                {
+                  "from": "2026-11-19T05:59:00",
+                  "to": "2026-11-21T00:00:00",
+                  "amount": 2630.25
+                }
+              ]
+            },
+            "deadlineDateTime": "2026-11-19T05:59:00"
+          }
+        ],
+        "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb",
+        "reviewHash": "3A0h17EkAZmMd03AjPdMlQ|1da716d9-bed7-4038-9412-d408adf1bceb"
+      }
+    },
+    {
+      "step": "3. review option ebcb9ae9-caef-45eb-8f0b-5698a091a3c2",
+      "time": "2026-11-05T12:12:40.409Z",
+      "durationMs": 837,
+      "request": {
+        "method": "POST",
+        "url": "https://apitest-hms.tripjack.com/hms/v3/hotel/review",
+        "body": {
+          "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb",
+          "optionId": "ebcb9ae9-caef-45eb-8f0b-5698a091a3c2",
+          "reviewHash": "3A0h17EkAZmMd03AjPdMlQ|1da716d9-bed7-4038-9412-d408adf1bceb",
+          "hid": "100000620177"
+        }
+      },
+      "httpStatus": 200,
+      "response": {
+        "status": {
+          "success": false,
+          "httpStatus": 200
+        },
+        "errors": [
+          {
+            "errorType": "OPTION_SOLD_OUT",
+            "message": "The selected optionId is no longer available. Return to Detail and choose a different option. Do not call Book after receiving this error.",
+            "errCode": "6506"
+          }
+        ],
+        "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb"
+      }
+    },
+    {
+      "step": "3. review option cdb80231-8f2c-4dbe-9fe2-68cc9898d082",
+      "time": "2026-11-05T12:12:41.247Z",
+      "durationMs": 466,
+      "request": {
+        "method": "POST",
+        "url": "https://apitest-hms.tripjack.com/hms/v3/hotel/review",
+        "body": {
+          "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb",
+          "optionId": "cdb80231-8f2c-4dbe-9fe2-68cc9898d082",
+          "reviewHash": "3A0h17EkAZmMd03AjPdMlQ|1da716d9-bed7-4038-9412-d408adf1bceb",
+          "hid": "100000620177"
+        }
+      },
+      "httpStatus": 200,
+      "response": {
+        "status": {
+          "success": false,
+          "httpStatus": 200
+        },
+        "errors": [
+          {
+            "errorType": "OPTION_SOLD_OUT",
+            "message": "The selected optionId is no longer available. Return to Detail and choose a different option. Do not call Book after receiving this error.",
+            "errCode": "6506"
+          }
+        ],
+        "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb"
+      }
+    },
+    {
+      "step": "3. review option 6eefbbc8-b0f1-4928-8fdf-db504a584ef5",
+      "time": "2026-11-05T12:12:41.713Z",
+      "durationMs": 736,
+      "request": {
+        "method": "POST",
+        "url": "https://apitest-hms.tripjack.com/hms/v3/hotel/review",
+        "body": {
+          "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb",
+          "optionId": "6eefbbc8-b0f1-4928-8fdf-db504a584ef5",
+          "reviewHash": "3A0h17EkAZmMd03AjPdMlQ|1da716d9-bed7-4038-9412-d408adf1bceb",
+          "hid": "100000620177"
+        }
+      },
+      "httpStatus": 200,
+      "response": {
+        "status": {
+          "success": false,
+          "httpStatus": 200
+        },
+        "errors": [
+          {
+            "errorType": "OPTION_SOLD_OUT",
+            "message": "The selected optionId is no longer available. Return to Detail and choose a different option. Do not call Book after receiving this error.",
+            "errCode": "6506"
+          }
+        ],
+        "correlationId": "1da716d9-bed7-4038-9412-d408adf1bceb"
+      }
+    }
+  ]
+}

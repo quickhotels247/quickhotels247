@@ -1,0 +1,33 @@
+export const styles = {
+  root: { position: "relative" },
+  track: (itemWidth: { xs: string; sm?: string; md?: string }) => ({
+    listStyle: "none",
+    m: 0,
+    display: "grid",
+    gridAutoFlow: "column",
+    gridAutoColumns: itemWidth,
+    gap: { xs: 1.5, md: 2 },
+    overflowX: "auto",
+    scrollSnapType: "x mandatory",
+    scrollPaddingInline: { xs: "16px", sm: "24px", md: 0 },
+    scrollbarWidth: "none",
+    "&::-webkit-scrollbar": { display: "none" },
+    // Run to the screen edge on phones and tablets.
+    mx: { xs: -2, sm: -3, md: 0 },
+    px: { xs: 2, sm: 3, md: 0 },
+    py: 0.5,
+  }),
+  item: { scrollSnapAlign: "start", minWidth: 0, display: "flex" },
+  arrow: (side: "left" | "right") => ({
+    display: { xs: "none", md: "inline-flex" },
+    position: "absolute",
+    top: "40%",
+    [side]: -20,
+    transform: "translateY(-50%)",
+    bgcolor: "background.paper",
+    border: "1px solid",
+    borderColor: "divider",
+    boxShadow: "0 6px 18px -8px rgba(15,23,42,0.35)",
+    "&:hover": { bgcolor: "background.paper", color: "primary.main" },
+  }),
+};

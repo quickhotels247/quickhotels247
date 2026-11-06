@@ -1,0 +1,17 @@
+export const styles = {
+  root: { display: "flex", minHeight: "100dvh", bgcolor: "background.default" },
+  sidebar: { display: { xs: "none", md: "block" }, position: "sticky", top: 0, height: "100dvh", flexShrink: 0 },
+  drawer: { display: { md: "none" } },
+  main: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" },
+  bar: { borderBottom: 1, borderColor: "divider" },
+  toolbar: { gap: 1.5 },
+  menuButton: { display: { md: "none" } },
+  spacer: { flex: 1 },
+  who: { display: "flex", alignItems: "center", gap: 1 },
+  avatar: { width: 32, height: 32, fontSize: "0.85rem", bgcolor: "primary.main" },
+  whoText: { display: { xs: "none", sm: "block" } },
+  name: { fontWeight: 700, fontSize: "0.85rem", lineHeight: 1.2 },
+  email: { fontSize: "0.75rem", color: "text.secondary" },
+  logout: { color: "text.secondary" },
+  content: { p: { xs: 2, md: 4 }, maxWidth: 1200, width: "100%" },
+};

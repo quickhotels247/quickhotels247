@@ -1,0 +1,33 @@
+export const styles = {
+  root: {
+    display: "grid",
+    gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) minmax(0, 1.1fr)" },
+    maxWidth: 960,
+    mx: "auto",
+    my: { xs: 0, md: 6 },
+    bgcolor: "background.paper",
+    borderRadius: { xs: 0, md: 4 },
+    overflow: "hidden",
+    boxShadow: { md: "0 24px 60px -24px rgba(15, 23, 42, 0.35)" },
+  },
+  side: {
+    display: { xs: "none", md: "flex" },
+    flexDirection: "column",
+    justifyContent: "flex-end",
+    gap: 2,
+    p: 5,
+    color: "#fff",
+    backgroundImage:
+      "linear-gradient(180deg, rgba(26,86,219,0.25), rgba(13,40,110,0.92)), url(https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=70)",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  },
+  sideTitle: { fontSize: "1.6rem", fontWeight: 800, lineHeight: 1.2 },
+  perks: { listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 1 },
+  perk: { display: "flex", alignItems: "center", gap: 1, fontSize: "0.95rem" },
+  perkIcon: { color: "secondary.main", fontSize: 20 },
+  panel: { p: { xs: 3, sm: 5 }, display: "flex", flexDirection: "column", gap: 3 },
+  header: { display: "flex", flexDirection: "column", gap: 0.75 },
+  title: { mt: 2, fontSize: { xs: "1.5rem", md: "1.75rem" }, fontWeight: 800 },
+  subtitle: { color: "text.secondary", fontSize: "0.95rem" },
+};

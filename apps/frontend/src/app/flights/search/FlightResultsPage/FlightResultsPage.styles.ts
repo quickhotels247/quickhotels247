@@ -1,0 +1,20 @@
+export const styles = {
+  band: { bgcolor: "primary.main", py: { xs: 2, md: 2.5 } },
+  body: { py: { xs: 2.5, md: 4 } },
+  layout: { display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "280px minmax(0, 1fr)" }, gap: { md: 3 }, alignItems: "start" },
+  // Sticky beside the results; scrolls on its own when taller than the screen.
+  sidebar: { display: { xs: "none", md: "block" }, position: "sticky", top: 96, maxHeight: "calc(100vh - 112px)", overflowY: "auto", overscrollBehavior: "contain", borderRadius: 3 },
+  main: { minWidth: 0, display: "flex", flexDirection: "column", gap: 2, scrollMarginTop: 96 },
+  heading: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 },
+  title: { fontSize: { xs: "1.2rem", md: "1.45rem" }, fontWeight: 800, lineHeight: 1.3 },
+  subtitle: { fontSize: "0.88rem", color: "text.secondary" },
+  filtersButton: { display: { xs: "flex", md: "none" }, flexShrink: 0 },
+  alert: { borderRadius: 2 },
+  list: { listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 1.5, transition: "opacity 0.2s" },
+  listLoading: { opacity: 0.55, pointerEvents: "none" },
+  pagination: { display: "flex", flexDirection: "column", alignItems: "center", gap: 1, mt: 1 },
+  showing: { fontSize: "0.82rem", color: "text.secondary" },
+  drawer: { maxHeight: "88vh", borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  drawerBody: { overflowY: "auto", p: 2, "& > div": { border: 0 } },
+  drawerFooter: { p: 2, borderTop: 1, borderColor: "divider" },
+};

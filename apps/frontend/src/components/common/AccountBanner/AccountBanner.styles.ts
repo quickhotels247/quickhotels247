@@ -1,0 +1,27 @@
+export const styles = {
+  root: {
+    display: "grid",
+    gridTemplateColumns: { xs: "1fr", md: "auto 1fr auto" },
+    alignItems: "center",
+    gap: { xs: 2, md: 3 },
+    p: { xs: 2.5, md: 3.5 },
+    borderRadius: 4,
+    color: "common.white",
+    background: "linear-gradient(120deg, #1544b0 0%, #1a56db 55%, #3b82f6 100%)",
+  },
+  icon: {
+    display: { xs: "none", md: "grid" },
+    placeItems: "center",
+    width: 56,
+    height: 56,
+    borderRadius: 3,
+    bgcolor: "rgba(255,255,255,0.15)",
+    "& svg": { fontSize: 30 },
+  },
+  text: { minWidth: 0 },
+  title: { fontWeight: 800, fontSize: { xs: "1.15rem", md: "1.35rem" } },
+  description: { mt: 0.5, fontSize: "0.92rem", color: "rgba(255,255,255,0.88)" },
+  actions: { display: "flex", gap: 1, flexWrap: "wrap" },
+  signIn: { bgcolor: "common.white", color: "primary.main", "&:hover": { bgcolor: "#eef2ff" } },
+  register: { color: "common.white", borderColor: "rgba(255,255,255,0.7)", "&:hover": { borderColor: "common.white", bgcolor: "rgba(255,255,255,0.1)" } },
+};

@@ -1,0 +1,30 @@
+{
+  "name": "quickhotels",
+  "private": true,
+  "packageManager": "yarn@4.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "nx run-many -t dev",
+    "ui:dev": "nx run @quickhotels/frontend:dev",
+    "ui:build": "nx run @quickhotels/frontend:build",
+    "backend:dev": "nx run @quickhotels/backend:dev",
+    "backend:build": "nx run @quickhotels/backend:build",
+    "backend:start": "yarn workspace @quickhotels/backend start",
+    "build": "nx run-many -t build",
+    "typecheck": "nx run-many -t typecheck",
+    "test": "nx run-many -t test",
+    "backend:test": "nx run @quickhotels/backend:test",
+    "backend:migrate": "yarn workspace @quickhotels/backend db:migrate",
+    "graph": "nx graph"
+  },
+  "devDependencies": {
+    "nx": "24.0.4",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

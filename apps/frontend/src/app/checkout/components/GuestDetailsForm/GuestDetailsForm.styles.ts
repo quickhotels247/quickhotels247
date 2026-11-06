@@ -1,0 +1,15 @@
+export const styles = {
+  root: { display: "flex", flexDirection: "column", gap: 2 },
+  errors: { borderRadius: 2, outline: "none" },
+  errorsTitle: { fontWeight: 700, fontSize: "0.9rem" },
+  errorList: { m: 0, mt: 0.5, pl: 2.5, fontSize: "0.85rem" },
+  card: { bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 3, p: { xs: 2, md: 3 } },
+  title: { fontSize: "1.1rem", fontWeight: 800, mb: 1.5 },
+  optional: { fontWeight: 400, color: "text.secondary", fontSize: "0.9rem" },
+  hint: { fontSize: "0.85rem", color: "text.secondary", mb: 2 },
+  policy: { "& + &": { mt: 1.5 } },
+  policyTitle: { fontSize: "0.9rem", fontWeight: 700, mb: 0.25 },
+  policyText: { fontSize: "0.85rem", color: "text.secondary", lineHeight: 1.6 },
+  terms: { alignItems: "flex-start", "& .MuiCheckbox-root": { pt: 0.5 } },
+  submit: { mt: 2, width: { xs: "100%", sm: "auto" }, px: 5 },
+};

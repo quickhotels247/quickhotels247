@@ -1,0 +1,4 @@
+{
+  "extends": "@quickhotels/tsconfig/base.json",
+  "include": ["*.ts"]
+}

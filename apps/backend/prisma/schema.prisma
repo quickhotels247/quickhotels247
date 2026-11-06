@@ -1,0 +1,868 @@
+// QuickHotels24/7 database. PostgreSQL on Neon now, AWS RDS later (see
+// docs/ROADMAP.md "Settled"). Tables and columns are snake_case in the
+// database and camelCase in code. Money is numeric(12,2) with an ISO currency.
+//
+// Case-insensitive unique indexes on users.email, users.username and
+// admin_users.email are added as plain SQL in the first migration, because
+// Prisma's schema can't express lower(column) indexes.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Customers and their sign-in ───────────────────────────────────────────
+
+model User {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName    String     @map("first_name")
+  lastName     String     @map("last_name")
+  email        String
+  username     String
+  phone        String?
+  dateOfBirth  DateTime?  @map("date_of_birth") @db.Date
+  nationality  String?
+  gender       String?
+  // { line1, line2, city, state, postcode, country }
+  address      Json?
+  // Email choices (/account/preferences). Booking emails are always sent.
+  notifyDeals         Boolean   @default(false) @map("notify_deals")
+  notifyTripReminders Boolean   @default(true) @map("notify_trip_reminders")
+  notifyReviews       Boolean   @default(true) @map("notify_reviews")
+  // When the customer last changed the choices above (consent record).
+  preferencesUpdatedAt DateTime? @map("preferences_updated_at") @db.Timestamptz
+  // Null for people who only sign in with Google.
+  passwordHash String?    @map("password_hash")
+  clerkUserId  String?    @unique @map("clerk_user_id")
+  isVerified   Boolean    @default(false) @map("is_verified")
+  isLoggedIn   Boolean    @default(false) @map("is_logged_in")
+  // How the account was first created: "Google" or "QuickHotels".
+  signedInWith String     @default("QuickHotels") @map("signed_in_with")
+  workspace    String?
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  identities        UserIdentity[]
+  authTokens        AuthToken[]
+  searchSessions    SearchSession[]
+  bookingAttempts   BookingAttempt[]
+  bookings          Booking[]
+  couponRedemptions CouponRedemption[]
+  notifications     Notification[]
+  savedTravellers   SavedTraveller[]
+  savedHotels       SavedHotel[]
+  supportTickets    SupportTicket[]
+
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+// A Google account connected to a user through Clerk.
+model UserIdentity {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  provider       String // "google"
+  providerUserId String   @map("provider_user_id")
+  clerkUserId    String   @map("clerk_user_id")
+  email          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("user_identities")
+}
+
+// Sign-up email codes (the backend's own OTP flow).
+model EmailVerification {
+  email                 String    @id
+  codeHash              String    @map("code_hash")
+  attempts              Int       @default(0)
+  expiresAt             DateTime  @map("expires_at") @db.Timestamptz
+  lastSentAt            DateTime  @default(now()) @map("last_sent_at") @db.Timestamptz
+  verifiedAt            DateTime? @map("verified_at") @db.Timestamptz
+  verificationTokenHash String?   @map("verification_token_hash")
+  tokenExpiresAt        DateTime? @map("token_expires_at") @db.Timestamptz
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("email_verifications")
+}
+
+// Customer sessions. Only a SHA-256 hash of each token is stored.
+model AuthToken {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  client     String    @default("web")
+  // "Chrome on macOS": from the browser at sign-in, for the devices list.
+  device     String?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastUsedAt DateTime  @default(now()) @map("last_used_at") @db.Timestamptz
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_tokens")
+}
+
+// ─── Admin console ─────────────────────────────────────────────────────────
+
+model AdminUser {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String
+  email        String
+  passwordHash String    @map("password_hash")
+  // Spec §1.1. Every admin is a super admin until roles are enforced (step 10).
+  role         AdminRole @default(SUPER_ADMIN)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+
+  tokens              AdminToken[]
+  auditLog            AdminAuditLog[]
+  bookingStatusEvents BookingStatusHistory[]
+  refundsInitiated    Refund[]
+  couponsCreated      Coupon[]
+  pricingRulesCreated PricingRule[]
+  ticketsAssigned     SupportTicket[]
+  supportNotes        SupportNote[]
+
+  @@map("admin_users")
+}
+
+enum AdminRole {
+  SUPPORT_AGENT
+  OPERATIONS_ADMIN
+  SUPER_ADMIN
+}
+
+model AdminToken {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId    String    @map("admin_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastUsedAt DateTime  @default(now()) @map("last_used_at") @db.Timestamptz
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+
+  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@map("admin_tokens")
+}
+
+// Append-only record of admin actions (spec §5.11). Never holds secrets.
+model AdminAuditLog {
+  id        BigInt   @id @default(autoincrement())
+  adminId   String?  @map("admin_id") @db.Uuid
+  action    String // e.g. "admin.login", "booking.reconcile"
+  target    String?
+  reason    String?
+  details   Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  admin AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@map("admin_audit_log")
+}
+
+// ─── Hotels and searches (spec §8) ─────────────────────────────────────────
+
+// A supplier's city, area or state, used to turn a typed destination into
+// the supplier's hotels (TripJack: fetch-city-regionIds). Names are stored as
+// the supplier sends them (upper case for TripJack).
+model SupplierRegion {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplier       String    @default("tripjack")
+  regionId       String    @map("region_id")
+  name           String // e.g. "MUMBAI"
+  cityName       String    @map("city_name")
+  countryName    String    @map("country_name")
+  // "CITY", "MULTI_CITY_VICINITY" or "PROVINCE_STATE".
+  regionType     String    @map("region_type")
+  fullName       String    @map("full_name") // e.g. "MUMBAI, MAHARASHTRA, INDIA"
+  // When this region's hotel list and content were last pulled.
+  hotelsSyncedAt DateTime? @map("hotels_synced_at") @db.Timestamptz
+  hotelCount     Int?      @map("hotel_count")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([supplier, regionId])
+  @@index([supplier, name])
+  @@index([supplier, cityName])
+  @@map("supplier_regions")
+}
+
+// A supplier's hotel. Supplier IDs are external references, not our keys.
+model Hotel {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplier         String    @default("tripjack")
+  supplierHotelId  String    @map("supplier_hotel_id")
+  // The supplier region this hotel was listed under (SupplierRegion.regionId).
+  regionId         String?   @map("region_id")
+  name             String
+  isActive         Boolean   @default(true) @map("is_active")
+  heroImageUrl     String?   @map("hero_image_url")
+  address          String?
+  city             String?
+  country          String?
+  latitude         Decimal?  @db.Decimal(9, 6)
+  longitude        Decimal?  @db.Decimal(9, 6)
+  starRating       Decimal?  @map("star_rating") @db.Decimal(2, 1)
+  propertyType     String?   @map("property_type")
+  contentUpdatedAt DateTime? @map("content_updated_at") @db.Timestamptz
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  content         HotelContentCache[]
+  bookingAttempts BookingAttempt[]
+  bookings        Booking[]
+
+  @@unique([supplier, supplierHotelId])
+  @@index([supplier, regionId])
+  @@index([city])
+  @@map("hotels")
+}
+
+// Static hotel content from the supplier (descriptions, facilities, images).
+model HotelContentCache {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hotelId      String   @map("hotel_id") @db.Uuid
+  language     String   @default("en")
+  description  String?
+  facilities   Json     @default("[]")
+  images       Json     @default("[]")
+  checkInTime  String?  @map("check_in_time")
+  checkOutTime String?  @map("check_out_time")
+  rawVersion   String?  @map("raw_version")
+  fetchedAt    DateTime @default(now()) @map("fetched_at") @db.Timestamptz
+  // The hotel page's full content (description sections, policies, room
+  // types, all photos), fetched when someone opens the page.
+  details          Json?
+  detailsFetchedAt DateTime? @map("details_fetched_at") @db.Timestamptz
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([hotelId, language])
+  @@map("hotel_content_cache")
+}
+
+// A customer's hotel search. Live rates themselves live in Redis (short-lived).
+model SearchSession {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String?  @map("user_id") @db.Uuid
+  destination      String
+  checkIn          DateTime @map("check_in") @db.Date
+  checkOut         DateTime @map("check_out") @db.Date
+  // [{ adults, childAges: [] }] per room.
+  occupancy        Json
+  supplier         String   @default("tripjack")
+  supplierSearchId String?  @map("supplier_search_id")
+  // Supplier details needed for the next steps (TripJack: which correlationId
+  // each hotel was listed under).
+  supplierContext  Json?    @map("supplier_context")
+  // Priced results so far, served page by page (rates expire with the session).
+  results          Json?
+  // Where the supplier continues when a later page needs more hotels; null when done.
+  nextCursor       Json?    @map("next_cursor")
+  // Point hotel distances are measured from ({ name, kind }), when known.
+  centre           Json?
+  expiresAt        DateTime @map("expires_at") @db.Timestamptz
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  bookingAttempts BookingAttempt[]
+
+  @@index([createdAt])
+  @@map("search_sessions")
+}
+
+// A customer's flight search and its results (fares expire after ~15 min).
+model FlightSearchSession {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  criteria  Json
+  supplier  String   @default("tripjack")
+  // Results per trip ("ONWARD", "RETURN", "COMBO", or one per multi-city leg).
+  results   Json
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([createdAt])
+  @@map("flight_search_sessions")
+}
+
+// A flight checkout: the chosen fares as the supplier confirmed them (review),
+// then travellers and payment (flights steps F4–F6). Opened only with the key
+// the customer's browser made; only its SHA-256 hash is kept.
+model FlightCheckout {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Stops a double click or retry reviewing the fares twice.
+  keyHash           String    @unique @map("key_hash")
+  userId            String?   @map("user_id") @db.Uuid
+  searchSessionId   String?   @map("search_session_id") @db.Uuid
+  supplier          String    @default("tripjack")
+  // The supplier's reference for the reviewed fares (TripJack: bookingId).
+  supplierBookingId String    @map("supplier_booking_id")
+  // "travellers" until their details are saved, then "payment".
+  status            String    @default("travellers")
+  // The server-owned summary: journeys, fares, price, rules, requirements.
+  quote             Json
+  amount            Decimal   @db.Decimal(12, 2)
+  currency          String    @db.Char(3)
+  // Travellers and contact (step F5).
+  travellers        Json?
+  contactEmail      String?   @map("contact_email")
+  contactPhone      String?   @map("contact_phone")
+  termsVersion      String?   @map("terms_version")
+  termsAcceptedAt   DateTime? @map("terms_accepted_at") @db.Timestamptz
+  // When the supplier stops holding the fares.
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("flight_checkouts")
+}
+
+// ─── Bookings (spec §6.2 states) ───────────────────────────────────────────
+
+enum BookingStatus {
+  INITIATED
+  PRICE_REVIEW_PENDING
+  AWAITING_PAYMENT
+  PAYMENT_PENDING
+  PAYMENT_FAILED
+  SUPPLIER_BOOKING_PENDING
+  CONFIRMED
+  SUPPLIER_BOOKING_FAILED
+  CANCELLATION_PENDING
+  CANCELLED
+  REFUND_PENDING
+  REFUNDED
+  MANUAL_REVIEW
+}
+
+// A checkout in progress, before (or without) a supplier booking.
+model BookingAttempt {
+  id                    String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String?       @map("user_id") @db.Uuid
+  searchSessionId       String?       @map("search_session_id") @db.Uuid
+  hotelId               String?       @map("hotel_id") @db.Uuid
+  selectedRateReference String        @map("selected_rate_reference")
+  // Stops double submissions creating two bookings.
+  idempotencyKey        String        @unique @map("idempotency_key")
+  status                BookingStatus @default(INITIATED)
+  contactEmail          String?       @map("contact_email")
+  contactPhone          String?       @map("contact_phone")
+  // Checkout (spec §4.4). Opening it needs the secret given when it was
+  // created; only its SHA-256 hash is kept.
+  accessTokenHash       String?       @map("access_token_hash")
+  // The re-checked rate is held until then.
+  expiresAt             DateTime?     @map("expires_at") @db.Timestamptz
+  // What the customer is buying, owned by the server: hotel, stay, rooms,
+  // the confirmed rate and any price change (CheckoutSummary parts).
+  quote                 Json?
+  // Supplier details for booking (TripJack: correlationId, bookingId). Never sent to the browser.
+  supplierContext       Json?         @map("supplier_context")
+  // Contact, guests per room and special requests (CheckoutGuestDetails).
+  guestDetails          Json?         @map("guest_details")
+  amount                Decimal?      @db.Decimal(12, 2)
+  currency              String?       @db.Char(3)
+  termsVersion          String?       @map("terms_version")
+  termsAcceptedAt       DateTime?     @map("terms_accepted_at") @db.Timestamptz
+  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user          User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  searchSession SearchSession?         @relation(fields: [searchSessionId], references: [id], onDelete: SetNull)
+  hotel         Hotel?                 @relation(fields: [hotelId], references: [id], onDelete: SetNull)
+  booking       Booking?
+  payments      Payment[]
+  statusHistory BookingStatusHistory[]
+
+  @@index([userId])
+  @@map("booking_attempts")
+}
+
+model Booking {
+  id                       String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Shown to customers, e.g. "QH-7K2M9P".
+  reference                String        @unique
+  userId                   String?       @map("user_id") @db.Uuid
+  attemptId                String?       @unique @map("attempt_id") @db.Uuid
+  supplier                 String        @default("tripjack")
+  supplierBookingReference String?       @map("supplier_booking_reference")
+  supplierConfirmation     String?       @map("supplier_confirmation")
+  hotelId                  String        @map("hotel_id") @db.Uuid
+  status                   BookingStatus
+  checkIn                  DateTime      @map("check_in") @db.Date
+  checkOut                 DateTime      @map("check_out") @db.Date
+  currency                 String        @db.Char(3)
+  totalAmount              Decimal       @map("total_amount") @db.Decimal(12, 2)
+  contactEmail             String        @map("contact_email")
+  contactPhone             String        @map("contact_phone")
+  specialRequests          String?       @map("special_requests")
+  // Version of the terms and cancellation policy accepted at checkout.
+  termsVersion             String?       @map("terms_version")
+  confirmedAt              DateTime?     @map("confirmed_at") @db.Timestamptz
+  cancelledAt              DateTime?     @map("cancelled_at") @db.Timestamptz
+  createdAt                DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user             User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attempt          BookingAttempt?        @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  hotel            Hotel                  @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  rooms            BookingRoom[]
+  guests           BookingGuest[]
+  priceSnapshot    BookingPriceSnapshot?
+  statusHistory    BookingStatusHistory[]
+  payments         Payment[]
+  cancellations    Cancellation[]
+  couponRedemption CouponRedemption?
+  notifications    Notification[]
+  supportTickets   SupportTicket[]
+  supportNotes     SupportNote[]
+  supplierEvents   SupplierEvent[]
+
+  @@unique([supplier, supplierBookingReference])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("bookings")
+}
+
+// One booked room with the rate and cancellation policy as they were at booking time.
+model BookingRoom {
+  id                 String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId          String  @map("booking_id") @db.Uuid
+  roomName           String  @map("room_name")
+  mealPlan           String? @map("meal_plan")
+  adults             Int
+  childAges          Int[]   @default([]) @map("child_ages")
+  rateSnapshot       Json    @map("rate_snapshot")
+  cancellationPolicy Json    @map("cancellation_policy")
+
+  booking Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  guests  BookingGuest[]
+
+  @@index([bookingId])
+  @@map("booking_rooms")
+}
+
+enum GuestType {
+  ADULT
+  CHILD
+}
+
+model BookingGuest {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId String    @map("booking_id") @db.Uuid
+  roomId    String?   @map("room_id") @db.Uuid
+  title     String?
+  firstName String    @map("first_name")
+  lastName  String    @map("last_name")
+  type      GuestType @default(ADULT)
+  age       Int?
+  isLead    Boolean   @default(false) @map("is_lead")
+
+  booking Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  room    BookingRoom? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@map("booking_guests")
+}
+
+// How the customer's total was made up, frozen at booking time.
+model BookingPriceSnapshot {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId          String   @unique @map("booking_id") @db.Uuid
+  supplierAmount     Decimal  @map("supplier_amount") @db.Decimal(12, 2)
+  taxes              Decimal  @default(0) @db.Decimal(12, 2)
+  markup             Decimal  @default(0) @db.Decimal(12, 2)
+  discount           Decimal  @default(0) @db.Decimal(12, 2)
+  customerTotal      Decimal  @map("customer_total") @db.Decimal(12, 2)
+  currency           String   @db.Char(3)
+  pricingRuleVersion Int?     @map("pricing_rule_version")
+  couponCode         String?  @map("coupon_code")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_price_snapshots")
+}
+
+// Every status change of an attempt or booking, and who or what caused it.
+model BookingStatusHistory {
+  id           BigInt         @id @default(autoincrement())
+  attemptId    String?        @map("attempt_id") @db.Uuid
+  bookingId    String?        @map("booking_id") @db.Uuid
+  fromStatus   BookingStatus? @map("from_status")
+  toStatus     BookingStatus  @map("to_status")
+  // "system", "supplier", "payment", "customer" or "admin".
+  source       String
+  reason       String?
+  actorAdminId String?        @map("actor_admin_id") @db.Uuid
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  attempt    BookingAttempt? @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  booking    Booking?        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actorAdmin AdminUser?      @relation(fields: [actorAdminId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([attemptId])
+  @@map("booking_status_history")
+}
+
+// ─── Payments, cancellations and refunds ───────────────────────────────────
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+model Payment {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId         String?       @map("attempt_id") @db.Uuid
+  bookingId         String?       @map("booking_id") @db.Uuid
+  provider          String        @default("razorpay")
+  providerOrderId   String        @unique @map("provider_order_id")
+  providerPaymentId String?       @unique @map("provider_payment_id")
+  amount            Decimal       @db.Decimal(12, 2)
+  currency          String        @db.Char(3)
+  status            PaymentStatus @default(CREATED)
+  method            String?
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  attempt BookingAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  booking Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  refunds Refund[]
+
+  @@index([bookingId])
+  @@map("payments")
+}
+
+// Gateway webhooks, kept so repeats are recognised and processed once.
+model PaymentWebhookEvent {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider        String    @default("razorpay")
+  providerEventId String    @map("provider_event_id")
+  eventType       String    @map("event_type")
+  signatureValid  Boolean   @map("signature_valid")
+  payloadRedacted Json      @map("payload_redacted")
+  receivedAt      DateTime  @default(now()) @map("received_at") @db.Timestamptz
+  processedAt     DateTime? @map("processed_at") @db.Timestamptz
+
+  @@unique([provider, providerEventId])
+  @@map("payment_webhook_events")
+}
+
+enum CancellationStatus {
+  REQUESTED
+  SUPPLIER_PENDING
+  CONFIRMED
+  REJECTED
+  FAILED
+}
+
+model Cancellation {
+  id                       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId                String             @map("booking_id") @db.Uuid
+  supplierRequestReference String?            @map("supplier_request_reference")
+  status                   CancellationStatus @default(REQUESTED)
+  penaltyAmount            Decimal?           @map("penalty_amount") @db.Decimal(12, 2)
+  refundEstimate           Decimal?           @map("refund_estimate") @db.Decimal(12, 2)
+  currency                 String?            @db.Char(3)
+  reason                   String?
+  // "customer" or "admin".
+  requestedBy              String             @map("requested_by")
+  supplierResponse         Json?              @map("supplier_response")
+  requestedAt              DateTime           @default(now()) @map("requested_at") @db.Timestamptz
+  completedAt              DateTime?          @map("completed_at") @db.Timestamptz
+
+  booking Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@index([bookingId])
+  @@map("cancellations")
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Refund {
+  id                 String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId          String       @map("payment_id") @db.Uuid
+  cancellationId     String?      @map("cancellation_id") @db.Uuid
+  providerRefundId   String?      @unique @map("provider_refund_id")
+  amount             Decimal      @db.Decimal(12, 2)
+  currency           String       @db.Char(3)
+  status             RefundStatus @default(PENDING)
+  reason             String?
+  initiatedByAdminId String?      @map("initiated_by_admin_id") @db.Uuid
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  completedAt        DateTime?    @map("completed_at") @db.Timestamptz
+
+  payment          Payment       @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  cancellation     Cancellation? @relation(fields: [cancellationId], references: [id], onDelete: SetNull)
+  initiatedByAdmin AdminUser?    @relation(fields: [initiatedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+// ─── Pricing and promotions (spec §5.7, §5.8) ──────────────────────────────
+
+enum DiscountType {
+  FIXED
+  PERCENTAGE
+}
+
+enum RuleStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
+
+model Coupon {
+  id                   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                 String       @unique
+  description          String?
+  discountType         DiscountType @map("discount_type")
+  value                Decimal      @db.Decimal(12, 2)
+  maxDiscount          Decimal?     @map("max_discount") @db.Decimal(12, 2)
+  minBookingAmount     Decimal?     @map("min_booking_amount") @db.Decimal(12, 2)
+  currency             String       @default("INR") @db.Char(3)
+  validFrom            DateTime     @map("valid_from") @db.Timestamptz
+  validTo              DateTime     @map("valid_to") @db.Timestamptz
+  usageLimit           Int?         @map("usage_limit")
+  perUserLimit         Int?         @map("per_user_limit")
+  eligibleDestinations String[]     @default([]) @map("eligible_destinations")
+  status               RuleStatus   @default(DRAFT)
+  createdByAdminId     String?      @map("created_by_admin_id") @db.Uuid
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  createdByAdmin AdminUser?         @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  redemptions    CouponRedemption[]
+
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  couponId       String   @map("coupon_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  bookingId      String   @unique @map("booking_id") @db.Uuid
+  discountAmount Decimal  @map("discount_amount") @db.Decimal(12, 2)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  coupon  Coupon  @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([couponId])
+  @@map("coupon_redemptions")
+}
+
+enum PricingScope {
+  ALL
+  COUNTRY
+  DESTINATION
+}
+
+// Our markup on supplier rates. A new version is saved on every change, and
+// each booking records the version it used.
+model PricingRule {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  scope            PricingScope @default(ALL)
+  scopeValue       String?      @map("scope_value")
+  markupType       DiscountType @map("markup_type")
+  value            Decimal      @db.Decimal(12, 2)
+  currency         String?      @db.Char(3)
+  priority         Int          @default(0)
+  validFrom        DateTime?    @map("valid_from") @db.Timestamptz
+  validTo          DateTime?    @map("valid_to") @db.Timestamptz
+  version          Int          @default(1)
+  status           RuleStatus   @default(DRAFT)
+  createdByAdminId String?      @map("created_by_admin_id") @db.Uuid
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  createdByAdmin AdminUser? @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([status, priority])
+  @@map("pricing_rules")
+}
+
+// ─── Operations ────────────────────────────────────────────────────────────
+
+// One supplier API call: safe metadata only, never keys or guest details.
+model SupplierEvent {
+  id            BigInt   @id @default(autoincrement())
+  supplier      String   @default("tripjack")
+  // "search", "pricing", "review", "book", "status", "cancel".
+  operation     String
+  correlationId String?  @map("correlation_id")
+  bookingId     String?  @map("booking_id") @db.Uuid
+  httpStatus    Int?     @map("http_status")
+  durationMs    Int      @map("duration_ms")
+  success       Boolean
+  errorCode     String?  @map("error_code")
+  requestMeta   Json?    @map("request_meta")
+  responseMeta  Json?    @map("response_meta")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([bookingId])
+  @@map("supplier_events")
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+model Notification {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String?             @map("user_id") @db.Uuid
+  bookingId         String?             @map("booking_id") @db.Uuid
+  channel           NotificationChannel
+  template          String
+  recipient         String
+  status            NotificationStatus  @default(QUEUED)
+  providerReference String?             @map("provider_reference")
+  error             String?
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  sentAt            DateTime?           @map("sent_at") @db.Timestamptz
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@map("notifications")
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+model SupportTicket {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Shown to customers, e.g. "T-48213".
+  reference       String       @unique
+  userId          String?      @map("user_id") @db.Uuid
+  bookingId       String?      @map("booking_id") @db.Uuid
+  topic           String
+  email           String
+  phone           String?
+  message         String
+  status          TicketStatus @default(OPEN)
+  assignedAdminId String?      @map("assigned_admin_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  booking       Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  assignedAdmin AdminUser?    @relation(fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  notes         SupportNote[]
+
+  @@index([status])
+  @@map("support_tickets")
+}
+
+// Staff notes on a booking or ticket. Append-only (spec §5.4).
+model SupportNote {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId String?  @map("booking_id") @db.Uuid
+  ticketId  String?  @map("ticket_id") @db.Uuid
+  adminId   String?  @map("admin_id") @db.Uuid
+  body      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  booking Booking?       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  ticket  SupportTicket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  admin   AdminUser?     @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@map("support_notes")
+}
+
+// People a customer books for often (spec §4.7 account), used to fill
+// checkout forms. Passport details are optional.
+model SavedTraveller {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  title          String
+  firstName      String    @map("first_name")
+  lastName       String    @map("last_name")
+  dateOfBirth    DateTime? @map("date_of_birth") @db.Date
+  nationality    String?
+  passportNumber String?   @map("passport_number")
+  passportExpiry DateTime? @map("passport_expiry") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_travellers")
+}
+
+// The customer's wishlist: hotels saved with the heart. Name, place, photo
+// and stars are a snapshot from when it was saved.
+model SavedHotel {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  hotelId    String   @map("hotel_id")
+  name       String
+  city       String?
+  country    String?
+  imageUrl   String?  @map("image_url")
+  starRating Int?     @map("star_rating")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hotelId])
+  @@map("saved_hotels")
+}

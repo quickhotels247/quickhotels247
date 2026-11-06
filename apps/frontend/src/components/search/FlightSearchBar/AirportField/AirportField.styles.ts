@@ -1,0 +1,25 @@
+export const styles = {
+  autocomplete: { flex: 1, minWidth: 0 },
+  input: {
+    fontSize: "0.92rem",
+    fontWeight: 600,
+    "& input": { py: 0.25 },
+    "& input::placeholder": { color: "text.secondary", opacity: 1, fontWeight: 400 },
+  },
+  paper: { mt: 1, borderRadius: 3, boxShadow: "0 16px 40px -12px rgba(15,23,42,0.3)", minWidth: 300 },
+  option: { display: "flex !important", alignItems: "center", gap: 1.5, py: "10px !important" },
+  code: {
+    flexShrink: 0,
+    width: 44,
+    py: 0.5,
+    borderRadius: 1.5,
+    textAlign: "center",
+    fontSize: "0.78rem",
+    fontWeight: 800,
+    bgcolor: "primary.light",
+    color: "primary.main",
+  },
+  optionText: { minWidth: 0 },
+  city: { fontWeight: 600, fontSize: "0.92rem" },
+  airportName: { fontSize: "0.78rem", color: "text.secondary" },
+};

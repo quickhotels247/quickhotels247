@@ -1,0 +1,15 @@
+export const styles = {
+  root: { py: { xs: 3, md: 5 }, display: "flex", flexDirection: "column", gap: 2.5 },
+  title: { fontSize: { xs: "1.5rem", md: "1.9rem" }, fontWeight: 800 },
+  controls: { display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", gap: 1.5 },
+  tabs: { minHeight: 40 },
+  tab: { textTransform: "none", fontWeight: 600, minHeight: 40 },
+  search: { width: { xs: "100%", sm: 260 }, "& .MuiInputBase-root": { borderRadius: 2, bgcolor: "background.paper" } },
+  list: { listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 2, transition: "opacity 0.2s" },
+  loading: { opacity: 0.55 },
+  skeleton: { borderRadius: 3 },
+  empty: { textAlign: "center", py: 6, px: 3, bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 3, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 },
+  emptyIcon: { fontSize: 44, color: "text.secondary" },
+  emptyText: { color: "text.secondary" },
+  pagination: { alignSelf: "center" },
+};

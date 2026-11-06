@@ -1,0 +1,40 @@
+export const styles = {
+  root: {
+    display: "grid",
+    gridTemplateColumns: { xs: "1fr", md: "280px minmax(0, 1fr)" },
+    bgcolor: "background.paper",
+    border: 1,
+    borderColor: "divider",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  room: {
+    p: 2,
+    bgcolor: { md: "rgba(26, 86, 219, 0.03)" },
+    // Width and style apart from colour: a responsive `border*` shorthand
+    // would reset the colour to the text colour.
+    borderStyle: "solid",
+    borderWidth: 0,
+    borderRightWidth: { md: 1 },
+    borderBottomWidth: { xs: 1, md: 0 },
+    borderColor: "divider",
+  },
+  photo: { position: "relative", aspectRatio: "16 / 10", borderRadius: 2, overflow: "hidden", mb: 1.5 },
+  photoNote: {
+    position: "absolute",
+    left: 8,
+    bottom: 8,
+    px: 1,
+    py: 0.25,
+    borderRadius: 1,
+    bgcolor: "rgba(15, 23, 42, 0.65)",
+    color: "#fff",
+    fontSize: "0.7rem",
+  },
+  name: { fontSize: "1.05rem", fontWeight: 800, color: "primary.dark", mb: 1 },
+  features: { listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 0.5 },
+  feature: { display: "flex", alignItems: "center", gap: 0.75, fontSize: "0.85rem", "& svg": { fontSize: 18, color: "text.secondary" } },
+  amenities: { mt: 1, fontSize: "0.78rem", color: "text.secondary" },
+  rates: { px: 2, py: 0.5 },
+  more: { mb: 1, px: 0, minWidth: 0 },
+};

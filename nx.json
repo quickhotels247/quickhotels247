@@ -1,0 +1,66 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.spec.ts"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/nx.json"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": [
+        "^build",
+        "typecheck"
+      ],
+      "inputs": [
+        "production",
+        "^production",
+        {
+          "env": "NEXT_PUBLIC_API_URL"
+        },
+        {
+          "env": "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
+        }
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "cache": true
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^typecheck"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    },
+    "test": {
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    },
+    "dev": {
+      "continuous": true
+    },
+    "start": {
+      "dependsOn": [
+        "build"
+      ],
+      "continuous": true
+    }
+  },
+  "analytics": true
+}

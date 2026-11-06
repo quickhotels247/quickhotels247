@@ -1,0 +1,27 @@
+export const styles = {
+  root: {
+    position: "relative",
+    display: "block",
+    width: "100%",
+    aspectRatio: "4 / 5",
+    borderRadius: 3,
+    overflow: "hidden",
+    color: "common.white",
+    textDecoration: "none",
+    "& img:first-of-type": { transition: "transform 0.35s ease" },
+    "&:hover img:first-of-type, &:focus-visible img:first-of-type": { transform: "scale(1.05)" },
+    "&:focus-visible": { outline: "3px solid", outlineColor: "primary.main", outlineOffset: 2 },
+  },
+  shade: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.7) 100%)" },
+  label: { position: "absolute", left: 0, right: 0, bottom: 0, p: 2, display: "flex", alignItems: "center", gap: 1 },
+  flag: {
+    width: 30,
+    height: 30,
+    flexShrink: 0,
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "2px solid",
+    borderColor: "common.white",
+  },
+  name: { fontWeight: 800, fontSize: { xs: "1.1rem", md: "1.25rem" }, lineHeight: 1.2, textShadow: "0 1px 8px rgba(0,0,0,0.4)" },
+};

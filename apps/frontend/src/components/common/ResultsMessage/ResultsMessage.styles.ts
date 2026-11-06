@@ -1,0 +1,27 @@
+export const styles = {
+  root: {
+    textAlign: "center",
+    py: { xs: 5, md: 7 },
+    px: 3,
+    bgcolor: "background.paper",
+    borderRadius: 3,
+    border: 1,
+    borderColor: "divider",
+  },
+  icon: {
+    width: 56,
+    height: 56,
+    mx: "auto",
+    mb: 2,
+    borderRadius: "50%",
+    display: "grid",
+    placeItems: "center",
+    color: "primary.main",
+    backgroundColor: "rgba(26, 86, 219, 0.08)",
+    "& svg": { fontSize: 28 },
+  },
+  iconError: { color: "error.main", backgroundColor: "rgba(211, 47, 47, 0.08)" },
+  title: { fontSize: "1.1rem", fontWeight: 700, mb: 0.75 },
+  text: { fontSize: "0.9rem", color: "text.secondary", maxWidth: 420, mx: "auto" },
+  action: { mt: 2.5, display: "flex", justifyContent: "center", gap: 1, flexWrap: "wrap" },
+};

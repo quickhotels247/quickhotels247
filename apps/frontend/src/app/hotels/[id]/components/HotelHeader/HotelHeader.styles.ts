@@ -1,0 +1,21 @@
+export const styles = {
+  root: {
+    display: "flex",
+    flexDirection: { xs: "column", md: "row" },
+    justifyContent: "space-between",
+    alignItems: { xs: "stretch", md: "flex-end" },
+    gap: 2,
+  },
+  main: { minWidth: 0 },
+  badges: { display: "flex", alignItems: "center", gap: 1, mb: 0.75, flexWrap: "wrap" },
+  type: { height: 24, fontWeight: 600, bgcolor: "rgba(26, 86, 219, 0.08)", color: "primary.main" },
+  titleRow: { display: "flex", alignItems: "flex-start", gap: 0.5 },
+  name: { fontSize: { xs: "1.5rem", md: "2rem" }, fontWeight: 800, lineHeight: 1.2 },
+  address: { display: "flex", alignItems: "flex-start", gap: 0.5, mt: 1, fontSize: "0.9rem", color: "text.secondary" },
+  addressIcon: { fontSize: 18, mt: "2px", flexShrink: 0 },
+  mapLink: { fontWeight: 600, whiteSpace: "nowrap" },
+  side: { display: "flex", flexDirection: { xs: "row", md: "column" }, alignItems: { xs: "center", md: "flex-end" }, justifyContent: "space-between", gap: 1, flexShrink: 0 },
+  from: { fontSize: "0.85rem", color: "text.secondary" },
+  amount: { fontSize: "1.4rem", fontWeight: 800, color: "text.primary" },
+  reserve: { px: 4, whiteSpace: "nowrap" },
+};
