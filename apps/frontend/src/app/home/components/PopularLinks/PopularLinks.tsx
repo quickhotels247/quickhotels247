@@ -6,6 +6,7 @@ import Box from "@mui/material/Box";
 import MuiLink from "@mui/material/Link";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import { cityPagePath } from "@/app/hotels/in/data/cities";
 import { routes } from "@/config/navigation";
 import type { LinkGroup } from "../../data/types";
 import SectionHeader from "@/components/common/SectionHeader";
@@ -32,7 +33,7 @@ export default function PopularLinks({ groups }: PopularLinksProps) {
       <Box component="ul" id="links-panel" role="tabpanel" aria-labelledby={`links-tab-${active}`} sx={styles.list}>
         {group.links.map((link) => (
           <li key={link.destination}>
-            <MuiLink component={Link} href={`${routes.hotels}?${new URLSearchParams({ destination: link.destination })}`} sx={styles.link}>
+            <MuiLink component={Link} href={cityPagePath(link.destination) ?? `${routes.hotels}?${new URLSearchParams({ destination: link.destination })}`} sx={styles.link}>
               {link.label}
             </MuiLink>
           </li>

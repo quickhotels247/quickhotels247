@@ -5,6 +5,8 @@ import SearchResultsPage from "./SearchResultsPage";
 
 export const metadata: Metadata = {
   title: "Hotel search",
+  // Results depend on the URL's search: not useful as search-engine pages.
+  robots: { index: false, follow: true },
   description: "Compare hotels and live prices for your dates with QuickHotels24/7.",
 };
 
