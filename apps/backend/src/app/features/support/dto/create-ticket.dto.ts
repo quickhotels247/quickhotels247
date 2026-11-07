@@ -1,6 +1,10 @@
-import { SUPPORT_TOPICS, type CreateTicketRequest, type SupportTopic } from "@quickhotels/types/support";
+import type { CreateTicketRequest, SupportTopic } from "@quickhotels/types/support";
 import { Transform } from "class-transformer";
 import { IsEmail, IsIn, IsOptional, IsString, Matches, MaxLength } from "class-validator";
+
+// Same list as SUPPORT_TOPICS in @quickhotels/types (that package is type-only
+// at runtime: it isn't shipped in the backend image).
+const TOPICS: SupportTopic[] = ["booking", "cancellation", "payment", "flight", "account", "other"];
 
 const trim = ({ value }: { value: unknown }) => (typeof value === "string" ? value.trim() : value);
 const trimOrNull = ({ value }: { value: unknown }) => (typeof value === "string" ? value.trim() || null : value);
@@ -21,7 +25,7 @@ export class CreateTicketDto implements CreateTicketRequest {
   @Matches(/^\+?[\d\s-]{6,20}$/, { message: "Check the phone number." })
   phone?: string | null;
 
-  @IsIn([...SUPPORT_TOPICS], { message: "Choose what your message is about." })
+  @IsIn(TOPICS, { message: "Choose what your message is about." })
   topic: SupportTopic;
 
   @IsOptional()
