@@ -1,10 +1,14 @@
+import type { AppliedMarkup } from "@quickhotels/types/pricing";
 import { Injectable } from "@nestjs/common";
 import type { CheckoutGuestDetails, CheckoutSummary } from "@quickhotels/types/checkout";
 import { PrismaService } from "../../common/database/prisma.service.js";
 import { BookingStatus, Prisma } from "../../../generated/prisma/client.js";
 
 // The parts of a CheckoutSummary the server decides once, at review.
-export type CheckoutQuote = Pick<CheckoutSummary, "hotel" | "stay" | "nights" | "rooms" | "room" | "priceChange" | "requirements" | "policies">;
+// What the customer sees, plus (server only) the net price and our markup.
+export type CheckoutQuote = Pick<CheckoutSummary, "hotel" | "stay" | "nights" | "rooms" | "room" | "priceChange" | "requirements" | "policies"> & {
+  markup?: AppliedMarkup;
+};
 
 export interface StoredCheckout {
   id: string;

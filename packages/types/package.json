@@ -12,7 +12,8 @@
     "./bookings": "./bookings.ts",
     "./flight-checkout": "./flight-checkout.ts",
     "./travellers": "./travellers.ts",
-    "./wishlist": "./wishlist.ts"
+    "./wishlist": "./wishlist.ts",
+    "./pricing": "./pricing.ts"
   },
   "scripts": {
     "typecheck": "tsc"

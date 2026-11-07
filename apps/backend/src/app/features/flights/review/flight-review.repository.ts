@@ -1,10 +1,14 @@
+import type { AppliedMarkup } from "@quickhotels/types/pricing";
 import { Injectable } from "@nestjs/common";
 import type { FlightReviewSummary, FlightTravellerDetails } from "@quickhotels/types/flight-checkout";
 import { PrismaService } from "../../../common/database/prisma.service.js";
 import { Prisma } from "../../../../generated/prisma/client.js";
 
 // The parts of a review summary the server decides at review time.
-export type FlightQuote = Omit<FlightReviewSummary, "reviewId" | "status" | "expiresAt" | "termsVersion" | "travellerDetails">;
+// What the customer sees, plus (server only) the net price and our markup.
+export type FlightQuote = Omit<FlightReviewSummary, "reviewId" | "status" | "expiresAt" | "termsVersion" | "travellerDetails"> & {
+  markup?: AppliedMarkup;
+};
 
 export interface StoredFlightReview {
   id: string;

@@ -1,3 +1,4 @@
+import type { PricingRule, PricingRuleInput } from "@quickhotels/types/pricing";
 import type {
   AdminAccount,
   AdminAuthResponse,
@@ -25,6 +26,14 @@ export const adminApi = {
   logout: (token: string) => apiRequest<void>("/admin/auth/logout", { method: "POST", headers: bearer(token) }),
   changePassword: (token: string, request: ChangeAdminPasswordRequest) =>
     apiRequest<void>("/admin/auth/password", { method: "PUT", body: JSON.stringify(request), headers: bearer(token) }),
+  // Markup rules; every change returns the whole updated list.
+  pricingRules: (token: string, signal?: AbortSignal) => apiRequest<PricingRule[]>("/admin/pricing-rules", { signal, headers: bearer(token) }),
+  createPricingRule: (token: string, rule: PricingRuleInput) =>
+    apiRequest<PricingRule[]>("/admin/pricing-rules", { method: "POST", body: JSON.stringify(rule), headers: bearer(token) }),
+  updatePricingRule: (token: string, id: string, rule: PricingRuleInput) =>
+    apiRequest<PricingRule[]>(`/admin/pricing-rules/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(rule), headers: bearer(token) }),
+  deletePricingRule: (token: string, id: string) =>
+    apiRequest<PricingRule[]>(`/admin/pricing-rules/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
   // Email: is sending set up, and send a test email to an address.
   mailStatus: (token: string, signal?: AbortSignal) => apiRequest<{ configured: boolean }>("/admin/mail/status", { signal, headers: bearer(token) }),
   testEmail: (token: string, to: string) =>

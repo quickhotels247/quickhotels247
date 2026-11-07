@@ -13,6 +13,7 @@ import type { SvgIconComponent } from "@mui/icons-material";
 import AdminPanelSettingsOutlined from "@mui/icons-material/AdminPanelSettingsOutlined";
 import BookOnlineOutlined from "@mui/icons-material/BookOnlineOutlined";
 import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
+import PercentRounded from "@mui/icons-material/PercentRounded";
 import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import PaymentsOutlined from "@mui/icons-material/PaymentsOutlined";
 import PeopleOutlineRounded from "@mui/icons-material/PeopleOutlineRounded";
@@ -49,7 +50,8 @@ const SECTIONS: { title: string; items: Item[] }[] = [
   {
     title: "Settings",
     items: [
-      { label: "Coupons & pricing", icon: LocalOfferOutlined },
+      { label: "Pricing & markup", href: routes.adminPricing, icon: PercentRounded },
+      { label: "Coupons", icon: LocalOfferOutlined },
       { label: "Account settings", href: routes.adminSettings, icon: SettingsOutlined },
     ],
   },

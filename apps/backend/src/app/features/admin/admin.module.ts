@@ -1,3 +1,5 @@
+import { AdminPricingController } from "./pricing/admin-pricing.controller.js";
+import { AdminPricingService } from "./pricing/admin-pricing.service.js";
 import { AdminMailController } from "./admin-mail.controller.js";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
@@ -18,6 +20,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
 @Module({
   imports: [ConfigModule.forFeature(adminConfig)],
   controllers: [
+    AdminPricingController,
     AdminMailController,
     AdminAuthController,
     AdminAdminsController,
@@ -25,6 +28,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
     AdminUsersController,
   ],
   providers: [
+    AdminPricingService,
     AdminsRepository,
     AdminGuard,
     AdminAuthService,

@@ -7,6 +7,7 @@ import { todayInIndia } from "../../../common/utils/india-dates.js";
 import { FLIGHT_SUPPLIER, type FlightSupplier } from "../../../suppliers/flight-supplier.js";
 import { SupplierError, supplierHttpError } from "../../../suppliers/supplier-error.js";
 import { FlightSearchSessionsRepository } from "../search/flight-search-sessions.repository.js";
+import { PricingService } from "../../../pricing/pricing.service.js";
 import { FlightReviewRepository, type FlightQuote, type StoredFlightReview } from "./flight-review.repository.js";
 import { checkTravellers } from "./traveller-rules.js";
 
@@ -26,6 +27,7 @@ export class FlightReviewService {
     @Inject(FLIGHT_SUPPLIER) private readonly supplier: FlightSupplier,
     private readonly reviews: FlightReviewRepository,
     private readonly searches: FlightSearchSessionsRepository,
+    private readonly pricing: PricingService,
   ) {}
 
   // `key` is the browser's random key: the same key returns the same review.
@@ -99,12 +101,15 @@ export class FlightReviewService {
     }
     const rules = await this.supplier.fareRules(reviewed.supplierBookingId, { correlationId });
 
-    const current = reviewed.price.total;
+    // The supplier's price is net: add our markup the way search did.
+    const priced = await this.pricing.markFlightReview(reviewed.price, chosen.map((option) => option!), search.criteria);
+    const current = priced.price.total;
     const quote: FlightQuote = {
       criteria: search.criteria,
       journeys: reviewed.journeys,
       fares: reviewed.fares,
-      price: reviewed.price,
+      price: priced.price,
+      markup: priced.applied,
       priceChange:
         Math.abs(current.amount - shownTotal) >= PRICE_TOLERANCE ? { previous: { amount: Math.round(shownTotal * 100) / 100, currency: current.currency }, current } : null,
       rules,
@@ -125,11 +130,13 @@ export class FlightReviewService {
   }
 
   private summary(review: StoredFlightReview): FlightReviewSummary {
+    // Net price and markup stay on the server.
+    const { markup: _markup, ...quote } = review.quote;
     return {
       reviewId: review.id,
       status: (review.status === "payment" ? "payment" : "travellers") satisfies FlightReviewStatus,
       expiresAt: review.expiresAt.toISOString(),
-      ...review.quote,
+      ...quote,
       termsVersion: TERMS_VERSION,
       travellerDetails: review.travellerDetails,
     };

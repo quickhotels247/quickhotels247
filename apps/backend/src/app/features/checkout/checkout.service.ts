@@ -114,6 +114,7 @@ export class CheckoutService {
       priceChange: changed ? { previous: shown, current } : null,
       requirements: { pan: review.option.panRequired, passport: review.option.passportRequired },
       policies: hotel.page?.policies ?? [],
+      ...(review.markup ? { markup: review.markup } : {}),
     };
     const id = await this.checkouts.create({
       keyHash,
@@ -189,11 +190,13 @@ export class CheckoutService {
   }
 
   private summary(checkout: StoredCheckout): CheckoutSummary {
+    // Net price and markup stay on the server.
+    const { markup: _markup, ...quote } = checkout.quote!;
     return {
       checkoutId: checkout.id,
       status: checkout.status === BookingStatus.AWAITING_PAYMENT ? "payment" : "details",
       expiresAt: (checkout.expiresAt ?? new Date()).toISOString(),
-      ...checkout.quote!,
+      ...quote,
       termsVersion: TERMS_VERSION,
       guestDetails: checkout.guestDetails,
     };

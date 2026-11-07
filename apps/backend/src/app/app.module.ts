@@ -14,6 +14,7 @@ import { CheckoutModule } from "./features/checkout/checkout.module.js";
 import { DestinationsModule } from "./features/destinations/destinations.module.js";
 import { HotelsModule } from "./features/hotels/hotels.module.js";
 import { MailModule } from "./mail/mail.module.js";
+import { PricingModule } from "./pricing/pricing.module.js";
 import { AppController } from "./app.controller.js";
 import { AppService } from "./app.service.js";
 
@@ -25,6 +26,7 @@ import { AppService } from "./app.service.js";
     ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 300 }]),
     DatabaseModule,
     MailModule,
+    PricingModule,
     AuthModule,
     AccountModule,
     HotelsModule,

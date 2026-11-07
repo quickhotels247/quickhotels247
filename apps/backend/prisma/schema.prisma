@@ -694,6 +694,12 @@ enum PricingScope {
   ALL
   COUNTRY
   DESTINATION
+  AIRLINE
+}
+
+enum PricingProduct {
+  HOTEL
+  FLIGHT
 }
 
 // Our markup on supplier rates. A new version is saved on every change, and
@@ -701,6 +707,7 @@ enum PricingScope {
 model PricingRule {
   id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name             String
+  product          PricingProduct @default(HOTEL)
   scope            PricingScope @default(ALL)
   scopeValue       String?      @map("scope_value")
   markupType       DiscountType @map("markup_type")
@@ -717,7 +724,7 @@ model PricingRule {
 
   createdByAdmin AdminUser? @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
 
-  @@index([status, priority])
+  @@index([product, status, priority])
   @@map("pricing_rules")
 }
 

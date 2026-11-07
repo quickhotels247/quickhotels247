@@ -6,6 +6,7 @@ import type {
   RoomOption,
   SearchCentre,
 } from "@quickhotels/types/hotels";
+import type { AppliedMarkup } from "@quickhotels/types/pricing";
 
 // What every hotel supplier (TripJack now, others later) must provide. The rest
 // of the app only talks to this, never to a supplier directly (spec §1).
@@ -55,6 +56,8 @@ export interface SupplierReviewResult {
   option: RoomOption;
   // Saved with the booking attempt for booking (TripJack: its bookingId).
   context: unknown;
+  // Net price and our markup (set by the pricing wrapper; kept with the checkout).
+  markup?: AppliedMarkup;
 }
 
 export interface SupplierRoomsResult {
