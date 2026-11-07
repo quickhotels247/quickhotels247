@@ -21,7 +21,7 @@ export const styles = {
     "& svg": { fontSize: 28 },
   },
   iconError: { color: "error.main", backgroundColor: "rgba(211, 47, 47, 0.08)" },
-  title: { fontSize: "1.1rem", fontWeight: 700, mb: 0.75 },
-  text: { fontSize: "0.9rem", color: "text.secondary", maxWidth: 420, mx: "auto" },
+  title: { fontSize: "1.125rem", fontWeight: 700, mb: 0.75 },
+  text: { fontSize: "0.9375rem", color: "text.secondary", maxWidth: 420, mx: "auto" },
   action: { mt: 2.5, display: "flex", justifyContent: "center", gap: 1, flexWrap: "wrap" },
 };

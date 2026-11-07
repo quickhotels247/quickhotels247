@@ -3,7 +3,7 @@ export const styles = {
     flex: 1,
     justifyContent: "flex-start",
     minHeight: 24,
-    fontSize: "0.92rem",
+    fontSize: "0.9375rem",
     fontWeight: 600,
     color: "text.primary",
     textAlign: "left",

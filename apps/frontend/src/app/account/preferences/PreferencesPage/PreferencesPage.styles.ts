@@ -3,6 +3,6 @@ export const styles = {
   row: { display: "flex", alignItems: "center", gap: 2, py: 2, "& + &": { borderTop: 1, borderColor: "divider" } },
   text: { flex: 1, minWidth: 0 },
   title: { fontWeight: 700 },
-  description: { fontSize: "0.85rem", color: "text.secondary" },
-  note: { fontSize: "0.85rem", color: "text.secondary" },
+  description: { fontSize: "0.875rem", color: "text.secondary" },
+  note: { fontSize: "0.875rem", color: "text.secondary" },
 };

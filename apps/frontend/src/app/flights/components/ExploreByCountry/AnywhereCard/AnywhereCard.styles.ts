@@ -19,5 +19,5 @@ export const styles = {
   },
   icon: { fontSize: 56, color: "secondary.main" },
   title: { fontWeight: 800, fontSize: "1.3rem" },
-  text: { fontSize: "0.92rem", opacity: 0.9 },
+  text: { fontSize: "0.9375rem", opacity: 0.9 },
 };

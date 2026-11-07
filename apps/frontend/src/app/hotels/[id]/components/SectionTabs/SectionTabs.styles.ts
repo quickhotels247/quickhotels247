@@ -15,7 +15,7 @@ export const styles = {
   tab: {
     px: 2,
     py: 1.5,
-    fontSize: "0.9rem",
+    fontSize: "0.9375rem",
     fontWeight: 600,
     color: "text.secondary",
     whiteSpace: "nowrap",

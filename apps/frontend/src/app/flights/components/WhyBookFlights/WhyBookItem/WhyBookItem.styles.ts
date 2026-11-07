@@ -20,5 +20,5 @@ export const styles = {
     color: "primary.main",
   },
   title: { fontWeight: 700, fontSize: "1rem" },
-  text: { mt: 0.25, fontSize: "0.88rem", color: "text.secondary" },
+  text: { mt: 0.25, fontSize: "0.875rem", color: "text.secondary" },
 };

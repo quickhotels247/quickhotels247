@@ -6,7 +6,7 @@ export const styles = {
     px: 2,
     py: 1.25,
     borderRadius: 2,
-    fontSize: "0.88rem",
+    fontSize: "0.875rem",
     bgcolor: "rgba(26, 86, 219, 0.07)",
     color: "primary.dark",
   },

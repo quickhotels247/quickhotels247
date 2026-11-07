@@ -20,7 +20,7 @@ export const styles = {
   },
   text: { minWidth: 0 },
   title: { fontWeight: 800, fontSize: { xs: "1.15rem", md: "1.35rem" } },
-  description: { mt: 0.5, fontSize: "0.92rem", color: "rgba(255,255,255,0.88)" },
+  description: { mt: 0.5, fontSize: "0.9375rem", color: "rgba(255,255,255,0.88)" },
   actions: { display: "flex", gap: 1, flexWrap: "wrap" },
   signIn: { bgcolor: "common.white", color: "primary.main", "&:hover": { bgcolor: "#eef2ff" } },
   register: { color: "common.white", borderColor: "rgba(255,255,255,0.7)", "&:hover": { borderColor: "common.white", bgcolor: "rgba(255,255,255,0.1)" } },

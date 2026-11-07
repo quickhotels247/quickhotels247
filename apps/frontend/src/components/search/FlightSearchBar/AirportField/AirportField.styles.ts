@@ -1,7 +1,7 @@
 export const styles = {
   autocomplete: { flex: 1, minWidth: 0 },
   input: {
-    fontSize: "0.92rem",
+    fontSize: "0.9375rem",
     fontWeight: 600,
     "& input": { py: 0.25 },
     "& input::placeholder": { color: "text.secondary", opacity: 1, fontWeight: 400 },
@@ -14,12 +14,12 @@ export const styles = {
     py: 0.5,
     borderRadius: 1.5,
     textAlign: "center",
-    fontSize: "0.78rem",
+    fontSize: "0.8125rem",
     fontWeight: 800,
     bgcolor: "primary.light",
     color: "primary.main",
   },
   optionText: { minWidth: 0 },
-  city: { fontWeight: 600, fontSize: "0.92rem" },
-  airportName: { fontSize: "0.78rem", color: "text.secondary" },
+  city: { fontWeight: 600, fontSize: "0.9375rem" },
+  airportName: { fontSize: "0.8125rem", color: "text.secondary" },
 };

@@ -12,7 +12,7 @@ export const styles = {
     borderRadius: 999,
     border: "1px solid",
     borderColor: "divider",
-    fontSize: "0.88rem",
+    fontSize: "0.875rem",
     color: "text.primary",
     bgcolor: "background.paper",
     "&.Mui-selected": { color: "primary.main", borderColor: "primary.main", bgcolor: "primary.light" },

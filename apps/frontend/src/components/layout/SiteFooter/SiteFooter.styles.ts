@@ -8,6 +8,6 @@ export const styles = {
   },
   brand: { display: "flex", flexDirection: "column", gap: 1 },
   links: { display: "flex", flexWrap: "wrap", gap: { xs: 2, md: 3 } },
-  link: { color: "text.secondary", fontSize: "0.9rem", textDecoration: "none", "&:hover": { color: "primary.main" } },
+  link: { color: "text.secondary", fontSize: "0.9375rem", textDecoration: "none", "&:hover": { color: "primary.main" } },
   copyright: { gridColumn: { md: "1 / -1" } },
 };

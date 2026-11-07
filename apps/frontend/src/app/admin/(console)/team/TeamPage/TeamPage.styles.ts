@@ -5,7 +5,7 @@ export const styles = {
   avatar: { bgcolor: "primary.main" },
   text: { flex: 1, minWidth: 180 },
   name: { fontWeight: 700, display: "flex", alignItems: "center", gap: 1 },
-  you: { height: 20, fontSize: "0.7rem" },
-  meta: { fontSize: "0.82rem", color: "text.secondary" },
+  you: { height: 20, fontSize: "0.75rem" },
+  meta: { fontSize: "0.8125rem", color: "text.secondary" },
   dates: { textAlign: { sm: "right" } },
 };

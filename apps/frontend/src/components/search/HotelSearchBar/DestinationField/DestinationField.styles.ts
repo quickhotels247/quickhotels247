@@ -1,7 +1,7 @@
 export const styles = {
   autocomplete: { flex: 1, minWidth: 0 },
   input: {
-    fontSize: "0.92rem",
+    fontSize: "0.9375rem",
     "& input": { py: 0.25 },
     "& input::placeholder": { color: "text.secondary", opacity: 1 },
   },
@@ -19,7 +19,7 @@ export const styles = {
     "& svg": { fontSize: 20 },
   },
   optionText: { minWidth: 0, flex: 1 },
-  name: { fontWeight: 600, fontSize: "0.92rem" },
-  detail: { fontSize: "0.78rem", color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  name: { fontWeight: 600, fontSize: "0.9375rem" },
+  detail: { fontSize: "0.8125rem", color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   count: { flexShrink: 0, fontSize: "0.75rem", color: "text.secondary" },
 };

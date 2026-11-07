@@ -21,7 +21,7 @@ export const styles = {
     bgcolor: "rgba(15, 23, 42, 0.55)",
     color: "#fff",
     fontWeight: 700,
-    fontSize: "1.05rem",
+    fontSize: "1.125rem",
   },
   allButton: {
     position: "absolute",
@@ -33,7 +33,7 @@ export const styles = {
     borderRadius: 2,
     bgcolor: "rgba(255,255,255,0.92)",
     fontWeight: 600,
-    fontSize: "0.85rem",
+    fontSize: "0.875rem",
     boxShadow: 2,
   },
 };

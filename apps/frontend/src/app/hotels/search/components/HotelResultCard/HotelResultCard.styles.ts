@@ -1,3 +1,5 @@
+import { HEADING_FONT } from "@/theme/theme";
+
 export const styles = {
   card: {
     display: "grid",
@@ -28,14 +30,14 @@ export const styles = {
   name: { fontSize: { xs: "1rem", sm: "1.15rem" }, fontWeight: 700, lineHeight: 1.3 },
   nameLink: { color: "primary.dark", textDecoration: "none", "&:hover": { textDecoration: "underline" } },
   badges: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 },
-  type: { height: 22, fontSize: "0.72rem", fontWeight: 600 },
-  place: { display: "flex", alignItems: "flex-start", gap: 0.5, fontSize: "0.82rem", color: "text.secondary" },
+  type: { height: 22, fontSize: "0.75rem", fontWeight: 600 },
+  place: { display: "flex", alignItems: "flex-start", gap: 0.5, fontSize: "0.8125rem", color: "text.secondary" },
   placeIcon: { fontSize: 16, mt: "2px", flexShrink: 0 },
   placeText: { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
-  distance: { fontSize: "0.8rem", fontWeight: 600, color: "text.primary" },
-  facilities: { fontSize: "0.78rem", color: "text.secondary" },
+  distance: { fontSize: "0.8125rem", fontWeight: 600, color: "text.primary" },
+  facilities: { fontSize: "0.8125rem", color: "text.secondary" },
   perks: { display: "flex", flexDirection: "column", gap: 0.25, mt: "auto" },
-  perk: { display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.82rem", fontWeight: 600, color: "success.dark" },
+  perk: { display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.8125rem", fontWeight: 600, color: "success.dark" },
   perkIcon: { fontSize: 16 },
   pricing: {
     gridArea: "pricing",
@@ -55,8 +57,8 @@ export const styles = {
     borderColor: "divider",
     pl: { md: 2 },
   },
-  stay: { fontSize: "0.78rem", color: "text.secondary" },
-  total: { fontSize: { xs: "1.3rem", md: "1.45rem" }, fontWeight: 800, lineHeight: 1.2 },
+  stay: { fontSize: "0.8125rem", color: "text.secondary" },
+  total: { fontFamily: HEADING_FONT, fontSize: { xs: "1.3rem", md: "1.45rem" }, fontWeight: 800, lineHeight: 1.2 },
   perNight: { fontSize: "0.75rem", color: "text.secondary" },
   cta: { mt: 1.25, whiteSpace: "nowrap", alignSelf: { xs: "stretch", md: "flex-end" } },
 };

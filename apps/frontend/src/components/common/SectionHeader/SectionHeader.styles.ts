@@ -1,7 +1,7 @@
 export const styles = {
   root: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 2, mb: { xs: 2, md: 2.5 } },
   title: { fontSize: { xs: "1.2rem", md: "1.5rem" } },
-  subtitle: { mt: 0.5, fontSize: { xs: "0.85rem", md: "0.95rem" }, color: "text.secondary" },
+  subtitle: { mt: 0.5, fontSize: { xs: "0.875rem", md: "0.9375rem" }, color: "text.secondary" },
   link: {
     display: "inline-flex",
     alignItems: "center",

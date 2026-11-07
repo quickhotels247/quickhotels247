@@ -15,5 +15,5 @@ export const styles = {
     overflow: "hidden",
     "& img": { transition: "transform 0.35s ease" },
   },
-  label: { mt: 1, fontWeight: 700, fontSize: "0.98rem" },
+  label: { mt: 1, fontWeight: 700, fontSize: "1rem" },
 };

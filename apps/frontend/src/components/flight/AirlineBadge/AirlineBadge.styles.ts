@@ -6,7 +6,7 @@ export const styles = {
     display: "grid",
     placeItems: "center",
     color: "#fff",
-    fontSize: "0.78rem",
+    fontSize: "0.8125rem",
     fontWeight: 800,
     letterSpacing: 0.3,
     flexShrink: 0,

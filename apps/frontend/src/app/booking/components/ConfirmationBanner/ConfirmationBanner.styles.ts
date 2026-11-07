@@ -7,8 +7,8 @@ export const styles = {
   icon: { "& svg": { fontSize: { xs: 36, md: 44 } } },
   body: { display: "flex", flexDirection: "column", gap: 1, minWidth: 0 },
   title: { fontSize: { xs: "1.35rem", md: "1.7rem" }, fontWeight: 800 },
-  text: { color: "text.secondary", fontSize: "0.95rem" },
+  text: { color: "text.secondary", fontSize: "0.9375rem" },
   refs: { display: "flex", flexWrap: "wrap", gap: { xs: 0.5, md: 3 }, mt: 0.5 },
-  ref: { fontSize: "0.9rem" },
+  ref: { fontSize: "0.9375rem" },
   check: { alignSelf: "flex-start", mt: 0.5 },
 };

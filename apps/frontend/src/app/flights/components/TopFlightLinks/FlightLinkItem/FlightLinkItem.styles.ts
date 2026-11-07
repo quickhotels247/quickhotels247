@@ -21,5 +21,5 @@ export const styles = {
     color: "primary.main",
     "& svg": { fontSize: 20, transform: "rotate(45deg)" },
   },
-  label: { fontWeight: 700, fontSize: "0.92rem" },
+  label: { fontWeight: 700, fontSize: "0.9375rem" },
 };

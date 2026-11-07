@@ -1,6 +1,6 @@
 export const styles = {
   root: { display: "flex", flexDirection: "column", gap: 2 },
-  message: { fontSize: "0.9rem", fontWeight: 600, color: "primary.main" },
+  message: { fontSize: "0.9375rem", fontWeight: 600, color: "primary.main" },
   card: {
     display: "grid",
     gridTemplateColumns: { xs: "112px minmax(0, 1fr)", sm: "200px minmax(0, 1fr)", md: "220px minmax(0, 1fr) 200px" },

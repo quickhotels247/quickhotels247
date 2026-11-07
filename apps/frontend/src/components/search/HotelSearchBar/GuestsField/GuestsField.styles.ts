@@ -3,7 +3,7 @@ export const styles = {
     flex: 1,
     justifyContent: "flex-start",
     minHeight: 46,
-    fontSize: "0.92rem",
+    fontSize: "0.9375rem",
     fontWeight: 600,
     color: "text.primary",
     textAlign: "left",
@@ -12,7 +12,7 @@ export const styles = {
   triggerInvalid: { color: "error.main" },
   paper: { p: 2, mt: 1, width: { xs: "calc(100vw - 32px)", sm: 340 }, maxHeight: "80vh", borderRadius: 3 },
   ages: { pt: 1.5 },
-  agesHint: { fontSize: "0.78rem", color: "text.secondary", mb: 1.5 },
+  agesHint: { fontSize: "0.8125rem", color: "text.secondary", mb: 1.5 },
   agesGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 },
   done: { mt: 2 },
 };

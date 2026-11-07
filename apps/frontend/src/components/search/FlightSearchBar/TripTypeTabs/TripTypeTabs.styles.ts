@@ -3,7 +3,7 @@ export const styles = {
   button: {
     px: 1.75,
     py: 0.5,
-    fontSize: "0.85rem",
+    fontSize: "0.875rem",
     fontWeight: 600,
     color: "text.primary",
     "&.Mui-selected": { color: "primary.main", bgcolor: "primary.light", borderColor: "primary.main" },

@@ -11,6 +11,6 @@ export const styles = {
     "& + &": { borderLeft: 1, borderLeftColor: "divider" },
   },
   active: { borderBottomColor: "primary.main", bgcolor: "rgba(26, 86, 219, 0.05)" },
-  label: { fontWeight: 800, fontSize: "0.92rem" },
+  label: { fontWeight: 800, fontSize: "0.9375rem" },
   detail: { fontSize: "0.75rem", color: "text.secondary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" },
 };

@@ -18,5 +18,5 @@ export const styles = {
     color: "primary.main",
     "& svg": { fontSize: { xs: 20, md: 24 } },
   },
-  text: { fontSize: { xs: "0.75rem", md: "0.9rem" }, fontWeight: 600, lineHeight: 1.35 },
+  text: { fontSize: { xs: "0.75rem", md: "0.9375rem" }, fontWeight: 600, lineHeight: 1.35 },
 };

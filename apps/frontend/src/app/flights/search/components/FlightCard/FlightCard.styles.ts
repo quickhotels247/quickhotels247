@@ -1,10 +1,12 @@
+import { HEADING_FONT } from "@/theme/theme";
+
 export const styles = {
   root: { p: { xs: 1.75, sm: 2.25 }, borderRadius: 3, border: 1, borderColor: "divider", boxShadow: "none", transition: "border-color 0.2s, box-shadow 0.2s", "&:hover": { borderColor: "primary.light", boxShadow: "0 12px 28px -18px rgba(15,23,42,0.4)" } },
   selected: { borderColor: "primary.main", boxShadow: "0 0 0 2px rgba(26, 86, 219, 0.25)" },
   main: { display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 200px" }, gap: { xs: 2, md: 3 } },
   journeys: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
   tags: { display: "flex", gap: 0.75, flexWrap: "wrap" },
-  tag: { height: 24, fontSize: "0.72rem" },
+  tag: { height: 24, fontSize: "0.75rem" },
   side: {
     display: "flex",
     flexDirection: { xs: "row", md: "column" },
@@ -21,7 +23,7 @@ export const styles = {
     pl: { md: 3 },
     pt: { xs: 1.5, md: 0 },
   },
-  price: { fontSize: "1.45rem", fontWeight: 800, lineHeight: 1.2 },
+  price: { fontFamily: HEADING_FONT, fontSize: "1.45rem", fontWeight: 800, lineHeight: 1.2 },
   priceNote: { fontSize: "0.75rem", color: "text.secondary", flexBasis: { xs: "100%", md: "auto" }, order: { xs: 3, md: 0 } },
   select: { mt: { md: 1 }, px: 4, minWidth: 120 },
   toggle: { mt: 1, px: 0.5, minWidth: 0 },

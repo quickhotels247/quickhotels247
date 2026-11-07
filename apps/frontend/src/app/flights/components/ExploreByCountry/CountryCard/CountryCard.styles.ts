@@ -23,5 +23,5 @@ export const styles = {
     border: "2px solid",
     borderColor: "common.white",
   },
-  name: { fontWeight: 800, fontSize: { xs: "1.1rem", md: "1.25rem" }, lineHeight: 1.2, textShadow: "0 1px 8px rgba(0,0,0,0.4)" },
+  name: { fontWeight: 800, fontSize: { xs: "1.125rem", md: "1.25rem" }, lineHeight: 1.2, textShadow: "0 1px 8px rgba(0,0,0,0.4)" },
 };

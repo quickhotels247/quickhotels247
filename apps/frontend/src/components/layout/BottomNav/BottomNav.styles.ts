@@ -15,8 +15,8 @@ export const styles = {
   bar: { height: BOTTOM_NAV_HEIGHT },
   action: {
     color: "text.secondary",
-    "& .MuiBottomNavigationAction-label": { fontSize: "0.72rem", mt: 0.25 },
+    "& .MuiBottomNavigationAction-label": { fontSize: "0.75rem", mt: 0.25 },
     "&.Mui-selected": { color: "primary.main" },
-    "& .MuiBottomNavigationAction-label.Mui-selected": { fontSize: "0.72rem", fontWeight: 600 },
+    "& .MuiBottomNavigationAction-label.Mui-selected": { fontSize: "0.75rem", fontWeight: 600 },
   },
 };

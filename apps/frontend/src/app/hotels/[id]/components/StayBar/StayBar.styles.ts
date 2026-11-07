@@ -13,5 +13,5 @@ export const styles = {
     alignItems: "stretch",
   },
   submit: { px: 3, minHeight: 48, whiteSpace: "nowrap", mt: { xs: 0.5, md: 0 }, ml: { md: 1 } },
-  error: { mt: 1, px: 1, fontSize: "0.85rem", color: "error.main" },
+  error: { mt: 1, px: 1, fontSize: "0.875rem", color: "error.main" },
 };

@@ -1,6 +1,6 @@
 export const styles = {
   root: { display: "flex", flexDirection: "column", gap: 0.5 },
-  number: { px: 0.5, fontSize: "0.78rem", fontWeight: 700, color: "text.secondary" },
+  number: { px: 0.5, fontSize: "0.8125rem", fontWeight: 700, color: "text.secondary" },
   fields: {
     display: "grid",
     gap: { xs: 1, md: 0 },

@@ -6,5 +6,5 @@ export const styles = {
   body: { p: 2, display: "flex", flexDirection: "column", gap: 0.5 },
   name: { fontWeight: 800, fontSize: "1rem", lineHeight: 1.3 },
   nameLink: { color: "inherit", textDecoration: "none", "&:hover": { textDecoration: "underline" } },
-  place: { fontSize: "0.85rem", color: "text.secondary" },
+  place: { fontSize: "0.875rem", color: "text.secondary" },
 };

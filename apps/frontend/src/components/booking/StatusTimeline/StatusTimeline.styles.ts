@@ -5,6 +5,6 @@ export const styles = {
   item: { display: "flex", gap: 1.5, alignItems: "flex-start" },
   dot: { width: 12, height: 12, borderRadius: "50%", bgcolor: "divider", mt: 0.6, flexShrink: 0 },
   dotCurrent: { bgcolor: "primary.main", boxShadow: "0 0 0 4px rgba(26, 86, 219, 0.18)" },
-  status: { fontWeight: 700, fontSize: "0.9rem" },
-  time: { fontSize: "0.78rem", color: "text.secondary" },
+  status: { fontWeight: 700, fontSize: "0.9375rem" },
+  time: { fontSize: "0.8125rem", color: "text.secondary" },
 };

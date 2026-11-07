@@ -15,6 +15,6 @@ export const styles = {
     overflow: "hidden",
     "& img": { transition: "transform 0.35s ease" },
   },
-  name: { mt: 1, fontWeight: 700, fontSize: "0.98rem" },
-  state: { fontSize: "0.8rem", color: "text.secondary" },
+  name: { mt: 1, fontWeight: 700, fontSize: "1rem" },
+  state: { fontSize: "0.8125rem", color: "text.secondary" },
 };

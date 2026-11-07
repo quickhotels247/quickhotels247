@@ -24,5 +24,5 @@ export const styles = {
   }),
   icon: { display: "flex", color: "text.secondary", "& svg": { fontSize: 20 } },
   labelled: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", py: 0.5 },
-  label: { fontSize: "0.72rem", fontWeight: 600, color: "text.secondary", lineHeight: 1.2 },
+  label: { fontSize: "0.75rem", fontWeight: 600, color: "text.secondary", lineHeight: 1.2 },
 };

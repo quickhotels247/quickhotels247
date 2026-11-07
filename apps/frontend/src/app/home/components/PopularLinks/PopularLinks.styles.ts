@@ -5,7 +5,7 @@ export const styles = {
     borderColor: "divider",
     "& .MuiTab-root": { textTransform: "none" },
   },
-  tab: { fontSize: "0.9rem", fontWeight: 600, px: { xs: 1.5, md: 2 } },
+  tab: { fontSize: "0.9375rem", fontWeight: 600, px: { xs: 1.5, md: 2 } },
   list: {
     listStyle: "none",
     m: 0,
@@ -15,5 +15,5 @@ export const styles = {
     columnGap: 3,
     gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", md: "repeat(4, 1fr)" },
   },
-  link: { fontSize: "0.88rem", color: "text.primary", textDecoration: "none", "&:hover": { color: "primary.main", textDecoration: "underline" } },
+  link: { fontSize: "0.875rem", color: "text.primary", textDecoration: "none", "&:hover": { color: "primary.main", textDecoration: "underline" } },
 };

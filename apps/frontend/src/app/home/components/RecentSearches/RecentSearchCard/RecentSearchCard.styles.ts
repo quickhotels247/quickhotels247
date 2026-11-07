@@ -12,6 +12,6 @@ export const styles = {
     color: "primary.main",
   },
   body: { minWidth: 0 },
-  destination: { fontWeight: 700, fontSize: "0.98rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  details: { fontSize: "0.82rem", color: "text.secondary" },
+  destination: { fontWeight: 700, fontSize: "1rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  details: { fontSize: "0.8125rem", color: "text.secondary" },
 };

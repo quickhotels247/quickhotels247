@@ -3,7 +3,7 @@ export const styles = {
     flex: 1,
     justifyContent: "flex-start",
     minHeight: 46,
-    fontSize: "0.92rem",
+    fontSize: "0.9375rem",
     fontWeight: filled ? 600 : 400,
     color: filled ? "text.primary" : "text.secondary",
     textAlign: "left",
@@ -20,5 +20,5 @@ export const styles = {
     justifyContent: "space-between",
     gap: 2,
   },
-  summary: { fontSize: "0.9rem", fontWeight: 600 },
+  summary: { fontSize: "0.9375rem", fontWeight: 600 },
 };

@@ -24,10 +24,10 @@ export const styles = {
   },
   sideTitle: { fontSize: "1.6rem", fontWeight: 800, lineHeight: 1.2 },
   perks: { listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 1 },
-  perk: { display: "flex", alignItems: "center", gap: 1, fontSize: "0.95rem" },
+  perk: { display: "flex", alignItems: "center", gap: 1, fontSize: "0.9375rem" },
   perkIcon: { color: "secondary.main", fontSize: 20 },
   panel: { p: { xs: 3, sm: 5 }, display: "flex", flexDirection: "column", gap: 3 },
   header: { display: "flex", flexDirection: "column", gap: 0.75 },
   title: { mt: 2, fontSize: { xs: "1.5rem", md: "1.75rem" }, fontWeight: 800 },
-  subtitle: { color: "text.secondary", fontSize: "0.95rem" },
+  subtitle: { color: "text.secondary", fontSize: "0.9375rem" },
 };

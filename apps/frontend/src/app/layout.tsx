@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { SITE_NAME, SITE_URL } from "@/config/site";
 import AuthProvider from "@/lib/auth/AuthProvider";
@@ -8,7 +8,9 @@ import WishlistProvider from "@/lib/wishlist/WishlistProvider";
 import ClerkSetup from "@/lib/auth/ClerkSetup";
 import ThemeRegistry from "@/theme/ThemeRegistry";
 
+// Inter for reading; Plus Jakarta Sans for headings, prices and the brand voice.
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["500", "600", "700", "800"], variable: "--font-heading", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -22,7 +24,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
       <body>
         <ThemeRegistry>
           <ClerkSetup>

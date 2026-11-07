@@ -7,7 +7,7 @@ export const styles = {
     px: 2,
     py: 0.9,
     borderRadius: 999,
-    fontSize: "0.9rem",
+    fontSize: "0.9375rem",
     fontWeight: 600,
     border: "1px solid",
     borderColor: selected ? "primary.main" : "transparent",

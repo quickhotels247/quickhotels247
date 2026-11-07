@@ -9,7 +9,7 @@ interface DayState {
 export const styles = {
   root: ({ selected, inRange, isStart, isEnd, disabled }: DayState) => ({
     height: 40,
-    fontSize: "0.92rem",
+    fontSize: "0.9375rem",
     fontWeight: selected || inRange ? 700 : 500,
     color: selected ? "primary.contrastText" : disabled ? "text.disabled" : "text.primary",
     bgcolor: selected ? "primary.main" : inRange ? "primary.light" : "transparent",

@@ -1,3 +1,3 @@
 export const styles = {
-  root: { "& .MuiInputBase-root": { borderRadius: 2, fontSize: "0.88rem" } },
+  root: { "& .MuiInputBase-root": { borderRadius: 2, fontSize: "0.875rem" } },
 };

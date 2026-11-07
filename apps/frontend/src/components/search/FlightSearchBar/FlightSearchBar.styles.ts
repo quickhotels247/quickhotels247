@@ -7,7 +7,7 @@ export const styles = {
     p: { xs: 1.5, md: 1.25 },
   },
   options: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: { xs: 1, md: 2 }, px: 0.5, pb: 1 },
-  direct: { m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.88rem" } },
+  direct: { m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.875rem" } },
   fields: {
     display: "grid",
     gap: { xs: 1, md: 0 },
@@ -27,6 +27,6 @@ export const styles = {
     mt: 1,
   },
   submit: { px: 3, minHeight: 48, whiteSpace: "nowrap", mt: { xs: 0.5, md: 0 }, ml: { md: 1 } },
-  error: { mt: 1, px: 1, fontSize: "0.85rem", color: "error.main" },
-  pending: { mt: 1, px: 1, fontSize: "0.85rem", color: "text.secondary", fontWeight: 600 },
+  error: { mt: 1, px: 1, fontSize: "0.875rem", color: "error.main" },
+  pending: { mt: 1, px: 1, fontSize: "0.875rem", color: "text.secondary", fontWeight: 600 },
 };

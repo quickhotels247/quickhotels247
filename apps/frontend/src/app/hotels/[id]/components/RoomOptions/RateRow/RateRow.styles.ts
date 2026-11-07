@@ -1,3 +1,5 @@
+import { HEADING_FONT } from "@/theme/theme";
+
 export const styles = {
   root: {
     display: "grid",
@@ -7,17 +9,17 @@ export const styles = {
     "& + &": { borderTop: 1, borderColor: "divider" },
   },
   terms: { display: "flex", flexDirection: "column", gap: 0.5, minWidth: 0 },
-  term: { display: "flex", alignItems: "center", gap: 0.75, fontSize: "0.88rem", fontWeight: 600 },
+  term: { display: "flex", alignItems: "center", gap: 0.75, fontSize: "0.875rem", fontWeight: 600 },
   good: { color: "success.dark" },
   plain: { color: "text.secondary" },
   icon: { fontSize: 18 },
-  notes: { fontSize: "0.78rem", color: "text.secondary", whiteSpace: "pre-line", mt: 0.5 },
+  notes: { fontSize: "0.8125rem", color: "text.secondary", whiteSpace: "pre-line", mt: 0.5 },
   price: { display: "flex", flexDirection: "column", alignItems: { xs: "flex-start", sm: "flex-end" }, textAlign: { sm: "right" } },
-  stay: { fontSize: "0.78rem", color: "text.secondary" },
-  strike: { fontSize: "0.85rem", color: "error.main", textDecoration: "line-through" },
-  total: { display: "flex", alignItems: "center", gap: 0.5, fontSize: "1.35rem", fontWeight: 800, lineHeight: 1.3 },
+  stay: { fontSize: "0.8125rem", color: "text.secondary" },
+  strike: { fontSize: "0.875rem", color: "error.main", textDecoration: "line-through" },
+  total: { fontFamily: HEADING_FONT, display: "flex", alignItems: "center", gap: 0.5, fontSize: "1.35rem", fontWeight: 800, lineHeight: 1.3 },
   info: { fontSize: 16, color: "text.secondary", cursor: "help" },
-  breakup: { fontSize: "0.8rem", lineHeight: 1.6 },
+  breakup: { fontSize: "0.8125rem", lineHeight: 1.6 },
   perNight: { fontSize: "0.75rem", color: "text.secondary" },
   reserve: { mt: 1.25, px: 4, alignSelf: { xs: "stretch", sm: "flex-end" } },
 };

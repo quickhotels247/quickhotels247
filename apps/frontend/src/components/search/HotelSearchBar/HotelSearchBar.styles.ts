@@ -19,6 +19,6 @@ export const styles = {
     mt: { xs: 0.5, md: 0 },
     ml: { md: 1 },
   },
-  error: { mt: 1, px: 1, fontSize: "0.85rem", color: "error.main" },
-  pending: { mt: 1, px: 1, fontSize: "0.85rem", color: "text.secondary", fontWeight: 600 },
+  error: { mt: 1, px: 1, fontSize: "0.875rem", color: "error.main" },
+  pending: { mt: 1, px: 1, fontSize: "0.875rem", color: "text.secondary", fontWeight: 600 },
 };
