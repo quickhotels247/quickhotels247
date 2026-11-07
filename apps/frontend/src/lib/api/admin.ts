@@ -12,7 +12,8 @@ import type {
   AdminUserList,
   AdminUserRow,
   ChangeAdminPasswordRequest,
-  NewAdminRequest,
+  AddAdminRequest,
+  AdminRole,
 } from "@quickhotels/types/admin";
 import { apiRequest, postJson } from "./client";
 
@@ -68,5 +69,10 @@ export const adminApi = {
   user: (token: string, id: string, signal?: AbortSignal) =>
     apiRequest<AdminUserRow>(`/admin/users/${encodeURIComponent(id)}`, { signal, headers: bearer(token) }),
   admins: (token: string, signal?: AbortSignal) => apiRequest<AdminAccount[]>("/admin/admins", { signal, headers: bearer(token) }),
-  addAdmin: (token: string, request: NewAdminRequest) => postJson<AdminAccount>("/admin/admins", request, { headers: bearer(token) }),
+  addAdmin: (token: string, request: AddAdminRequest) => postJson<AdminAccount>("/admin/admins", request, { headers: bearer(token) }),
+  // Both return the whole updated team.
+  setAdminRole: (token: string, id: string, role: AdminRole) =>
+    apiRequest<AdminAccount[]>(`/admin/admins/${encodeURIComponent(id)}/role`, { method: "PUT", body: JSON.stringify({ role }), headers: bearer(token) }),
+  removeAdmin: (token: string, id: string) =>
+    apiRequest<AdminAccount[]>(`/admin/admins/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
 };

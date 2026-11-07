@@ -7,5 +7,9 @@ export const styles = {
   name: { fontWeight: 700, display: "flex", alignItems: "center", gap: 1 },
   you: { height: 20, fontSize: "0.75rem" },
   meta: { fontSize: "0.8125rem", color: "text.secondary" },
+  controls: { display: "flex", alignItems: "center", gap: 0.5, width: { xs: "100%", sm: "auto" } },
+  role: { minWidth: 160 },
+  legend: { mt: 2.5, display: "flex", flexDirection: "column", gap: 0.5 },
+  dialogActions: { px: 3, pb: 2 },
   dates: { textAlign: { sm: "right" } },
 };

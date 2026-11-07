@@ -1,6 +1,6 @@
-import type { AdminSetupRequest, NewAdminRequest } from "@quickhotels/types/admin";
+import type { AddAdminRequest, AdminRole, AdminSetupRequest, NewAdminRequest, UpdateAdminRequest } from "@quickhotels/types/admin";
 import { Transform } from "class-transformer";
-import { IsEmail, IsOptional, IsString, Length, MaxLength } from "class-validator";
+import { IsEmail, IsIn, IsOptional, IsString, Length, MaxLength } from "class-validator";
 
 const trim = ({ value }: { value: unknown }) =>
   typeof value === "string" ? value.trim() : value;
@@ -29,4 +29,17 @@ export class AdminSetupDto extends NewAdminDto implements AdminSetupRequest {
   @IsString()
   @MaxLength(200)
   setupToken?: string;
+}
+
+const ROLES: AdminRole[] = ["SUPER_ADMIN", "OPERATIONS_ADMIN", "SUPPORT_AGENT"];
+
+// A teammate added by a super admin, with their role.
+export class AddAdminDto extends NewAdminDto implements AddAdminRequest {
+  @IsIn(ROLES, { message: "Choose a role." })
+  role: AdminRole;
+}
+
+export class UpdateAdminDto implements UpdateAdminRequest {
+  @IsIn(ROLES, { message: "Choose a role." })
+  role: AdminRole;
 }

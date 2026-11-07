@@ -1,10 +1,17 @@
 // The admin dashboard (/api/admin/*). Admins are separate accounts from users.
 import type { SignedInWith } from "@quickhotels/types/users";
 
+// Spec §1.1 roles. What each can do is decided on the server; the console
+// gets the signed-in admin's permissions to show only what they can use.
+export type AdminRole = "SUPER_ADMIN" | "OPERATIONS_ADMIN" | "SUPPORT_AGENT";
+export type AdminPermission = "team" | "pricing" | "coupons" | "customers" | "support" | "email";
+
 export interface AdminProfile {
   id: string;
   name: string;
   email: string;
+  role: AdminRole;
+  permissions: AdminPermission[];
 }
 
 export interface AdminLoginRequest {
@@ -29,6 +36,15 @@ export interface NewAdminRequest {
   name: string;
   email: string;
   password: string;
+}
+
+// Adding a teammate (another admin): with their role.
+export interface AddAdminRequest extends NewAdminRequest {
+  role: AdminRole;
+}
+
+export interface UpdateAdminRequest {
+  role: AdminRole;
 }
 
 export interface ChangeAdminPasswordRequest {

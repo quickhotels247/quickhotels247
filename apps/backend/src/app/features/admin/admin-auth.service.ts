@@ -56,7 +56,8 @@ export class AdminAuthService {
     }
     this.failures.delete(attemptKey);
     await this.audit.record(admin.id, "admin.login", null, { ip });
-    return this.startSession({ id: admin.id, name: admin.name, email: admin.email });
+    const { passwordHash: _hash, ...profile } = admin;
+    return this.startSession(profile);
   }
 
   // The signup page is open only until the first admin exists; after that,

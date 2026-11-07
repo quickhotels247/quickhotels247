@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from "@nestjs/common";
-import { AdminGuard, CurrentAdminId } from "../admin.guard.js";
+import { AdminGuard, RequirePermission, CurrentAdminId } from "../admin.guard.js";
 import { AdminSupportService } from "./admin-support.service.js";
 import { TicketListQueryDto, TicketNoteDto, TicketUpdateDto } from "./dto/ticket.dto.js";
 
 @Controller("admin/support/tickets")
 @UseGuards(AdminGuard)
+@RequirePermission("support")
 export class AdminSupportController {
   constructor(private readonly support: AdminSupportService) {}
 

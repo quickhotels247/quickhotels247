@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, UseGuards } from "@nestjs/common";
-import { AdminGuard, CurrentAdminId } from "../admin.guard.js";
+import { AdminGuard, RequirePermission, CurrentAdminId } from "../admin.guard.js";
 import { AdminPricingService } from "./admin-pricing.service.js";
 import { PricingRuleDto } from "./dto/pricing-rule.dto.js";
 
 // Markup rules. Each change returns the full, updated list.
 @Controller("admin/pricing-rules")
 @UseGuards(AdminGuard)
+@RequirePermission("pricing")
 export class AdminPricingController {
   constructor(private readonly pricing: AdminPricingService) {}
 

@@ -20,13 +20,17 @@ import PeopleOutlineRounded from "@mui/icons-material/PeopleOutlineRounded";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import SupportAgentOutlined from "@mui/icons-material/SupportAgentOutlined";
 import Logo from "@/components/brand/Logo";
+import type { AdminPermission } from "@quickhotels/types/admin";
 import { routes } from "@/config/navigation";
+import { useAdminAuth } from "@/lib/admin/AdminAuthProvider";
 import { styles } from "./AdminSidebar.styles";
 
 interface Item {
   label: string;
   href?: string;
   icon: SvgIconComponent;
+  // Hidden for admins whose role doesn't include it.
+  permission?: AdminPermission;
 }
 
 // Spec §5 sections. Ones without a page yet show as "soon".
@@ -37,21 +41,21 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     items: [
       { label: "Bookings", icon: BookOnlineOutlined },
       { label: "Payments & refunds", icon: PaymentsOutlined },
-      { label: "Support", href: routes.adminSupport, icon: SupportAgentOutlined },
+      { label: "Support", href: routes.adminSupport, icon: SupportAgentOutlined, permission: "support" },
     ],
   },
   {
     title: "People",
     items: [
-      { label: "Customers", href: routes.adminCustomers, icon: PeopleOutlineRounded },
-      { label: "Admin team", href: routes.adminTeam, icon: AdminPanelSettingsOutlined },
+      { label: "Customers", href: routes.adminCustomers, icon: PeopleOutlineRounded, permission: "customers" },
+      { label: "Admin team", href: routes.adminTeam, icon: AdminPanelSettingsOutlined, permission: "team" },
     ],
   },
   {
     title: "Settings",
     items: [
-      { label: "Pricing & markup", href: routes.adminPricing, icon: PercentRounded },
-      { label: "Coupons", href: routes.adminCoupons, icon: LocalOfferOutlined },
+      { label: "Pricing & markup", href: routes.adminPricing, icon: PercentRounded, permission: "pricing" },
+      { label: "Coupons", href: routes.adminCoupons, icon: LocalOfferOutlined, permission: "coupons" },
       { label: "Account settings", href: routes.adminSettings, icon: SettingsOutlined },
     ],
   },
@@ -62,13 +66,16 @@ const active = (pathname: string, href: string) => (href === routes.admin ? path
 // The console's navigation (spec §5).
 export default function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { admin } = useAdminAuth();
+  const allowed = (item: Item) => !item.permission || Boolean(admin?.permissions.includes(item.permission));
+  const sections = SECTIONS.map((section) => ({ ...section, items: section.items.filter(allowed) })).filter((section) => section.items.length);
   return (
     <Box component="nav" aria-label="Admin" sx={styles.root}>
       <Box sx={styles.brand}>
         <Logo />
         <Typography sx={styles.badge}>Admin</Typography>
       </Box>
-      {SECTIONS.map((section) => (
+      {sections.map((section) => (
         <Box key={section.title || "main"} sx={styles.section}>
           {section.title && <Typography sx={styles.sectionTitle}>{section.title}</Typography>}
           <List dense disablePadding>

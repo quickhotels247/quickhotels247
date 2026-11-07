@@ -1,4 +1,7 @@
-import { UnauthorizedException, type ExecutionContext } from "@nestjs/common";
+import { ForbiddenException, UnauthorizedException, type ExecutionContext } from "@nestjs/common";
+import type { Reflector } from "@nestjs/core";
+import type { AdminPermission, AdminRole } from "@quickhotels/types/admin";
+import { permissionsOf } from "./admin-permissions.js";
 import { describe, expect, it, vi } from "vitest";
 import { hashPassword } from "../auth/password-hash.js";
 import { hashToken } from "../auth/session.service.js";
@@ -10,9 +13,11 @@ import type { AuditLogRepository } from "./audit-log.repository.js";
 
 async function setup(config: Partial<AdminConfig> = {}) {
   const admin = {
-    id: "a1", name: "Admin", email: "admin@quickhotels247.com",
+    id: "a1", name: "Admin", email: "admin@quickhotels247.com", role: "SUPER_ADMIN" as const, permissions: permissionsOf("SUPER_ADMIN"),
     passwordHash: await hashPassword("correct-horse-battery"),
   };
+  // Role per admin id, as resolveToken reads it.
+  const roles = new Map<string, AdminRole>([["a1", "SUPER_ADMIN"]]);
   const tokens = new Map<string, string>();
   const admins = {
     findByEmail: vi.fn(async (email: string) =>
@@ -20,7 +25,10 @@ async function setup(config: Partial<AdminConfig> = {}) {
     findById: vi.fn(async () => admin),
     markLoggedIn: vi.fn(),
     createToken: vi.fn(async (id: string, hash: string) => void tokens.set(hash, id)),
-    resolveToken: vi.fn(async (hash: string) => tokens.get(hash) ?? null),
+    resolveToken: vi.fn(async (hash: string) => {
+      const adminId = tokens.get(hash);
+      return adminId ? { adminId, role: roles.get(adminId) ?? "SUPER_ADMIN" } : null;
+    }),
     revokeToken: vi.fn(async (hash: string) => void tokens.delete(hash)),
     exists: vi.fn(async () => true),
     createFirst: vi.fn(async (data: { name: string; email: string }) => ({ id: "a2", ...data })),
@@ -33,15 +41,18 @@ async function setup(config: Partial<AdminConfig> = {}) {
     audit as unknown as AuditLogRepository,
     { sessionTtlMs: 3_600_000, maxLoginAttempts: 3, loginLockMs: 60_000, production: false, ...config } as AdminConfig,
   );
-  const guard = new AdminGuard(admins as unknown as AdminsRepository);
-  return { service, guard, admins, audit };
+  // The route's required permission, as @RequirePermission would set it.
+  const required: { permission?: AdminPermission } = {};
+  const reflector = { getAllAndOverride: () => required.permission } as unknown as Reflector;
+  const guard = new AdminGuard(admins as unknown as AdminsRepository, reflector);
+  return { service, guard, admins, audit, roles, required };
 }
 
 const contextFor = (authorization?: string) => {
   const request = { headers: { authorization } } as Record<string, unknown>;
   return {
     request,
-    context: { switchToHttp: () => ({ getRequest: () => request }) } as unknown as ExecutionContext,
+    context: { switchToHttp: () => ({ getRequest: () => request }), getHandler: () => undefined, getClass: () => undefined } as unknown as ExecutionContext,
   };
 };
 
@@ -49,7 +60,7 @@ describe("admin sign-in", () => {
   it("issues a token that only the hash of is stored, and audits the sign-in", async () => {
     const { service, admins, audit } = await setup();
     const result = await service.login({ email: "Admin@QuickHotels247.com", password: "correct-horse-battery" }, "1.2.3.4");
-    expect(result.admin).toEqual({ id: "a1", name: "Admin", email: "admin@quickhotels247.com" });
+    expect(result.admin).toEqual({ id: "a1", name: "Admin", email: "admin@quickhotels247.com", role: "SUPER_ADMIN", permissions: permissionsOf("SUPER_ADMIN") });
     expect(admins.createToken).toHaveBeenCalledWith("a1", hashToken(result.token), expect.any(Date));
     expect(audit.record).toHaveBeenCalledWith("a1", "admin.login", null, { ip: "1.2.3.4" });
   });
@@ -161,5 +172,18 @@ describe("admin setup token (production)", () => {
     await expect(service.setup({ ...first, setupToken: "wrong" }, "ip")).rejects.toThrow(/isn't right/);
     await expect(service.setup(first, "ip")).rejects.toThrow(/isn't right/);
     await expect(service.setup({ ...first, setupToken: "s3cret-token" }, "ip")).resolves.toBeDefined();
+  });
+});
+
+describe("admin roles", () => {
+  it("lets a route through only with the role's permission", async () => {
+    const { service, guard, roles, required } = await setup();
+    const { token } = await service.login({ email: "admin@quickhotels247.com", password: "correct-horse-battery" }, "ip");
+    required.permission = "pricing";
+    await expect(guard.canActivate(contextFor(`Bearer ${token}`).context)).resolves.toBe(true);
+    roles.set("a1", "SUPPORT_AGENT");
+    await expect(guard.canActivate(contextFor(`Bearer ${token}`).context)).rejects.toBeInstanceOf(ForbiddenException);
+    required.permission = "support";
+    await expect(guard.canActivate(contextFor(`Bearer ${token}`).context)).resolves.toBe(true);
   });
 });

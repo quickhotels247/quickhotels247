@@ -3,12 +3,13 @@ import { Throttle } from "@nestjs/throttler";
 import { LIMITS } from "../../common/throttle/limits.js";
 import { MailService } from "../../mail/mail.service.js";
 import { testEmail } from "../../mail/templates/test.template.js";
-import { AdminGuard, CurrentAdminId } from "./admin.guard.js";
+import { AdminGuard, RequirePermission, CurrentAdminId } from "./admin.guard.js";
 import { TestEmailDto } from "./dto/test-email.dto.js";
 
 // Email settings check for admins: is sending set up, and a test send.
 @Controller("admin/mail")
 @UseGuards(AdminGuard)
+@RequirePermission("email")
 export class AdminMailController {
   constructor(private readonly mail: MailService) {}
 

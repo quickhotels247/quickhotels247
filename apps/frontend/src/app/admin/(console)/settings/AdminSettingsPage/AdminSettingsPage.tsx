@@ -50,7 +50,7 @@ export default function AdminSettingsPage() {
           {busy ? "Saving…" : "Change password"}
         </Button>
       </Box>
-      {token && admin && <EmailTestCard token={token} defaultTo={admin.email} />}
+      {token && admin?.permissions.includes("email") && <EmailTestCard token={token} defaultTo={admin.email} />}
     </>
   );
 }
