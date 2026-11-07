@@ -7,6 +7,7 @@ import { DatabaseModule } from "./common/database/database.module.js";
 import { AdminModule } from "./features/admin/admin.module.js";
 import { AuthModule } from "./features/auth/auth.module.js";
 import { AccountModule } from "./features/account/account.module.js";
+import { SupportModule } from "./features/support/support.module.js";
 import { FlightsModule } from "./features/flights/flights.module.js";
 import { HomeModule } from "./features/home/home.module.js";
 import { BookingsModule } from "./features/bookings/bookings.module.js";
@@ -29,6 +30,7 @@ import { AppService } from "./app.service.js";
     PricingModule,
     AuthModule,
     AccountModule,
+    SupportModule,
     HotelsModule,
     FlightsModule,
     HomeModule,

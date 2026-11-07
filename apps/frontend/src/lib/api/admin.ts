@@ -1,3 +1,4 @@
+import type { AdminTicket, AdminTicketList, TicketNoteRequest, TicketStatus, TicketUpdateRequest } from "@quickhotels/types/support";
 import type { PricingRule, PricingRuleInput } from "@quickhotels/types/pricing";
 import type {
   AdminAccount,
@@ -34,6 +35,16 @@ export const adminApi = {
     apiRequest<PricingRule[]>(`/admin/pricing-rules/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(rule), headers: bearer(token) }),
   deletePricingRule: (token: string, id: string) =>
     apiRequest<PricingRule[]>(`/admin/pricing-rules/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
+  // Support inbox (tickets from /help).
+  tickets: (token: string, params: { status?: TicketStatus; q?: string; page?: number }, signal?: AbortSignal) => {
+    const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== "").map(([key, value]) => [key, String(value)]));
+    return apiRequest<AdminTicketList>(`/admin/support/tickets${query.size ? `?${query}` : ""}`, { signal, headers: bearer(token) });
+  },
+  ticket: (token: string, id: string, signal?: AbortSignal) => apiRequest<AdminTicket>(`/admin/support/tickets/${encodeURIComponent(id)}`, { signal, headers: bearer(token) }),
+  updateTicket: (token: string, id: string, update: TicketUpdateRequest) =>
+    apiRequest<AdminTicket>(`/admin/support/tickets/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(update), headers: bearer(token) }),
+  addTicketNote: (token: string, id: string, note: TicketNoteRequest) =>
+    apiRequest<AdminTicket>(`/admin/support/tickets/${encodeURIComponent(id)}/notes`, { method: "POST", body: JSON.stringify(note), headers: bearer(token) }),
   // Email: is sending set up, and send a test email to an address.
   mailStatus: (token: string, signal?: AbortSignal) => apiRequest<{ configured: boolean }>("/admin/mail/status", { signal, headers: bearer(token) }),
   testEmail: (token: string, to: string) =>

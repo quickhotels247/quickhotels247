@@ -800,6 +800,9 @@ model SupportTicket {
   userId          String?      @map("user_id") @db.Uuid
   bookingId       String?      @map("booking_id") @db.Uuid
   topic           String
+  // As the customer wrote them on the form.
+  name             String?
+  bookingReference String?     @map("booking_reference")
   email           String
   phone           String?
   message         String
@@ -823,6 +826,8 @@ model SupportNote {
   bookingId String?  @map("booking_id") @db.Uuid
   ticketId  String?  @map("ticket_id") @db.Uuid
   adminId   String?  @map("admin_id") @db.Uuid
+  // "note" (staff only) or "reply" (emailed to the customer).
+  kind      String   @default("note")
   body      String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
@@ -831,6 +836,7 @@ model SupportNote {
   admin   AdminUser?     @relation(fields: [adminId], references: [id], onDelete: SetNull)
 
   @@index([bookingId])
+  @@index([ticketId])
   @@map("support_notes")
 }
 

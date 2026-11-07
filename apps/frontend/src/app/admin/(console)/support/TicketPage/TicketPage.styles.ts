@@ -1,0 +1,15 @@
+export const styles = {
+  crumbs: { mb: 2, fontSize: "0.875rem" },
+  crumb: { fontSize: "0.875rem", color: "text.primary" },
+  alert: { mb: 2 },
+  layout: { display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 280px" }, gap: 2, alignItems: "start" },
+  main: { display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 },
+  card: { bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 3, p: { xs: 2, md: 2.5 } },
+  note: { bgcolor: "#fffbeb", borderColor: "#fde68a" },
+  label: { fontSize: "0.75rem", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.04em", mb: 0.75 },
+  message: { whiteSpace: "pre-wrap", fontSize: "0.9375rem", lineHeight: 1.6, overflowWrap: "anywhere" },
+  side: { display: "flex", flexDirection: "column", gap: 2, position: { md: "sticky" }, top: { md: 88 } },
+  sideRow: { display: "flex", gap: 1 },
+  value: { fontSize: "0.9375rem", fontWeight: 600, overflowWrap: "anywhere" },
+  small: { fontSize: "0.8125rem", color: "text.secondary" },
+};
