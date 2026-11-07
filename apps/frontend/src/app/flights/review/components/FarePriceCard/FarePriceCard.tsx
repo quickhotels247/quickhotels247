@@ -1,7 +1,10 @@
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
+import type { ReactNode } from "react";
+import type { AppliedCoupon } from "@quickhotels/types/coupons";
 import type { FlightPriceBreakdown } from "@quickhotels/types/flight-checkout";
+import type { Money } from "@quickhotels/types/hotels";
 import { formatPrice } from "@/lib/format";
 import { styles } from "./FarePriceCard.styles";
 
@@ -9,7 +12,15 @@ const PAX = { adult: ["adult", "adults"], child: ["child", "children"], infant: 
 
 // Fare breakdown (base, taxes, service fee and its tax as separate lines),
 // what each traveller pays, and the total.
-export default function FarePriceCard({ price }: { price: FlightPriceBreakdown }) {
+interface FarePriceCardProps {
+  price: FlightPriceBreakdown;
+  coupon: AppliedCoupon | null;
+  payable: Money;
+  // The coupon box, when the coupon can still change.
+  children?: ReactNode;
+}
+
+export default function FarePriceCard({ price, coupon, payable, children }: FarePriceCardProps) {
   const lines: [string, number][] = [
     ["Base fare", price.base.amount],
     ["Taxes and airline charges", price.taxes.amount],
@@ -46,16 +57,27 @@ export default function FarePriceCard({ price }: { price: FlightPriceBreakdown }
               </Typography>
             </Box>
           ))}
+        {coupon && (
+          <Box sx={styles.row}>
+            <Typography component="dt" sx={styles.label}>
+              Coupon {coupon.code}
+            </Typography>
+            <Typography component="dd" sx={[styles.value, { color: "success.main", fontWeight: 700 }]}>
+              −{formatPrice(coupon.discount)}
+            </Typography>
+          </Box>
+        )}
         <Divider sx={styles.divider} />
         <Box sx={styles.row}>
           <Typography component="dt" sx={styles.totalLabel}>
             Total
           </Typography>
           <Typography component="dd" sx={styles.total}>
-            {formatPrice(price.total)}
+            {formatPrice(payable)}
           </Typography>
         </Box>
       </Box>
+      {children}
       <Typography sx={styles.note}>Includes all taxes and fees. Seats, meals and extra baggage, if added later, cost extra.</Typography>
     </Box>
   );

@@ -19,7 +19,8 @@ import { HotelPageRepository } from "../hotels/hotel-page.repository.js";
 import { splitGuests } from "../hotels/room-guests.js";
 import { SearchSessionsRepository } from "../hotels/search-sessions.repository.js";
 import { nightsOf } from "../hotels/stay-rules.js";
-import { CheckoutRepository, type CheckoutQuote, type StoredCheckout } from "./checkout.repository.js";
+import { CouponsService } from "../coupons/coupons.service.js";
+import { CheckoutRepository, payableOf, type CheckoutQuote, type StoredCheckout } from "./checkout.repository.js";
 
 // How long a reviewed rate is held for guest details and payment.
 const CHECKOUT_TTL_MS = 15 * 60 * 1000;
@@ -53,6 +54,7 @@ export class CheckoutService {
     private readonly checkouts: CheckoutRepository,
     private readonly sessions: SearchSessionsRepository,
     private readonly hotels: HotelPageRepository,
+    private readonly coupons: CouponsService,
   ) {}
 
   // Starts a checkout for a rate from the hotel page. `key` is the browser's
@@ -154,6 +156,37 @@ export class CheckoutService {
     return this.summary((await this.checkouts.find(checkout.id))!);
   }
 
+  // A coupon code: checked against this checkout (never more than our markup).
+  async applyCoupon(id: string, key: string, code: string, userId: string | null): Promise<CheckoutSummary> {
+    const checkout = await this.editable(id, key);
+    const quote = checkout.quote!;
+    const coupon = await this.coupons.apply(code, {
+      product: "HOTEL",
+      amount: quote.room.totalPrice.amount,
+      currency: quote.room.totalPrice.currency,
+      margin: quote.markup?.markup.amount ?? 0,
+      city: quote.hotel.city,
+      userId,
+    });
+    await this.checkouts.setQuote(checkout.id, { ...quote, coupon });
+    return this.summary((await this.checkouts.find(checkout.id))!);
+  }
+
+  async removeCoupon(id: string, key: string): Promise<CheckoutSummary> {
+    const checkout = await this.editable(id, key);
+    await this.checkouts.setQuote(checkout.id, { ...checkout.quote!, coupon: null });
+    return this.summary((await this.checkouts.find(checkout.id))!);
+  }
+
+  private async editable(id: string, key: string): Promise<StoredCheckout> {
+    const checkout = await this.open(id, key);
+    if (!EDITABLE.includes(checkout.status)) throw new ConflictException("This checkout can't be changed any more.");
+    if (checkout.expiresAt && checkout.expiresAt.getTime() <= Date.now()) {
+      throw new GoneException("Your checkout timed out. Please choose your room again for current prices.");
+    }
+    return checkout;
+  }
+
   // The checkout, if the key opens it. Unknown id and wrong key look the same.
   private async open(id: string, key: string): Promise<StoredCheckout> {
     const checkout = await this.checkouts.find(id);
@@ -191,12 +224,14 @@ export class CheckoutService {
 
   private summary(checkout: StoredCheckout): CheckoutSummary {
     // Net price and markup stay on the server.
-    const { markup: _markup, ...quote } = checkout.quote!;
+    const { markup: _markup, coupon, ...quote } = checkout.quote!;
     return {
       checkoutId: checkout.id,
       status: checkout.status === BookingStatus.AWAITING_PAYMENT ? "payment" : "details",
       expiresAt: (checkout.expiresAt ?? new Date()).toISOString(),
       ...quote,
+      coupon: coupon ?? null,
+      payable: payableOf(checkout.quote!),
       termsVersion: TERMS_VERSION,
       guestDetails: checkout.guestDetails,
     };

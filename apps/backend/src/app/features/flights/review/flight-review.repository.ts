@@ -1,3 +1,4 @@
+import type { AppliedCoupon } from "@quickhotels/types/coupons";
 import type { AppliedMarkup } from "@quickhotels/types/pricing";
 import { Injectable } from "@nestjs/common";
 import type { FlightReviewSummary, FlightTravellerDetails } from "@quickhotels/types/flight-checkout";
@@ -6,9 +7,16 @@ import { Prisma } from "../../../../generated/prisma/client.js";
 
 // The parts of a review summary the server decides at review time.
 // What the customer sees, plus (server only) the net price and our markup.
-export type FlightQuote = Omit<FlightReviewSummary, "reviewId" | "status" | "expiresAt" | "termsVersion" | "travellerDetails"> & {
+export type FlightQuote = Omit<FlightReviewSummary, "reviewId" | "status" | "expiresAt" | "termsVersion" | "travellerDetails" | "coupon" | "payable"> & {
   markup?: AppliedMarkup;
+  coupon?: AppliedCoupon | null;
 };
+
+// What the customer pays: the fare minus any coupon.
+export const payableOf = (quote: FlightQuote) => ({
+  amount: Math.round((quote.price.total.amount - (quote.coupon?.discount.amount ?? 0)) * 100) / 100,
+  currency: quote.price.total.currency,
+});
 
 export interface StoredFlightReview {
   id: string;
@@ -54,6 +62,12 @@ export class FlightReviewRepository {
   async find(id: string) {
     const row = await this.db.flightCheckout.findUnique({ where: { id } });
     return row && toStored(row);
+  }
+
+  // A coupon added or removed: new quote and amount to charge.
+  async setQuote(id: string, quote: FlightQuote) {
+    const payable = payableOf(quote);
+    await this.db.flightCheckout.update({ where: { id }, data: { quote: quote as unknown as Prisma.InputJsonValue, amount: payable.amount, currency: payable.currency } });
   }
 
   // Travellers and contact, ready for payment (step F6).

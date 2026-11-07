@@ -52,7 +52,7 @@ export default function PaymentStep({ review, onEdit }: PaymentStepProps) {
           Online payment and ticketing are being set up and open here soon. Nothing has been charged and no tickets have been issued.
         </Alert>
         <Button variant="contained" size="large" startIcon={<LockOutlined />} disabled fullWidth>
-          Pay {formatPrice(review.price.total)} securely
+          Pay {formatPrice(review.payable)} securely
         </Button>
         <Typography sx={styles.note}>We&apos;ll show your booking as confirmed only once the airline issues your tickets.</Typography>
       </Box>

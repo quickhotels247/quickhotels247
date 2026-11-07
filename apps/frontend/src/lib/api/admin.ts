@@ -1,3 +1,4 @@
+import type { Coupon, CouponInput } from "@quickhotels/types/coupons";
 import type { AdminTicket, AdminTicketList, TicketNoteRequest, TicketStatus, TicketUpdateRequest } from "@quickhotels/types/support";
 import type { PricingRule, PricingRuleInput } from "@quickhotels/types/pricing";
 import type {
@@ -35,6 +36,14 @@ export const adminApi = {
     apiRequest<PricingRule[]>(`/admin/pricing-rules/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(rule), headers: bearer(token) }),
   deletePricingRule: (token: string, id: string) =>
     apiRequest<PricingRule[]>(`/admin/pricing-rules/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
+  // Coupons; every change returns the whole updated list.
+  coupons: (token: string, signal?: AbortSignal) => apiRequest<Coupon[]>("/admin/coupons", { signal, headers: bearer(token) }),
+  createCoupon: (token: string, coupon: CouponInput) =>
+    apiRequest<Coupon[]>("/admin/coupons", { method: "POST", body: JSON.stringify(coupon), headers: bearer(token) }),
+  updateCoupon: (token: string, id: string, coupon: CouponInput) =>
+    apiRequest<Coupon[]>(`/admin/coupons/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(coupon), headers: bearer(token) }),
+  deleteCoupon: (token: string, id: string) =>
+    apiRequest<Coupon[]>(`/admin/coupons/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
   // Support inbox (tickets from /help).
   tickets: (token: string, params: { status?: TicketStatus; q?: string; page?: number }, signal?: AbortSignal) => {
     const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== "").map(([key, value]) => [key, String(value)]));

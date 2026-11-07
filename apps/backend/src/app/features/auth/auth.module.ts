@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { authConfig } from "./auth.config.js";
 import { AuthController } from "./auth.controller.js";
 import { AuthService } from "./auth.service.js";
+import { OptionalUser } from "./optional-user.js";
 import { ClerkService } from "./clerk.service.js";
 import { AuthGuard } from "./auth.guard.js";
 import { EmailVerificationRepository } from "./email-verification.repository.js";
@@ -15,6 +16,7 @@ import { UsersRepository } from "./users.repository.js";
   imports: [ConfigModule.forFeature(authConfig)],
   controllers: [AuthController],
   providers: [
+    OptionalUser,
     AuthService,
     SessionService,
     UsersRepository,
@@ -26,6 +28,7 @@ import { UsersRepository } from "./users.repository.js";
   ],
   // Shared with the account feature (connected accounts, password).
   exports: [
+    OptionalUser,
     SessionService,
     UsersRepository,
     IdentitiesRepository,

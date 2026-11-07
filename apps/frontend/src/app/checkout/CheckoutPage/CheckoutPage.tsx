@@ -13,6 +13,7 @@ import LockOutlined from "@mui/icons-material/LockOutlined";
 import type { CheckoutSummary } from "@quickhotels/types/checkout";
 import { criteriaParams } from "@/components/search/HotelSearchBar/searchCriteria";
 import { routes } from "@/config/navigation";
+import CouponBox from "@/components/booking/CouponBox";
 import BookingSummary from "../components/BookingSummary";
 import CheckoutSteps from "../components/CheckoutSteps";
 import GuestDetailsForm from "../components/GuestDetailsForm";
@@ -34,7 +35,7 @@ const hotelHref = (checkout: CheckoutSummary) => {
 // step (step 8 of the roadmap).
 export default function CheckoutPage() {
   const { checkoutId } = useParams<{ checkoutId: string }>();
-  const { checkout, problem, message, saveGuests } = useCheckout(checkoutId);
+  const { checkout, problem, message, saveGuests, applyCoupon, removeCoupon } = useCheckout(checkoutId);
   const [editing, setEditing] = useState(false);
   const [expired, setExpired] = useState(false);
   const onExpire = useCallback(() => setExpired(true), []);
@@ -107,7 +108,7 @@ export default function CheckoutPage() {
             )}
           </Box>
           <Box sx={styles.side}>
-            <BookingSummary checkout={checkout} />
+            <BookingSummary checkout={checkout} coupon={<CouponBox coupon={checkout.coupon} onApply={applyCoupon} onRemove={removeCoupon} />} />
           </Box>
         </Box>
       )}

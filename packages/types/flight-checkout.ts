@@ -1,3 +1,4 @@
+import type { AppliedCoupon } from "@quickhotels/types/coupons";
 import type { FlightJourney, FlightOption, FlightSearchCriteria } from "@quickhotels/types/flights";
 import type { Money } from "@quickhotels/types/hotels";
 
@@ -91,6 +92,9 @@ export interface FlightReviewSummary {
   price: FlightPriceBreakdown;
   // Set when the confirmed price differs from the results page.
   priceChange: { previous: Money; current: Money } | null;
+  // A coupon code applied at checkout, and the total after it.
+  coupon: AppliedCoupon | null;
+  payable: Money;
   rules: FlightFareRule[];
   requirements: FlightTravellerRequirements;
   // Whether the seats can be held without paying yet.

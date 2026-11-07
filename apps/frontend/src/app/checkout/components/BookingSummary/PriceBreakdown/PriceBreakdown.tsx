@@ -1,7 +1,8 @@
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
-import type { RoomOption } from "@quickhotels/types/hotels";
+import type { AppliedCoupon } from "@quickhotels/types/coupons";
+import type { Money, RoomOption } from "@quickhotels/types/hotels";
 import { formatPrice } from "@/lib/format";
 import { styles } from "./PriceBreakdown.styles";
 
@@ -9,11 +10,13 @@ interface PriceBreakdownProps {
   room: RoomOption;
   nights: number;
   rooms: number;
+  coupon: AppliedCoupon | null;
+  payable: Money;
 }
 
 // Itemised price (spec §4.4): room, taxes, the supplier's service fee and its
 // tax as separate lines (TripJack's rule), any discount, and the total.
-export default function PriceBreakdown({ room, nights, rooms }: PriceBreakdownProps) {
+export default function PriceBreakdown({ room, nights, rooms, coupon, payable }: PriceBreakdownProps) {
   const { priceBreakup: p, totalPrice } = room;
   const money = (amount: number) => formatPrice({ amount, currency: totalPrice.currency });
   const lines: [string, number][] = [
@@ -46,13 +49,23 @@ export default function PriceBreakdown({ room, nights, rooms }: PriceBreakdownPr
           </Typography>
         </Box>
       )}
+      {coupon && (
+        <Box sx={styles.row}>
+          <Typography component="dt" sx={styles.label}>
+            Coupon {coupon.code}
+          </Typography>
+          <Typography component="dd" sx={[styles.value, styles.discount]}>
+            −{formatPrice(coupon.discount)}
+          </Typography>
+        </Box>
+      )}
       <Divider sx={styles.divider} />
       <Box sx={styles.row}>
         <Typography component="dt" sx={styles.totalLabel}>
           Total to pay
         </Typography>
         <Typography component="dd" sx={styles.total}>
-          {formatPrice(totalPrice)}
+          {formatPrice(payable)}
         </Typography>
       </Box>
       <Typography sx={styles.note}>Includes taxes and fees. Charges paid at the hotel, if any, are listed below.</Typography>

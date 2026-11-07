@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
@@ -15,6 +16,8 @@ import { styles } from "./BookingSummary.styles";
 
 interface BookingSummaryProps {
   checkout: CheckoutSummary;
+  // The coupon box; left out where the coupon can't change.
+  coupon?: ReactNode;
 }
 
 const plural = (count: number, word: string, many = `${word}s`) => `${count} ${count === 1 ? word : many}`;
@@ -27,7 +30,7 @@ function deadline(iso: string) {
 
 // The right-hand card: hotel, dates, guests, room and meal plan, cancellation
 // terms and the itemised price (spec §4.4).
-export default function BookingSummary({ checkout }: BookingSummaryProps) {
+export default function BookingSummary({ checkout, coupon }: BookingSummaryProps) {
   const { hotel, stay, room, nights } = checkout;
   const guests = [plural(stay.adults, "adult"), stay.children > 0 && plural(stay.children, "child", "children")].filter(Boolean).join(", ");
   const time = (value: string | null, prefix: string) => (value ? ` · ${prefix} ${formatClock(value)}` : "");
@@ -86,7 +89,8 @@ export default function BookingSummary({ checkout }: BookingSummaryProps) {
         ))}
       </Box>
       <Divider />
-      <PriceBreakdown room={room} nights={nights} rooms={stay.rooms} />
+      <PriceBreakdown room={room} nights={nights} rooms={stay.rooms} coupon={checkout.coupon} payable={checkout.payable} />
+      {coupon}
     </Box>
   );
 }

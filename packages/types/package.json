@@ -14,7 +14,8 @@
     "./travellers": "./travellers.ts",
     "./wishlist": "./wishlist.ts",
     "./pricing": "./pricing.ts",
-    "./support": "./support.ts"
+    "./support": "./support.ts",
+    "./coupons": "./coupons.ts"
   },
   "scripts": {
     "typecheck": "tsc"

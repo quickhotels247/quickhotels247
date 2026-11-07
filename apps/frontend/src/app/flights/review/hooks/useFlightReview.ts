@@ -44,5 +44,21 @@ export function useFlightReview(reviewId: string) {
     [reviewId],
   );
 
-  return { ...state, saveTravellers };
+  const applyCoupon = useCallback(
+    async (code: string, token: string | null) => {
+      const key = checkoutKeyFor(reviewId);
+      if (!key) throw new Error("This booking was started in another tab. Please choose your flights again.");
+      const review = await flightReviewsApi.applyCoupon(reviewId, key, code, token);
+      setState({ review, problem: null, message: null });
+    },
+    [reviewId],
+  );
+  const removeCoupon = useCallback(async () => {
+    const key = checkoutKeyFor(reviewId);
+    if (!key) return;
+    const review = await flightReviewsApi.removeCoupon(reviewId, key);
+    setState({ review, problem: null, message: null });
+  }, [reviewId]);
+
+  return { ...state, saveTravellers, applyCoupon, removeCoupon };
 }

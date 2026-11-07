@@ -7,6 +7,7 @@ import { SupplierError } from "../../suppliers/supplier-error.js";
 import type { HotelPageRepository, StoredHotel } from "../hotels/hotel-page.repository.js";
 import type { SearchSessionsRepository } from "../hotels/search-sessions.repository.js";
 import type { CheckoutRepository, NewCheckout, StoredCheckout } from "./checkout.repository.js";
+import type { CouponsService } from "../coupons/coupons.service.js";
 import { CheckoutService } from "./checkout.service.js";
 
 const isoDay = (offsetDays: number) => new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
@@ -53,7 +54,7 @@ function setup({ reviewed = rate(9000), shown = 9000, children = 0 }: { reviewed
     }),
   } as unknown as HotelSupplier;
   const hotels = { find: vi.fn(async () => hotel) };
-  const service = new CheckoutService(supplier, checkouts as unknown as CheckoutRepository, sessions as unknown as SearchSessionsRepository, hotels as unknown as HotelPageRepository);
+  const service = new CheckoutService(supplier, checkouts as unknown as CheckoutRepository, sessions as unknown as SearchSessionsRepository, hotels as unknown as HotelPageRepository, {} as CouponsService);
   return { service, supplier, checkouts };
 }
 

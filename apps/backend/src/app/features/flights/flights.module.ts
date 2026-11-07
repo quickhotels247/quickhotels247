@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { AuthModule } from "../auth/auth.module.js";
 import { SuppliersModule } from "../../suppliers/suppliers.module.js";
 import { PopularRoutesController } from "./popular-routes/popular-routes.controller.js";
 import { FlightReviewController } from "./review/flight-review.controller.js";
@@ -12,7 +13,7 @@ import { FlightSearchSessionsRepository } from "./search/flight-search-sessions.
 // Flights: search/ (searches and their results), popular-routes/ (fares for
 // the flights page) and review/ (fare check, then travellers and payment).
 @Module({
-  imports: [SuppliersModule],
+  imports: [AuthModule, SuppliersModule],
   controllers: [FlightSearchController, PopularRoutesController, FlightReviewController],
   providers: [FlightSearchService, FlightSearchSessionsRepository, PopularRoutesService, FlightReviewService, FlightReviewRepository],
 })

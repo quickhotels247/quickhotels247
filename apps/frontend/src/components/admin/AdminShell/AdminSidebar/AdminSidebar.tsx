@@ -51,7 +51,7 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     title: "Settings",
     items: [
       { label: "Pricing & markup", href: routes.adminPricing, icon: PercentRounded },
-      { label: "Coupons", icon: LocalOfferOutlined },
+      { label: "Coupons", href: routes.adminCoupons, icon: LocalOfferOutlined },
       { label: "Account settings", href: routes.adminSettings, icon: SettingsOutlined },
     ],
   },

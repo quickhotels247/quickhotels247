@@ -49,7 +49,7 @@ export default function PaymentNext({ checkout, onEdit }: PaymentNextProps) {
           Online payment is being set up and opens here soon. Nothing has been charged and your room isn&apos;t booked yet.
         </Alert>
         <Button variant="contained" size="large" startIcon={<LockOutlined />} disabled fullWidth>
-          Pay {formatPrice(checkout.room.totalPrice)} securely
+          Pay {formatPrice(checkout.payable)} securely
         </Button>
         <Typography sx={styles.note}>
           Payment and the hotel&apos;s confirmation are separate steps: we&apos;ll show your booking as confirmed only once

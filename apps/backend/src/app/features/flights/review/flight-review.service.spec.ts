@@ -5,6 +5,7 @@ import type { FlightReviewResult, FlightSupplier } from "../../../suppliers/flig
 import { SupplierError } from "../../../suppliers/supplier-error.js";
 import type { FlightSearchSessionsRepository } from "../search/flight-search-sessions.repository.js";
 import type { FlightReviewRepository, NewFlightReview, StoredFlightReview } from "./flight-review.repository.js";
+import type { CouponsService } from "../../coupons/coupons.service.js";
 import type { PricingService } from "../../../pricing/pricing.service.js";
 import { FlightReviewService } from "./flight-review.service.js";
 
@@ -50,7 +51,7 @@ function setup(reviewed: Partial<FlightReviewResult> | Error = {}) {
   } as unknown as FlightSupplier;
   // No markup rules: the reviewed price passes through unchanged.
   const pricing = { markFlightReview: vi.fn(async (price: unknown) => ({ price, applied: { ruleId: null, ruleVersion: null, net: price, markup: { amount: 0, currency: "INR" } } })) };
-  const service = new FlightReviewService(supplier, reviews as unknown as FlightReviewRepository, searches as unknown as FlightSearchSessionsRepository, pricing as unknown as PricingService);
+  const service = new FlightReviewService(supplier, reviews as unknown as FlightReviewRepository, searches as unknown as FlightSearchSessionsRepository, pricing as unknown as PricingService, {} as CouponsService);
   return { service, supplier };
 }
 

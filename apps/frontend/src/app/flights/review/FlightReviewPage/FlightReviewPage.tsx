@@ -16,6 +16,7 @@ import { airportByCode } from "@/components/search/FlightSearchBar/airports";
 import { flightSearchUrl } from "@/components/search/FlightSearchBar/flightSearchCriteria";
 import { routes } from "@/config/navigation";
 import BookingSteps from "../components/BookingSteps";
+import CouponBox from "@/components/booking/CouponBox";
 import FarePriceCard from "../components/FarePriceCard";
 import FareRulesCard from "../components/FareRulesCard";
 import ItineraryCard from "../components/ItineraryCard";
@@ -33,7 +34,7 @@ const city = (code: string) => airportByCode(code)?.city ?? code;
 // payment (F6). The price is held for a short time throughout.
 export default function FlightReviewPage() {
   const { reviewId } = useParams<{ reviewId: string }>();
-  const { review, problem, message, saveTravellers } = useFlightReview(reviewId);
+  const { review, problem, message, saveTravellers, applyCoupon, removeCoupon } = useFlightReview(reviewId);
   const [expired, setExpired] = useState(false);
   const onExpire = useCallback(() => setExpired(true), []);
   // 0 review fare, 1 travellers, 2 payment.
@@ -125,7 +126,9 @@ export default function FlightReviewPage() {
             {step === 2 && <PaymentStep review={review} onEdit={() => goTo(1)} />}
           </Box>
           <Box sx={styles.side}>
-            <FarePriceCard price={review.price} />
+            <FarePriceCard price={review.price} coupon={review.coupon} payable={review.payable}>
+              <CouponBox coupon={review.coupon} onApply={applyCoupon} onRemove={removeCoupon} />
+            </FarePriceCard>
             {step === 0 && (
               <>
                 <TravellerNeedsCard requirements={review.requirements} />

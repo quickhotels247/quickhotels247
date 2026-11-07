@@ -14,7 +14,6 @@ import TrustHighlights from "../components/TrustHighlights";
 import WeekendDeals from "../components/WeekendDeals";
 import { popularDestinations } from "../data/destinations";
 import { indiaDestinations, tripThemes } from "../data/indiaDestinations";
-import { sampleOffers } from "../data/offers";
 import { popularLinkGroups } from "../data/popularLinks";
 import { propertyTypes } from "../data/propertyTypes";
 import { styles } from "./HomePage.styles";
@@ -30,7 +29,7 @@ export default function HomePage() {
       <Container>
         <Stack sx={styles.sections}>
           <RecentSearches />
-          <OffersSection offers={sampleOffers} />
+          <OffersSection />
           <PopularDestinations destinations={popularDestinations} />
           <ExploreIndia destinations={indiaDestinations} />
           <PropertyTypes types={propertyTypes} />

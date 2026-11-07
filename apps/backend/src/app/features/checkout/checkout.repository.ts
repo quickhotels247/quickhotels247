@@ -1,3 +1,4 @@
+import type { AppliedCoupon } from "@quickhotels/types/coupons";
 import type { AppliedMarkup } from "@quickhotels/types/pricing";
 import { Injectable } from "@nestjs/common";
 import type { CheckoutGuestDetails, CheckoutSummary } from "@quickhotels/types/checkout";
@@ -8,7 +9,14 @@ import { BookingStatus, Prisma } from "../../../generated/prisma/client.js";
 // What the customer sees, plus (server only) the net price and our markup.
 export type CheckoutQuote = Pick<CheckoutSummary, "hotel" | "stay" | "nights" | "rooms" | "room" | "priceChange" | "requirements" | "policies"> & {
   markup?: AppliedMarkup;
+  coupon?: AppliedCoupon | null;
 };
+
+// What the customer pays: the rate minus any coupon.
+export const payableOf = (quote: CheckoutQuote) => ({
+  amount: Math.round((quote.room.totalPrice.amount - (quote.coupon?.discount.amount ?? 0)) * 100) / 100,
+  currency: quote.room.totalPrice.currency,
+});
 
 export interface StoredCheckout {
   id: string;
@@ -71,6 +79,12 @@ export class CheckoutRepository {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return null;
       throw error;
     }
+  }
+
+  // A coupon added or removed: new quote and amount to charge.
+  async setQuote(id: string, quote: CheckoutQuote) {
+    const payable = payableOf(quote);
+    await this.db.bookingAttempt.update({ where: { id }, data: { quote: json(quote), amount: payable.amount, currency: payable.currency } });
   }
 
   async saveGuests(id: string, from: BookingStatus, details: CheckoutGuestDetails, termsVersion: string) {

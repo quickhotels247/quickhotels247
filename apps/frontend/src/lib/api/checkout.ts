@@ -16,4 +16,14 @@ export const checkoutApi = {
       body: JSON.stringify(details),
       headers: { "X-Checkout-Token": key },
     }),
+
+  // Coupons: a signed-in customer's token counts their own uses.
+  applyCoupon: (checkoutId: string, key: string, code: string, token: string | null) =>
+    apiRequest<CheckoutSummary>(`/v1/checkouts/${encodeURIComponent(checkoutId)}/coupon`, {
+      method: "PUT",
+      body: JSON.stringify({ code }),
+      headers: { "X-Checkout-Token": key, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    }),
+  removeCoupon: (checkoutId: string, key: string) =>
+    apiRequest<CheckoutSummary>(`/v1/checkouts/${encodeURIComponent(checkoutId)}/coupon`, { method: "DELETE", headers: { "X-Checkout-Token": key } }),
 };

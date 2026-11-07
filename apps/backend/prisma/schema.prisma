@@ -652,7 +652,12 @@ enum RuleStatus {
 model Coupon {
   id                   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code                 String       @unique
+  // Shown on Home offers when `public`.
+  title                String?
   description          String?
+  // Null: hotels and flights.
+  product              PricingProduct?
+  public               Boolean      @default(false)
   discountType         DiscountType @map("discount_type")
   value                Decimal      @db.Decimal(12, 2)
   maxDiscount          Decimal?     @map("max_discount") @db.Decimal(12, 2)

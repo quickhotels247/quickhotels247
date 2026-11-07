@@ -1,3 +1,4 @@
+import type { AppliedCoupon } from "@quickhotels/types/coupons";
 import type { HotelSearchCriteria, Money, RoomOption, TextSection } from "@quickhotels/types/hotels";
 
 // Checkout shapes shared by the website and the backend (spec §4.4–4.5).
@@ -59,6 +60,9 @@ export interface CheckoutSummary {
   room: RoomOption;
   // Set when the confirmed price differs from what the hotel page showed.
   priceChange: { previous: Money; current: Money } | null;
+  // A coupon code applied at checkout, and the total after it.
+  coupon: AppliedCoupon | null;
+  payable: Money;
   requirements: { pan: boolean; passport: boolean };
   // Fees paid at the hotel and other rules to read before paying.
   policies: TextSection[];

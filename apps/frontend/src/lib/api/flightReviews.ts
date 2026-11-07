@@ -17,4 +17,13 @@ export const flightReviewsApi = {
       body: JSON.stringify(details),
       headers: { "X-Checkout-Token": key },
     }),
+
+  applyCoupon: (reviewId: string, key: string, code: string, token: string | null) =>
+    apiRequest<FlightReviewSummary>(`/v1/flights/reviews/${encodeURIComponent(reviewId)}/coupon`, {
+      method: "PUT",
+      body: JSON.stringify({ code }),
+      headers: { "X-Checkout-Token": key, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    }),
+  removeCoupon: (reviewId: string, key: string) =>
+    apiRequest<FlightReviewSummary>(`/v1/flights/reviews/${encodeURIComponent(reviewId)}/coupon`, { method: "DELETE", headers: { "X-Checkout-Token": key } }),
 };

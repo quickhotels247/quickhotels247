@@ -45,5 +45,22 @@ export function useCheckout(checkoutId: string) {
     [checkoutId],
   );
 
-  return { ...state, saveGuests };
+  // Coupon codes; errors are thrown for the coupon box to show.
+  const applyCoupon = useCallback(
+    async (code: string, token: string | null) => {
+      const key = checkoutKeyFor(checkoutId);
+      if (!key) throw new Error("This checkout was started in another tab. Please choose your room again.");
+      const checkout = await checkoutApi.applyCoupon(checkoutId, key, code, token);
+      setState({ checkout, problem: null, message: null });
+    },
+    [checkoutId],
+  );
+  const removeCoupon = useCallback(async () => {
+    const key = checkoutKeyFor(checkoutId);
+    if (!key) return;
+    const checkout = await checkoutApi.removeCoupon(checkoutId, key);
+    setState({ checkout, problem: null, message: null });
+  }, [checkoutId]);
+
+  return { ...state, saveGuests, applyCoupon, removeCoupon };
 }

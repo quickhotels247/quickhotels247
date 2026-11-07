@@ -1,3 +1,5 @@
+import { AdminCouponsController } from "./coupons/admin-coupons.controller.js";
+import { AdminCouponsService } from "./coupons/admin-coupons.service.js";
 import { AdminSupportController } from "./support/admin-support.controller.js";
 import { AdminSupportRepository } from "./support/admin-support.repository.js";
 import { AdminSupportService } from "./support/admin-support.service.js";
@@ -23,6 +25,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
 @Module({
   imports: [ConfigModule.forFeature(adminConfig)],
   controllers: [
+    AdminCouponsController,
     AdminSupportController,
     AdminPricingController,
     AdminMailController,
@@ -32,6 +35,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
     AdminUsersController,
   ],
   providers: [
+    AdminCouponsService,
     AdminSupportService,
     AdminSupportRepository,
     AdminPricingService,

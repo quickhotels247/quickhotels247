@@ -8,7 +8,8 @@ import { FLIGHT_SUPPLIER, type FlightSupplier } from "../../../suppliers/flight-
 import { SupplierError, supplierHttpError } from "../../../suppliers/supplier-error.js";
 import { FlightSearchSessionsRepository } from "../search/flight-search-sessions.repository.js";
 import { PricingService } from "../../../pricing/pricing.service.js";
-import { FlightReviewRepository, type FlightQuote, type StoredFlightReview } from "./flight-review.repository.js";
+import { CouponsService } from "../../coupons/coupons.service.js";
+import { FlightReviewRepository, payableOf, type FlightQuote, type StoredFlightReview } from "./flight-review.repository.js";
 import { checkTravellers } from "./traveller-rules.js";
 
 // Differences under ₹1 are rounding, not a price change.
@@ -28,6 +29,7 @@ export class FlightReviewService {
     private readonly reviews: FlightReviewRepository,
     private readonly searches: FlightSearchSessionsRepository,
     private readonly pricing: PricingService,
+    private readonly coupons: CouponsService,
   ) {}
 
   // `key` is the browser's random key: the same key returns the same review.
@@ -62,6 +64,35 @@ export class FlightReviewService {
     };
     await this.reviews.saveTravellers(review.id, clean, TERMS_VERSION);
     return this.summary((await this.reviews.find(review.id))!);
+  }
+
+  // A coupon code: checked against this fare (never more than our markup).
+  async applyCoupon(id: string, key: string, code: string, userId: string | null): Promise<FlightReviewSummary> {
+    const review = await this.editable(id, key);
+    const coupon = await this.coupons.apply(code, {
+      product: "FLIGHT",
+      amount: review.quote.price.total.amount,
+      currency: review.quote.price.total.currency,
+      margin: review.quote.markup?.markup.amount ?? 0,
+      city: null,
+      userId,
+    });
+    await this.reviews.setQuote(review.id, { ...review.quote, coupon });
+    return this.summary((await this.reviews.find(review.id))!);
+  }
+
+  async removeCoupon(id: string, key: string): Promise<FlightReviewSummary> {
+    const review = await this.editable(id, key);
+    await this.reviews.setQuote(review.id, { ...review.quote, coupon: null });
+    return this.summary((await this.reviews.find(review.id))!);
+  }
+
+  private async editable(id: string, key: string) {
+    const review = await this.open(id, key);
+    if (review.expiresAt.getTime() <= Date.now()) {
+      throw new GoneException("The airline's price hold has ended. Please search again for current fares.");
+    }
+    return review;
   }
 
   // The review, if the key opens it. Unknown id and wrong key look the same.
@@ -131,12 +162,14 @@ export class FlightReviewService {
 
   private summary(review: StoredFlightReview): FlightReviewSummary {
     // Net price and markup stay on the server.
-    const { markup: _markup, ...quote } = review.quote;
+    const { markup: _markup, coupon, ...quote } = review.quote;
     return {
       reviewId: review.id,
       status: (review.status === "payment" ? "payment" : "travellers") satisfies FlightReviewStatus,
       expiresAt: review.expiresAt.toISOString(),
       ...quote,
+      coupon: coupon ?? null,
+      payable: payableOf(review.quote),
       termsVersion: TERMS_VERSION,
       travellerDetails: review.travellerDetails,
     };
