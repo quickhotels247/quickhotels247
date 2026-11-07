@@ -29,4 +29,12 @@ export class PricedFlightSupplier implements FlightSupplier {
   fareRules(...args: Parameters<FlightSupplier["fareRules"]>) {
     return this.inner.fareRules(...args);
   }
+
+  bookFlights(...args: Parameters<FlightSupplier["bookFlights"]>) {
+    return this.inner.bookFlights(...args);
+  }
+
+  flightBooking(...args: Parameters<FlightSupplier["flightBooking"]>) {
+    return this.inner.flightBooking(...args);
+  }
 }

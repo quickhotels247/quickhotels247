@@ -1,10 +1,19 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import type { FlightReviewSummary } from "@quickhotels/types/flight-checkout";
+import { routes } from "@/config/navigation";
+import { flightReviewsApi } from "@/lib/api/flightReviews";
+import { paymentsApi } from "@/lib/api/payments";
+import { checkoutKeyFor } from "@/lib/checkoutKeys";
 import { formatPrice } from "@/lib/format";
+import { PaymentCancelled, payWithRazorpay } from "@/lib/payments/razorpay";
 import { styles } from "./PaymentStep.styles";
 
 interface PaymentStepProps {
@@ -12,10 +21,30 @@ interface PaymentStepProps {
   onEdit: () => void;
 }
 
-// After travellers: who's flying and where tickets go, then payment. Online
-// payment and ticketing arrive with flights step F6, so "Pay" isn't live yet.
+// After travellers: who's flying and where tickets go, then Pay (Razorpay).
+// Once paid, the booking page shows ticketing and the PNR.
 export default function PaymentStep({ review, onEdit }: PaymentStepProps) {
+  const router = useRouter();
   const details = review.travellerDetails;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function pay() {
+    const key = checkoutKeyFor(review.reviewId);
+    if (!key) return setError("This booking was started in another tab. Please choose your flights again.");
+    setBusy(true);
+    setError(null);
+    try {
+      const order = await flightReviewsApi.startPayment(review.reviewId, key);
+      const result = await payWithRazorpay(order);
+      await paymentsApi.confirm(result);
+      router.push(`${routes.flightBooking}/${review.reviewId}`);
+    } catch (caught) {
+      if (!(caught instanceof PaymentCancelled)) setError(caught instanceof Error ? caught.message : "The payment didn't go through. Please try again.");
+      setBusy(false);
+    }
+  }
+
   return (
     <Box sx={styles.root}>
       <Box sx={styles.card}>
@@ -23,7 +52,7 @@ export default function PaymentStep({ review, onEdit }: PaymentStepProps) {
           <Typography component="h2" sx={styles.title}>
             Travellers
           </Typography>
-          <Button size="small" onClick={onEdit}>
+          <Button size="small" onClick={onEdit} disabled={busy}>
             Edit
           </Button>
         </Box>
@@ -48,13 +77,13 @@ export default function PaymentStep({ review, onEdit }: PaymentStepProps) {
         <Typography component="h2" sx={styles.title}>
           Payment
         </Typography>
-        <Alert severity="info" sx={styles.alert}>
-          Online payment and ticketing are being set up and open here soon. Nothing has been charged and no tickets have been issued.
-        </Alert>
-        <Button variant="contained" size="large" startIcon={<LockOutlined />} disabled fullWidth>
-          Pay {formatPrice(review.payable)} securely
+        {error && <Alert severity="error" sx={styles.alert}>{error}</Alert>}
+        <Button variant="contained" size="large" startIcon={<LockOutlined />} onClick={() => void pay()} disabled={busy} fullWidth>
+          {busy ? "Opening secure payment…" : `Pay ${formatPrice(review.payable)} securely`}
         </Button>
-        <Typography sx={styles.note}>We&apos;ll show your booking as confirmed only once the airline issues your tickets.</Typography>
+        <Typography sx={styles.note}>
+          Cards, UPI and net banking through Razorpay. We show your booking as confirmed only once the airline issues your tickets; if it can&apos;t, you get a full refund.
+        </Typography>
       </Box>
     </Box>
   );

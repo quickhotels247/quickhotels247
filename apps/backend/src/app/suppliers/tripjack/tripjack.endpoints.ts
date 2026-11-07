@@ -11,6 +11,10 @@ export const TRIPJACK_ENDPOINTS = {
   flightFareRule: { host: "air", method: "POST", path: "/fms/v2/farerule", retry: true },
   // Review only re-checks fares (booking is separate), so a dropped connection may be retried.
   flightReview: { host: "air", method: "POST", path: "/fms/v1/review", retry: true, timeoutMs: 30_000 },
+  // Instant booking: ticketing with payment from our TripJack balance. Never
+  // retried; on a timeout, read the booking's status instead.
+  flightBook: { host: "air", method: "POST", path: "/oms/v1/air/book", retry: false, timeoutMs: 90_000 },
+  flightBookingDetails: { host: "air", method: "POST", path: "/oms/v1/booking-details", retry: true, timeoutMs: 30_000 },
   // Hotel API v3.
   // Search host (HMS): content, search, detail, review.
   nationalities: { host: "hms", method: "GET", path: "/hms/v3/nationality-info", retry: true },

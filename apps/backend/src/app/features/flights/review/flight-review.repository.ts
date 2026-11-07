@@ -1,13 +1,13 @@
 import type { AppliedCoupon } from "@quickhotels/types/coupons";
 import type { AppliedMarkup } from "@quickhotels/types/pricing";
 import { Injectable } from "@nestjs/common";
-import type { FlightReviewSummary, FlightTravellerDetails } from "@quickhotels/types/flight-checkout";
+import type { FlightBookingResult, FlightReviewSummary, FlightTravellerDetails } from "@quickhotels/types/flight-checkout";
 import { PrismaService } from "../../../common/database/prisma.service.js";
 import { Prisma } from "../../../../generated/prisma/client.js";
 
 // The parts of a review summary the server decides at review time.
 // What the customer sees, plus (server only) the net price and our markup.
-export type FlightQuote = Omit<FlightReviewSummary, "reviewId" | "status" | "expiresAt" | "termsVersion" | "travellerDetails" | "coupon" | "payable"> & {
+export type FlightQuote = Omit<FlightReviewSummary, "reviewId" | "status" | "expiresAt" | "termsVersion" | "travellerDetails" | "coupon" | "payable" | "booking"> & {
   markup?: AppliedMarkup;
   coupon?: AppliedCoupon | null;
 };
@@ -18,14 +18,20 @@ export const payableOf = (quote: FlightQuote) => ({
   currency: quote.price.total.currency,
 });
 
+// Status on the row: travellers → payment → paid → booking → confirmed;
+// "pending" while the airline is still ticketing; "failed" (refunded).
 export interface StoredFlightReview {
   id: string;
   keyHash: string;
   status: string;
+  userId: string | null;
   supplierBookingId: string;
   quote: FlightQuote;
   travellerDetails: FlightTravellerDetails | null;
+  booking: FlightBookingResult | null;
+  failureReason: string | null;
   expiresAt: Date;
+  updatedAt: Date;
 }
 
 export interface NewFlightReview {
@@ -37,7 +43,19 @@ export interface NewFlightReview {
   expiresAt: Date;
 }
 
-type Row = { id: string; keyHash: string; status: string; supplierBookingId: string; quote: unknown; travellers: unknown; expiresAt: Date };
+type Row = {
+  id: string;
+  keyHash: string;
+  status: string;
+  userId: string | null;
+  supplierBookingId: string;
+  quote: unknown;
+  travellers: unknown;
+  bookingResult: unknown;
+  failureReason: string | null;
+  expiresAt: Date;
+  updatedAt: Date;
+};
 
 const toStored = (row: Row): StoredFlightReview => ({
   id: row.id,
@@ -46,7 +64,11 @@ const toStored = (row: Row): StoredFlightReview => ({
   supplierBookingId: row.supplierBookingId,
   quote: row.quote as FlightQuote,
   travellerDetails: (row.travellers as FlightTravellerDetails | null) ?? null,
+  userId: row.userId,
+  booking: (row.bookingResult as FlightBookingResult | null) ?? null,
+  failureReason: row.failureReason,
   expiresAt: row.expiresAt,
+  updatedAt: row.updatedAt,
 });
 
 // Flight checkouts, from the fare review on (flight_checkouts).
@@ -62,6 +84,29 @@ export class FlightReviewRepository {
   async find(id: string) {
     const row = await this.db.flightCheckout.findUnique({ where: { id } });
     return row && toStored(row);
+  }
+
+  // Moves the status only from one of `from`; false if another request moved it first.
+  async transition(id: string, from: string[], to: string): Promise<boolean> {
+    const { count } = await this.db.flightCheckout.updateMany({ where: { id, status: { in: from } }, data: { status: to } });
+    return count > 0;
+  }
+
+  async saveBooking(id: string, status: "confirmed" | "pending" | "failed", booking: FlightBookingResult, failureReason: string | null = null) {
+    await this.db.flightCheckout.update({
+      where: { id },
+      data: {
+        status,
+        bookingResult: booking as unknown as Prisma.InputJsonValue,
+        failureReason,
+        ...(status === "confirmed" ? { bookedAt: new Date() } : {}),
+      },
+    });
+  }
+
+  // Touch the row (the last time the supplier was asked), without changes.
+  async touch(id: string) {
+    await this.db.flightCheckout.update({ where: { id }, data: { updatedAt: new Date() } });
   }
 
   // A coupon added or removed: new quote and amount to charge.

@@ -1,7 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
-import type { FlightFareRule } from "@quickhotels/types/flight-checkout";
+import type { FlightFareRule, FlightTravellerDetails } from "@quickhotels/types/flight-checkout";
 import type { FlightOption, FlightSearchCriteria } from "@quickhotels/types/flights";
-import type { FlightReviewResult, FlightSupplier, FlightTrip } from "../../flight-supplier.js";
+import type { FlightReviewResult, FlightSupplier, FlightTrip, SupplierFlightBooking } from "../../flight-supplier.js";
+import type { TripjackEnvelope } from "../tripjack.types.js";
+import { toFlightBooking, toTripjackBook, type TripjackBookingDetailsResponse } from "./tripjack-flight-booking.mapper.js";
 import type { SupplierCallContext } from "../../hotel-supplier.js";
 import { SupplierError } from "../../supplier-error.js";
 import { TripjackClient } from "../tripjack.client.js";
@@ -69,5 +71,17 @@ export class TripjackFlightSupplier implements FlightSupplier {
       this.logger.warn(`Fare rules for ${supplierBookingId} unavailable: ${(error as Error).message}`);
       return [];
     }
+  }
+
+  async bookFlights(supplierBookingId: string, amount: number, details: FlightTravellerDetails, context: SupplierCallContext): Promise<void> {
+    await this.client.request("flightBook", { correlationId: context.correlationId, body: toTripjackBook(supplierBookingId, amount, details) });
+  }
+
+  async flightBooking(supplierBookingId: string, context: SupplierCallContext): Promise<SupplierFlightBooking> {
+    const response = await this.client.request<TripjackBookingDetailsResponse & TripjackEnvelope>("flightBookingDetails", {
+      correlationId: context.correlationId,
+      body: { bookingId: supplierBookingId, requirePaxPricing: false },
+    });
+    return toFlightBooking(response);
   }
 }

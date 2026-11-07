@@ -1,4 +1,4 @@
-import type { FlightFareRule, FlightPriceBreakdown, FlightTravellerRequirements, ReviewedFare } from "@quickhotels/types/flight-checkout";
+import type { FlightFareRule, FlightPriceBreakdown, FlightTravellerDetails, FlightTravellerRequirements, ReviewedFare } from "@quickhotels/types/flight-checkout";
 import type { FlightJourney, FlightOption, FlightSearchCriteria } from "@quickhotels/types/flights";
 import type { SupplierCallContext } from "./hotel-supplier.js";
 
@@ -19,6 +19,18 @@ export interface FlightSupplier {
   reviewFlights(priceIds: string[], criteria: FlightSearchCriteria, tripKeys: string[], context: SupplierCallContext): Promise<FlightReviewResult>;
   // Change, cancellation and no-show rules for a reviewed booking; empty when unknown.
   fareRules(supplierBookingId: string, context: SupplierCallContext): Promise<FlightFareRule[]>;
+  // Tickets the reviewed fares, paying the supplier `amount` (their total
+  // fare, before our markup). Not idempotent: never call twice for one booking.
+  bookFlights(supplierBookingId: string, amount: number, details: FlightTravellerDetails, context: SupplierCallContext): Promise<void>;
+  flightBooking(supplierBookingId: string, context: SupplierCallContext): Promise<SupplierFlightBooking>;
+}
+
+// The supplier's view of a flight booking after Book.
+export interface SupplierFlightBooking {
+  // SUCCESS (ticketed), PENDING (in progress), FAILED / ABORTED, ON_HOLD, …
+  status: string;
+  pnrs: { route: string; pnr: string }[];
+  tickets: { traveller: string; route: string; ticket: string }[];
 }
 
 export interface FlightReviewResult {

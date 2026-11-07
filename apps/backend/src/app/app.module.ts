@@ -7,6 +7,7 @@ import { DatabaseModule } from "./common/database/database.module.js";
 import { AdminModule } from "./features/admin/admin.module.js";
 import { AuthModule } from "./features/auth/auth.module.js";
 import { AccountModule } from "./features/account/account.module.js";
+import { PaymentsModule } from "./features/payments/payments.module.js";
 import { CouponsModule } from "./features/coupons/coupons.module.js";
 import { SupportModule } from "./features/support/support.module.js";
 import { FlightsModule } from "./features/flights/flights.module.js";
@@ -33,6 +34,7 @@ import { AppService } from "./app.service.js";
     AccountModule,
     SupportModule,
     CouponsModule,
+    PaymentsModule,
     HotelsModule,
     FlightsModule,
     HomeModule,

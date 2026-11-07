@@ -22,7 +22,15 @@ async function bootstrap() {
   });
   // Every route takes small bodies, so a flood of large ones can't exhaust
   // memory before auth runs.
-  app.use(json({ limit: "100kb" }));
+  // The Razorpay webhook's signature covers the exact bytes sent, so keep them.
+  app.use(
+    json({
+      limit: "100kb",
+      verify: (request, _response, buffer) => {
+        if ((request as { url?: string }).url?.startsWith("/api/v1/payments/razorpay/webhook")) (request as { rawBody?: Buffer }).rawBody = buffer;
+      },
+    }),
+  );
   const config = app.get(ConfigService).getOrThrow<AppConfig>("app");
 
   app.disable("x-powered-by");

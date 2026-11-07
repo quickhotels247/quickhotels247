@@ -29,6 +29,8 @@ function setup() {
     reviewFlights: vi.fn(async () => {
       throw new Error("not used");
     }),
+    bookFlights: vi.fn(),
+    flightBooking: vi.fn(),
     fareRules: vi.fn(async () => []),
   };
   const sessions = { create: vi.fn(async () => "flight-1"), find: vi.fn() };

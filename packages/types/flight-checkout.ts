@@ -51,7 +51,20 @@ export interface ReviewedFare {
   cabin: string;
 }
 
-export type FlightReviewStatus = "travellers" | "payment";
+// travellers → payment → (paid) processing → confirmed, or failed (refunded).
+export type FlightReviewStatus = "travellers" | "payment" | "processing" | "confirmed" | "failed";
+
+// After payment: what the airline issued, or why it couldn't.
+export interface FlightBookingResult {
+  // TripJack's booking reference.
+  bookingId: string;
+  // Airline PNR per route, e.g. { route: "DEL-BOM", pnr: "ABC123" }.
+  pnrs: { route: string; pnr: string }[];
+  tickets: { traveller: string; route: string; ticket: string }[];
+  // When it failed: why, in words for the customer.
+  failureReason: string | null;
+  refund: { status: "pending" | "processed" | "failed"; amount: { amount: number; currency: string } } | null;
+}
 
 export type FlightTravellerType = "adult" | "child" | "infant";
 // Adults: Mr, Mrs or Ms. Children and infants: Master or Ms (airline rules).
@@ -102,6 +115,7 @@ export interface FlightReviewSummary {
   termsVersion: string;
   // Saved traveller details, to fill the form again.
   travellerDetails: FlightTravellerDetails | null;
+  booking: FlightBookingResult | null;
 }
 
 // POST /api/v1/flights/reviews with an Idempotency-Key header (the browser's

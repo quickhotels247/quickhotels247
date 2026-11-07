@@ -8,11 +8,25 @@ import { FLIGHT_SUPPLIER, type FlightSupplier } from "../../../suppliers/flight-
 import { SupplierError, supplierHttpError } from "../../../suppliers/supplier-error.js";
 import { FlightSearchSessionsRepository } from "../search/flight-search-sessions.repository.js";
 import { PricingService } from "../../../pricing/pricing.service.js";
+import type { PaymentOrder } from "@quickhotels/types/payments";
 import { CouponsService } from "../../coupons/coupons.service.js";
+import { PaymentsService } from "../../payments/payments.service.js";
+import { FlightBookingService } from "../booking/flight-booking.service.js";
 import { FlightReviewRepository, payableOf, type FlightQuote, type StoredFlightReview } from "./flight-review.repository.js";
 import { checkTravellers } from "./traveller-rules.js";
 
 // Differences under ₹1 are rounding, not a price change.
+// Our row statuses as the customer sees them.
+const PUBLIC_STATUS: Record<string, FlightReviewStatus> = {
+  travellers: "travellers",
+  payment: "payment",
+  paid: "processing",
+  booking: "processing",
+  pending: "processing",
+  confirmed: "confirmed",
+  failed: "failed",
+};
+
 const PRICE_TOLERANCE = 1;
 
 // Fare review (flights step F4): re-checks the chosen fares with the
@@ -30,6 +44,8 @@ export class FlightReviewService {
     private readonly searches: FlightSearchSessionsRepository,
     private readonly pricing: PricingService,
     private readonly coupons: CouponsService,
+    private readonly payments: PaymentsService,
+    private readonly booking: FlightBookingService,
   ) {}
 
   // `key` is the browser's random key: the same key returns the same review.
@@ -43,15 +59,35 @@ export class FlightReviewService {
   }
 
   async get(id: string, key: string): Promise<FlightReviewSummary> {
-    return this.summary(await this.open(id, key));
+    const review = await this.open(id, key);
+    // A paid booking left mid-way (restart, slow airline): carry on.
+    this.booking.recover(review);
+    return this.summary(review);
+  }
+
+  // Step F6: a Razorpay order for what's payable now (travellers saved).
+  async startPayment(id: string, key: string): Promise<PaymentOrder> {
+    const review = await this.editable(id, key);
+    if (review.status !== "payment" || !review.travellerDetails) throw new ConflictException("Add the travellers before paying.");
+    const lead = review.travellerDetails.travellers[0];
+    const route = review.quote.journeys.map((leg) => `${leg.from}–${leg.to}`).join(", ");
+    const payable = payableOf(review.quote);
+    return this.payments.createOrder({
+      target: { flightCheckoutId: review.id },
+      amount: payable.amount,
+      currency: payable.currency,
+      description: `Flight ${route}`,
+      prefill: {
+        name: lead ? `${lead.firstName} ${lead.lastName}` : null,
+        email: review.travellerDetails.contact.email,
+        contact: `${review.travellerDetails.contact.phoneCode}${review.travellerDetails.contact.phone}`.replace(/\s+/g, ""),
+      },
+    });
   }
 
   // Step F5: travellers and contact, checked against the fare and the trip.
   async saveTravellers(id: string, key: string, details: FlightTravellerDetails): Promise<FlightReviewSummary> {
-    const review = await this.open(id, key);
-    if (review.expiresAt.getTime() <= Date.now()) {
-      throw new GoneException("The airline's price hold has ended. Please search again for current fares.");
-    }
+    const review = await this.editable(id, key);
     checkTravellers(review.quote, details, todayInIndia());
     // Optional parts only when filled in; PAN or passport only when asked for.
     const clean: FlightTravellerDetails = {
@@ -87,8 +123,10 @@ export class FlightReviewService {
     return this.summary((await this.reviews.find(review.id))!);
   }
 
+  // Still before payment, and within the airline's price hold.
   private async editable(id: string, key: string) {
     const review = await this.open(id, key);
+    if (review.status !== "travellers" && review.status !== "payment") throw new ConflictException("This booking is already paid and can't be changed.");
     if (review.expiresAt.getTime() <= Date.now()) {
       throw new GoneException("The airline's price hold has ended. Please search again for current fares.");
     }
@@ -165,7 +203,8 @@ export class FlightReviewService {
     const { markup: _markup, coupon, ...quote } = review.quote;
     return {
       reviewId: review.id,
-      status: (review.status === "payment" ? "payment" : "travellers") satisfies FlightReviewStatus,
+      status: PUBLIC_STATUS[review.status] ?? "travellers",
+      booking: review.booking,
       expiresAt: review.expiresAt.toISOString(),
       ...quote,
       coupon: coupon ?? null,

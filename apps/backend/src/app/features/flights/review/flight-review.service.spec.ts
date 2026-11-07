@@ -5,6 +5,8 @@ import type { FlightReviewResult, FlightSupplier } from "../../../suppliers/flig
 import { SupplierError } from "../../../suppliers/supplier-error.js";
 import type { FlightSearchSessionsRepository } from "../search/flight-search-sessions.repository.js";
 import type { FlightReviewRepository, NewFlightReview, StoredFlightReview } from "./flight-review.repository.js";
+import type { PaymentsService } from "../../payments/payments.service.js";
+import type { FlightBookingService } from "../booking/flight-booking.service.js";
 import type { CouponsService } from "../../coupons/coupons.service.js";
 import type { PricingService } from "../../../pricing/pricing.service.js";
 import { FlightReviewService } from "./flight-review.service.js";
@@ -24,7 +26,7 @@ function setup(reviewed: Partial<FlightReviewResult> | Error = {}) {
     find: vi.fn(async (id: string) => rows.get(id) ?? null),
     create: vi.fn(async (review: NewFlightReview) => {
       const id = `review-${rows.size + 1}`;
-      rows.set(id, { id, keyHash: review.keyHash, status: "travellers", supplierBookingId: review.supplierBookingId, quote: review.quote, travellerDetails: null, expiresAt: review.expiresAt });
+      rows.set(id, { id, keyHash: review.keyHash, status: "travellers", supplierBookingId: review.supplierBookingId, quote: review.quote, travellerDetails: null, expiresAt: review.expiresAt, userId: null, booking: null, failureReason: null, updatedAt: new Date() });
       return id;
     }),
   };
@@ -51,7 +53,7 @@ function setup(reviewed: Partial<FlightReviewResult> | Error = {}) {
   } as unknown as FlightSupplier;
   // No markup rules: the reviewed price passes through unchanged.
   const pricing = { markFlightReview: vi.fn(async (price: unknown) => ({ price, applied: { ruleId: null, ruleVersion: null, net: price, markup: { amount: 0, currency: "INR" } } })) };
-  const service = new FlightReviewService(supplier, reviews as unknown as FlightReviewRepository, searches as unknown as FlightSearchSessionsRepository, pricing as unknown as PricingService, {} as CouponsService);
+  const service = new FlightReviewService(supplier, reviews as unknown as FlightReviewRepository, searches as unknown as FlightSearchSessionsRepository, pricing as unknown as PricingService, {} as CouponsService, {} as PaymentsService, { recover: vi.fn() } as unknown as FlightBookingService);
   return { service, supplier };
 }
 

@@ -20,6 +20,7 @@ export const routes = {
   flightSearch: "/flights/search",
   // Fare check and travellers for the chosen flights (flights step F4).
   flightReview: "/flights/review",
+  flightBooking: "/flights/booking",
   myBookings: "/account/bookings",
   account: "/account",
   savedTravellers: "/account/travellers",

@@ -330,10 +330,16 @@ model FlightCheckout {
   contactPhone      String?   @map("contact_phone")
   termsVersion      String?   @map("terms_version")
   termsAcceptedAt   DateTime? @map("terms_accepted_at") @db.Timestamptz
+  // After payment (step F6): the supplier's PNRs/tickets and when booked, or why it failed.
+  bookingResult     Json?     @map("booking_result")
+  bookedAt          DateTime? @map("booked_at") @db.Timestamptz
+  failureReason     String?   @map("failure_reason")
   // When the supplier stops holding the fares.
   expiresAt         DateTime  @map("expires_at") @db.Timestamptz
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  payments Payment[]
 
   @@index([userId])
   @@index([createdAt])
@@ -543,6 +549,8 @@ enum PaymentStatus {
 model Payment {
   id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   attemptId         String?       @map("attempt_id") @db.Uuid
+  // Flight payments (hotel ones use attemptId).
+  flightCheckoutId  String?       @map("flight_checkout_id") @db.Uuid
   bookingId         String?       @map("booking_id") @db.Uuid
   provider          String        @default("razorpay")
   providerOrderId   String        @unique @map("provider_order_id")
@@ -554,11 +562,13 @@ model Payment {
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  attempt BookingAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
-  booking Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  refunds Refund[]
+  attempt        BookingAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  flightCheckout FlightCheckout? @relation(fields: [flightCheckoutId], references: [id], onDelete: SetNull)
+  booking        Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  refunds        Refund[]
 
   @@index([bookingId])
+  @@index([flightCheckoutId])
   @@map("payments")
 }
 

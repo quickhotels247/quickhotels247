@@ -35,6 +35,13 @@ export class FlightReviewController {
     return this.reviews.saveTravellers(id, requireCheckoutKey(key, "X-Checkout-Token"), body);
   }
 
+  // Step F6: a Razorpay order to pay what's payable.
+  @Post(":id/payment")
+  @Throttle(LIMITS.sensitive)
+  startPayment(@Param("id", new ParseUUIDPipe()) id: string, @Headers("x-checkout-token") key?: string) {
+    return this.reviews.startPayment(id, requireCheckoutKey(key, "X-Checkout-Token"));
+  }
+
   @Put(":id/coupon")
   @Throttle(LIMITS.sensitive)
   async applyCoupon(

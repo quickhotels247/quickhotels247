@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -34,16 +34,19 @@ const city = (code: string) => airportByCode(code)?.city ?? code;
 // payment (F6). The price is held for a short time throughout.
 export default function FlightReviewPage() {
   const { reviewId } = useParams<{ reviewId: string }>();
+  const router = useRouter();
   const { review, problem, message, saveTravellers, applyCoupon, removeCoupon } = useFlightReview(reviewId);
   const [expired, setExpired] = useState(false);
   const onExpire = useCallback(() => setExpired(true), []);
   // 0 review fare, 1 travellers, 2 payment.
   const [step, setStep] = useState(0);
   const status = review?.status;
-  // Travellers already saved (e.g. after a reload): go to payment.
+  // Travellers already saved (e.g. after a reload): go to payment. Already
+  // paid: the booking page shows ticketing and the PNR.
   useEffect(() => {
     if (status === "payment") setStep(2);
-  }, [status]);
+    if (status === "processing" || status === "confirmed" || status === "failed") router.replace(`${routes.flightBooking}/${reviewId}`);
+  }, [status, reviewId, router]);
   const goTo = (next: number) => {
     setStep(next);
     window.scrollTo({ top: 0, behavior: "smooth" });

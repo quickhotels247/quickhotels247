@@ -23,6 +23,10 @@ export function checkProductionEnv(env: NodeJS.ProcessEnv = process.env) {
   // emails need SMTP (blocked on Render) or the Gmail API settings.
   const gmail = ["GMAIL_CLIENT_ID", "GMAIL_CLIENT_SECRET", "GMAIL_REFRESH_TOKEN"].every((name) => value(name));
   if (!value("SMTP_HOST") && !gmail) warnings.push("no email sending configured (GMAIL_* or SMTP_HOST)");
+  // Without these, Pay is unavailable (the rest of the site works).
+  for (const name of ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET"]) {
+    if (!value(name)) warnings.push(`${name} is not set: online payment is off`);
+  }
   for (const name of ["CORS_ORIGINS", "FRONTEND_URL"]) {
     if (/localhost|127\.0\.0\.1/.test(value(name))) warnings.push(`${name} points at localhost`);
   }
