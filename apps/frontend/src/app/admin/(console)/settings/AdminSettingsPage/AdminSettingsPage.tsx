@@ -10,6 +10,7 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { adminApi } from "@/lib/api/admin";
 import { useAdminAuth } from "@/lib/admin/AdminAuthProvider";
 import { useRequest } from "@/lib/hooks/useRequest";
+import EmailTestCard from "../components/EmailTestCard";
 import { styles } from "./AdminSettingsPage.styles";
 
 // The signed-in admin's account: change password.
@@ -49,6 +50,7 @@ export default function AdminSettingsPage() {
           {busy ? "Saving…" : "Change password"}
         </Button>
       </Box>
+      {token && admin && <EmailTestCard token={token} defaultTo={admin.email} />}
     </>
   );
 }

@@ -11,6 +11,8 @@ import type {
   User,
   VerifySignupOtpResponse,
 } from "@quickhotels/types/users";
+import { MailService } from "../../mail/mail.service.js";
+import { welcomeEmail } from "../../mail/templates/welcome.template.js";
 import { toPublicUser } from "./dto/auth-response.dto.js";
 import type { LoginDto } from "./dto/login.dto.js";
 import type { SignupDetailsDto } from "./dto/signup-details.dto.js";
@@ -41,6 +43,7 @@ export class AuthService {
     private readonly otp: OtpService,
     private readonly clerk: ClerkService,
     private readonly identities: IdentitiesRepository,
+    private readonly mail: MailService,
   ) {}
 
   // Email/password and Google: trade a Clerk session token for a QuickHotels24/7 session.
@@ -108,6 +111,8 @@ export class AuthService {
         profile.clerkUserId,
         profile.accounts,
       );
+      // A new account: say hello (in the background, never blocking sign-in).
+      this.mail.sendInBackground(welcomeEmail(user.email, user.firstName), { template: "welcome", userId: user.id });
       return this.startSession(user, device);
     } catch (error) {
       // Same person finishing sign-in twice at once: use the account that won.

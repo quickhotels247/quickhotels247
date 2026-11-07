@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { MailService } from "../../mail/mail.service.js";
 import { AuthService } from "./auth.service.js";
 import type { ClerkProfile, ClerkService } from "./clerk.service.js";
 import type { UsersRepository, UserWithPassword } from "./users.repository.js";
@@ -22,16 +23,19 @@ function setup(overrides: Partial<ClerkProfile> = {}) {
   const identities = { owners: vi.fn(async () => new Map()), connect: vi.fn() };
   const sessions = { create: vi.fn(async () => ({ token: "quickhotels-session", expiresAt: new Date() })) };
   const clerk = { profile: vi.fn(async () => profile) };
+  const mail = { sendInBackground: vi.fn() };
   const service = new AuthService(users as unknown as UsersRepository,
     sessions as unknown as SessionService, {} as OtpService,
-    clerk as unknown as ClerkService, identities as unknown as IdentitiesRepository);
-  return { service, users, identities, user };
+    clerk as unknown as ClerkService, identities as unknown as IdentitiesRepository,
+    mail as unknown as MailService);
+  return { service, users, identities, user, mail };
 }
 
 describe("Clerk email registration and login", () => {
   it("creates a verified email-only account without a local password or SMTP", async () => {
-    const { service, users } = setup();
+    const { service, users, mail } = setup();
     const response = await service.loginWithClerk("verified-session");
+    expect(mail.sendInBackground).toHaveBeenCalledWith(expect.objectContaining({ to: "new@example.com" }), expect.objectContaining({ template: "welcome" }));
     expect(users.create).toHaveBeenCalledWith(expect.objectContaining({
       clerkUserId: "clerk-new", username: "new.user", passwordHash: null,
       isVerified: true, signedInWith: "QuickHotels",

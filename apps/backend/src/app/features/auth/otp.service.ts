@@ -72,8 +72,7 @@ export class OtpService {
         firstName,
         code,
         Math.round(this.config.otpTtlMs / 60000),
-      ),
-    );
+      ), { template: "signup-otp" });
 
     return {
       email,

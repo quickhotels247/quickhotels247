@@ -25,6 +25,10 @@ export const adminApi = {
   logout: (token: string) => apiRequest<void>("/admin/auth/logout", { method: "POST", headers: bearer(token) }),
   changePassword: (token: string, request: ChangeAdminPasswordRequest) =>
     apiRequest<void>("/admin/auth/password", { method: "PUT", body: JSON.stringify(request), headers: bearer(token) }),
+  // Email: is sending set up, and send a test email to an address.
+  mailStatus: (token: string, signal?: AbortSignal) => apiRequest<{ configured: boolean }>("/admin/mail/status", { signal, headers: bearer(token) }),
+  testEmail: (token: string, to: string) =>
+    apiRequest<void>("/admin/mail/test", { method: "POST", body: JSON.stringify({ to }), headers: bearer(token) }),
 
   overview: (token: string, signal?: AbortSignal) => apiRequest<AdminOverview>("/admin/overview", { signal, headers: bearer(token) }),
   users: (token: string, search: string, page: number, signal?: AbortSignal) => {

@@ -1,3 +1,4 @@
+import { AdminMailController } from "./admin-mail.controller.js";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { adminConfig } from "./admin.config.js";
@@ -17,6 +18,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
 @Module({
   imports: [ConfigModule.forFeature(adminConfig)],
   controllers: [
+    AdminMailController,
     AdminAuthController,
     AdminAdminsController,
     AdminOverviewController,
