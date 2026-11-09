@@ -60,13 +60,17 @@ export default function PaymentsPage() {
         {data?.items.map((payment) => {
           const refunded = payment.refunds.filter((refund) => refund.status !== "FAILED").reduce((sum, refund) => sum + refund.amount.amount, 0);
           const failedRefund = payment.refunds.some((refund) => refund.status === "FAILED");
-          const href = payment.flightBookingId ? `${routes.adminBookings}/flights/${payment.flightBookingId}` : null;
+          const href = payment.flightBookingId
+            ? `${routes.adminBookings}/flights/${payment.flightBookingId}`
+            : payment.hotelBookingId
+              ? `${routes.adminBookings}/hotels/${payment.hotelBookingId}`
+              : null;
           const body = (
             <>
               <Box sx={styles.main}>
                 <Typography sx={styles.title}>
                   <b>{money(payment.amount)}</b>
-                  {payment.method ? ` · ${payment.method}` : ""} · {payment.flightBookingId ? "Flight" : "Hotel"}
+                  {payment.method ? ` · ${payment.method}` : ""} · {payment.flightBookingId ? "Flight" : payment.hotelReference ? `Hotel ${payment.hotelReference}` : "Hotel"}
                   {payment.email ? ` · ${payment.email}` : ""}
                 </Typography>
                 <Typography sx={styles.mono}>{payment.providerPaymentId ?? payment.providerOrderId}</Typography>

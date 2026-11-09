@@ -1,6 +1,6 @@
-import type { AdminFlightStatus, AdminRefundRequest } from "@quickhotels/types/admin";
+import type { AdminFlightStatus, AdminHotelCancelRequest, AdminHotelFilter, AdminRefundRequest } from "@quickhotels/types/admin";
 import { Transform } from "class-transformer";
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from "class-validator";
+import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from "class-validator";
 
 const FLIGHT_STATUSES: AdminFlightStatus[] = ["travellers", "payment", "paid", "booking", "pending", "confirmed", "failed"];
 const page = ({ value }: { value: unknown }) => Number(value);
@@ -54,4 +54,34 @@ export class RefundDto implements AdminRefundRequest {
   @IsString()
   @Matches(/^[\s\S]{5,300}$/, { message: "Say why (5–300 characters); it's kept with the refund." })
   reason: string;
+}
+
+export class HotelBookingListQueryDto {
+  @IsOptional()
+  @IsIn(["all", "processing", "confirmed", "cancelled", "failed"])
+  status: AdminHotelFilter = "all";
+
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @IsString()
+  @MaxLength(100)
+  q?: string;
+
+  @IsOptional()
+  @Transform(page)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  page: number = 1;
+}
+
+export class HotelCancelDto implements AdminHotelCancelRequest {
+  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @IsString()
+  @Matches(/^[\s\S]{5,300}$/, { message: "Say why (5–300 characters); it's kept with the cancellation." })
+  reason: string;
+
+  @IsOptional()
+  @IsBoolean()
+  waiveFee?: boolean;
 }

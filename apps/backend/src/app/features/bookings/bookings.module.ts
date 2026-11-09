@@ -12,6 +12,7 @@ import { BookingsService } from "./bookings.service.js";
 @Module({
   imports: [AuthModule, CheckoutModule, SuppliersModule],
   controllers: [BookingsController],
+  exports: [HotelCancellationService],
   providers: [BookingsService, BookingsRepository, HotelCancellationsRepository, HotelCancellationService, HotelCancellationReconciler],
 })
 export class BookingsModule {}

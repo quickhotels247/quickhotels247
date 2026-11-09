@@ -178,6 +178,9 @@ export interface AdminPaymentRow extends AdminPayment {
   // The booking it paid for.
   flightBookingId: string | null;
   hotelCheckoutId: string | null;
+  // The hotel booking made from that checkout, once there is one.
+  hotelBookingId: string | null;
+  hotelReference: string | null;
   email: string | null;
 }
 
@@ -193,4 +196,100 @@ export interface AdminRefundRequest {
   // Rupees; empty for everything still refundable.
   amount?: number | null;
   reason: string;
+}
+
+// ---- Hotel bookings (staff) ----
+
+// Our booking states (the database enum).
+export type AdminHotelStatus =
+  | "PAYMENT_PENDING"
+  | "SUPPLIER_BOOKING_PENDING"
+  | "CONFIRMED"
+  | "SUPPLIER_BOOKING_FAILED"
+  | "MANUAL_REVIEW"
+  | "CANCELLATION_PENDING"
+  | "CANCELLED"
+  | "REFUND_PENDING"
+  | "REFUNDED"
+  | "PAYMENT_FAILED"
+  | "INITIATED"
+  | "PRICE_REVIEW_PENDING"
+  | "AWAITING_PAYMENT";
+
+// List tabs: groups of states.
+export type AdminHotelFilter = "all" | "processing" | "confirmed" | "cancelled" | "failed";
+
+export interface AdminHotelBookingRow {
+  id: string;
+  reference: string;
+  status: AdminHotelStatus;
+  hotel: string;
+  city: string | null;
+  checkIn: string; // YYYY-MM-DD
+  checkOut: string;
+  nights: number;
+  rooms: number;
+  guests: number;
+  leadGuest: string | null;
+  email: string;
+  supplierConfirmation: string | null;
+  total: AdminMoney;
+  paymentStatus: string | null;
+  refunded: AdminMoney | null;
+  createdAt: string;
+}
+
+export interface AdminHotelBookingList {
+  items: AdminHotelBookingRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Partial<Record<AdminHotelFilter, number>>;
+}
+
+export interface AdminHotelCancellation {
+  status: string;
+  fee: AdminMoney | null;
+  refundEstimate: AdminMoney | null;
+  reason: string | null;
+  requestedBy: string;
+  requestedAt: string;
+  completedAt: string | null;
+}
+
+export interface AdminHotelBooking extends AdminHotelBookingRow {
+  phone: string;
+  address: string | null;
+  supplier: string;
+  // TripJack's booking id (from Review), for support calls.
+  supplierBookingId: string | null;
+  checkoutId: string | null;
+  roomsBooked: { name: string; mealPlan: string | null; guests: string[] }[];
+  specialRequests: string | null;
+  money: {
+    customerTotal: AdminMoney;
+    coupon: { code: string; discount: AdminMoney } | null;
+    supplierNet: AdminMoney | null;
+    markup: AdminMoney | null;
+    // What we keep: paid − net − refunded… before refunds: paid − net.
+    margin: AdminMoney | null;
+    ruleVersion: number | null;
+  };
+  // Cancellation terms as sold, and cancelling now.
+  policy: { refundable: boolean; freeCancellationUntil: string | null; charges: { from: string; to: string; amount: AdminMoney }[] } | null;
+  cancelQuote: { allowed: boolean; reason: string | null; fee: AdminMoney; refund: AdminMoney } | null;
+  cancellations: AdminHotelCancellation[];
+  payments: AdminPayment[];
+  history: { from: string | null; to: string; source: string; reason: string | null; at: string }[];
+  confirmedAt: string | null;
+  cancelledAt: string | null;
+  opsAlertedAt: string | null;
+  updatedAt: string;
+}
+
+// POST /api/admin/bookings/hotels/:id/cancel
+export interface AdminHotelCancelRequest {
+  reason: string;
+  // Refund everything paid instead of following the policy.
+  waiveFee?: boolean;
 }

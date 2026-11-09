@@ -1,4 +1,9 @@
 import { FlightsModule } from "../flights/flights.module.js";
+import { BookingsModule } from "../bookings/bookings.module.js";
+import { CheckoutModule } from "../checkout/checkout.module.js";
+import { SuppliersModule } from "../../suppliers/suppliers.module.js";
+import { AdminHotelBookingsRepository } from "./bookings/admin-hotel-bookings.repository.js";
+import { AdminHotelBookingsService } from "./bookings/admin-hotel-bookings.service.js";
 import { AdminBookingsController } from "./bookings/admin-bookings.controller.js";
 import { AdminBookingsRepository } from "./bookings/admin-bookings.repository.js";
 import { AdminBookingsService } from "./bookings/admin-bookings.service.js";
@@ -27,7 +32,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
 
 // The admin dashboard, under /api/admin. Admins sign in separately from users.
 @Module({
-  imports: [ConfigModule.forFeature(adminConfig), FlightsModule],
+  imports: [ConfigModule.forFeature(adminConfig), FlightsModule, BookingsModule, CheckoutModule, SuppliersModule],
   controllers: [
     AdminBookingsController,
     AdminCouponsController,
@@ -42,6 +47,8 @@ import { AuditLogRepository } from "./audit-log.repository.js";
   providers: [
     AdminBookingsService,
     AdminBookingsRepository,
+    AdminHotelBookingsService,
+    AdminHotelBookingsRepository,
     AdminCouponsService,
     AdminSupportService,
     AdminSupportRepository,

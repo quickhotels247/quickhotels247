@@ -47,7 +47,7 @@ export function toListItem(booking: BookingForList | BookingWithDetails): Bookin
 
 // The policy saved with the first room at booking time (spec §4.8: the
 // snapshot, not today's hotel policy). Read defensively: it's stored JSON.
-function policy(raw: unknown, currency: string): BookingCancellationPolicy | null {
+export function policy(raw: unknown, currency: string): BookingCancellationPolicy | null {
   const value = raw as { refundable?: unknown; freeCancellationUntil?: unknown; charges?: unknown } | null;
   if (!value || typeof value !== "object") return null;
   const charges = Array.isArray(value.charges)

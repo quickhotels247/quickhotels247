@@ -1,16 +1,3 @@
 export const styles = {
-  tabs: { mb: 2, borderBottom: 1, borderColor: "divider", "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 44 } },
-  search: { width: { xs: "100%", sm: 420 }, mb: 2, "& .MuiInputBase-root": { borderRadius: 2, bgcolor: "background.paper" } },
-  list: { display: "flex", flexDirection: "column", gap: 1, transition: "opacity 0.2s" },
-  loading: { opacity: 0.6 },
-  empty: { color: "text.secondary", py: 4, textAlign: "center" },
-  row: { display: "flex", gap: 2, p: 2, bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2.5, color: "inherit", textDecoration: "none", "&:hover": { borderColor: "primary.main" } },
-  main: { flex: 1, minWidth: 0 },
-  title: { fontSize: "0.9375rem" },
-  meta: { fontSize: "0.8125rem", color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  side: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.5, flexShrink: 0 },
-  amount: { fontWeight: 800, fontSize: "0.9375rem" },
-  refunded: { fontSize: "0.75rem", color: "info.main", fontWeight: 600 },
-  time: { fontSize: "0.75rem", color: "text.secondary" },
-  pagination: { display: "flex", justifyContent: "center", mt: 2 },
+  products: { mb: 1.5, "& .MuiToggleButton-root": { textTransform: "none", fontWeight: 600, px: 2.5 } },
 };

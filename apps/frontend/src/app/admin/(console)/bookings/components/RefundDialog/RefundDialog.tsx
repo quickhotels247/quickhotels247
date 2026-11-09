@@ -10,24 +10,23 @@ import DialogTitle from "@mui/material/DialogTitle";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import type { AdminFlightBooking } from "@quickhotels/types/admin";
-import { adminApi } from "@/lib/api/admin";
 import { money } from "@/lib/admin/format";
 import { useRequest } from "@/lib/hooks/useRequest";
 import { styles } from "./RefundDialog.styles";
 
 interface RefundDialogProps {
   open: boolean;
-  token: string;
-  booking: AdminFlightBooking;
   // Still refundable (paid − refunded so far).
   refundable: number;
+  // Shown above the form, e.g. "the booking stays booked".
+  warning?: string | null;
+  // amount null = everything still refundable.
+  onRefund: (amount: number | null, reason: string) => Promise<void>;
   onClose: () => void;
-  onDone: (booking: AdminFlightBooking) => void;
 }
 
-// Money back to the customer through Razorpay, in full or part.
-export default function RefundDialog({ open, token, booking, refundable, onClose, onDone }: RefundDialogProps) {
+// Money back to the customer through Razorpay, in full or part (flights and hotels).
+export default function RefundDialog({ open, refundable, warning, onRefund, onClose }: RefundDialogProps) {
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const { busy, error, setError, run } = useRequest();
@@ -43,7 +42,7 @@ export default function RefundDialog({ open, token, booking, refundable, onClose
     event.preventDefault();
     const value = Number(amount);
     if (!value || value <= 0 || value > refundable) return setError(`Enter an amount between ₹1 and ${money({ amount: refundable, currency: "INR" })}.`);
-    void run(async () => onDone(await adminApi.refundFlightBooking(token, booking.id, { amount: value === refundable ? null : value, reason: reason.trim() })));
+    void run(() => onRefund(value === refundable ? null : value, reason.trim()));
   }
 
   return (
@@ -51,9 +50,7 @@ export default function RefundDialog({ open, token, booking, refundable, onClose
       <DialogTitle>Refund the customer</DialogTitle>
       <DialogContent sx={styles.content}>
         {error && <Alert severity="error">{error}</Alert>}
-        {booking.status === "confirmed" && (
-          <Alert severity="warning">This booking is ticketed. A refund only returns money; cancel the tickets with TripJack separately, or the airline seats stay booked.</Alert>
-        )}
+        {warning && <Alert severity="warning">{warning}</Alert>}
         <Typography sx={styles.text}>Refundable now: {money({ amount: refundable, currency: "INR" })}. It goes back to the customer&apos;s original payment method through Razorpay.</Typography>
         <TextField
           label="Amount"

@@ -22,7 +22,7 @@ import { useAdminAuth } from "@/lib/admin/AdminAuthProvider";
 import { flightTime, money, when } from "@/lib/admin/format";
 import { useApiData } from "@/lib/hooks/useApiData";
 import { useRequest } from "@/lib/hooks/useRequest";
-import RefundDialog from "../components/RefundDialog";
+import RefundDialog from "../../components/RefundDialog";
 import { styles } from "./FlightBookingPage.styles";
 
 // One flight booking for staff: status and actions, the trip, travellers,
@@ -178,12 +178,11 @@ export default function FlightBookingPage() {
           {canRefund && (
             <RefundDialog
               open={refunding}
-              token={token}
-              booking={booking}
               refundable={refundable}
+              warning={booking.status === "confirmed" ? "This booking is ticketed. A refund only returns money; cancel the tickets with TripJack separately, or the airline seats stay booked." : null}
               onClose={() => setRefunding(false)}
-              onDone={(next) => {
-                setBooking(next);
+              onRefund={async (amount, reason) => {
+                setBooking(await adminApi.refundFlightBooking(token, booking.id, { amount, reason }));
                 setRefunding(false);
                 setNotice("Refund sent to Razorpay.");
               }}

@@ -154,16 +154,16 @@ export class AdminBookingsRepository {
 
   async payments(status: string | undefined, query: string | undefined, page: number): Promise<AdminPaymentList> {
     const search: Prisma.PaymentWhereInput = query
-      ? { OR: [{ providerOrderId: { contains: query } }, { providerPaymentId: { contains: query } }, { flightCheckout: { contactEmail: { contains: query, mode: "insensitive" } } }] }
+      ? { OR: [{ providerOrderId: { contains: query } }, { providerPaymentId: { contains: query } }, { flightCheckout: { contactEmail: { contains: query, mode: "insensitive" } } }, { booking: { contactEmail: { contains: query, mode: "insensitive" } } }, { booking: { reference: { contains: query, mode: "insensitive" } } }] }
       : {};
     const where: Prisma.PaymentWhereInput = { ...search, ...(status ? { status: status as PaymentRecord["status"] } : {}) };
     const [rows, total, grouped] = await Promise.all([
-      this.db.payment.findMany({ where, include: { ...paymentInclude, flightCheckout: { select: { contactEmail: true } } }, orderBy: { createdAt: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+      this.db.payment.findMany({ where, include: { ...paymentInclude, flightCheckout: { select: { contactEmail: true } }, booking: { select: { id: true, reference: true, contactEmail: true } } }, orderBy: { createdAt: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
       this.db.payment.count({ where }),
       this.db.payment.groupBy({ by: ["status"], where: search, _count: { _all: true } }),
     ]);
     return {
-      items: rows.map((row) => ({ ...toPayment(row), flightBookingId: row.flightCheckoutId, hotelCheckoutId: row.attemptId, email: row.flightCheckout?.contactEmail ?? null })),
+      items: rows.map((row) => ({ ...toPayment(row), flightBookingId: row.flightCheckoutId, hotelCheckoutId: row.attemptId, hotelBookingId: row.booking?.id ?? null, hotelReference: row.booking?.reference ?? null, email: row.flightCheckout?.contactEmail ?? row.booking?.contactEmail ?? null })),
       total,
       page,
       pageSize: PAGE_SIZE,

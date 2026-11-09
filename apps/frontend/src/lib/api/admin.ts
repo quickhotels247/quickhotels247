@@ -18,6 +18,10 @@ import type {
   AdminFlightBookingList,
   AdminPaymentList,
   AdminRefundRequest,
+  AdminHotelBooking,
+  AdminHotelBookingList,
+  AdminHotelCancelRequest,
+  AdminHotelFilter,
 } from "@quickhotels/types/admin";
 import { apiRequest, postJson } from "./client";
 
@@ -53,6 +57,16 @@ export const adminApi = {
     apiRequest<{ supplierStatus: string; booking: AdminFlightBooking }>(`/admin/bookings/flights/${encodeURIComponent(id)}/recheck`, { method: "POST", headers: bearer(token) }),
   refundFlightBooking: (token: string, id: string, request: AdminRefundRequest) =>
     apiRequest<AdminFlightBooking>(`/admin/bookings/flights/${encodeURIComponent(id)}/refund`, { method: "POST", body: JSON.stringify(request), headers: bearer(token) }),
+  hotelBookings: (token: string, params: { status?: AdminHotelFilter; q?: string; page?: number }, signal?: AbortSignal) =>
+    apiRequest<AdminHotelBookingList>(`/admin/bookings/hotels?${query(params)}`, { signal, headers: bearer(token) }),
+  hotelBooking: (token: string, id: string, signal?: AbortSignal) =>
+    apiRequest<AdminHotelBooking>(`/admin/bookings/hotels/${encodeURIComponent(id)}`, { signal, headers: bearer(token) }),
+  recheckHotelBooking: (token: string, id: string) =>
+    apiRequest<{ supplierStatus: string; booking: AdminHotelBooking }>(`/admin/bookings/hotels/${encodeURIComponent(id)}/recheck`, { method: "POST", headers: bearer(token) }),
+  refundHotelBooking: (token: string, id: string, request: AdminRefundRequest) =>
+    apiRequest<AdminHotelBooking>(`/admin/bookings/hotels/${encodeURIComponent(id)}/refund`, { method: "POST", body: JSON.stringify(request), headers: bearer(token) }),
+  cancelHotelBooking: (token: string, id: string, request: AdminHotelCancelRequest) =>
+    apiRequest<AdminHotelBooking>(`/admin/bookings/hotels/${encodeURIComponent(id)}/cancel`, { method: "POST", body: JSON.stringify(request), headers: bearer(token) }),
   payments: (token: string, params: { status?: string; q?: string; page?: number }, signal?: AbortSignal) =>
     apiRequest<AdminPaymentList>(`/admin/payments?${query(params)}`, { signal, headers: bearer(token) }),
   // Coupons; every change returns the whole updated list.
