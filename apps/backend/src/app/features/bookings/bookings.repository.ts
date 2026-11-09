@@ -51,6 +51,10 @@ export class BookingsRepository {
     return this.db.booking.findFirst({ where: { reference, userId }, include: DETAIL });
   }
 
+  findByReference(reference: string): Promise<BookingWithDetails | null> {
+    return this.db.booking.findUnique({ where: { reference }, include: DETAIL });
+  }
+
   // A guest's booking, opened with the key of the checkout that made it.
   findForCheckout(reference: string, keyHash: string): Promise<BookingWithDetails | null> {
     return this.db.booking.findFirst({ where: { reference, attempt: { accessTokenHash: keyHash } }, include: DETAIL });

@@ -36,11 +36,18 @@ export type CheckoutStatus =
   // Collecting guest details.
   | "details"
   // Details saved; payment comes next.
-  | "payment";
+  | "payment"
+  // Paid: booking with the hotel (see bookingReference).
+  | "processing"
+  | "confirmed"
+  // The hotel couldn't confirm; the payment is refunded.
+  | "failed";
 
 export interface CheckoutSummary {
   checkoutId: string;
   status: CheckoutStatus;
+  // Once paid: the booking to show (/booking/<reference>).
+  bookingReference: string | null;
   // The re-checked rate is held until then; afterwards the visitor starts again.
   expiresAt: string;
   hotel: {

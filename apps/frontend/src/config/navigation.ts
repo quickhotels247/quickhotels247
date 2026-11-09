@@ -1,5 +1,7 @@
 import type { SvgIconComponent } from "@mui/icons-material";
 import BookmarkBorderRounded from "@mui/icons-material/BookmarkBorderRounded";
+import FavoriteBorderRounded from "@mui/icons-material/FavoriteBorderRounded";
+import PeopleOutlineRounded from "@mui/icons-material/PeopleOutlineRounded";
 import FlightRounded from "@mui/icons-material/FlightRounded";
 import HomeOutlined from "@mui/icons-material/HomeOutlined";
 import HotelRounded from "@mui/icons-material/HotelRounded";
@@ -20,6 +22,8 @@ export const routes = {
   flightSearch: "/flights/search",
   // Fare check and travellers for the chosen flights (flights step F4).
   flightReview: "/flights/review",
+  // Hotel booking confirmation: /booking/<reference>.
+  booking: "/booking",
   flightBooking: "/flights/booking",
   myBookings: "/account/bookings",
   account: "/account",
@@ -52,6 +56,12 @@ export const routes = {
 // Account links for the phone menu. Home and hotel search live under Stays.
 export const mainNav: NavItem[] = [
   { label: "My Bookings", href: routes.myBookings, icon: BookmarkBorderRounded },
+];
+
+// Signed-in extras, in the account menu and the phone menu.
+export const accountNav: NavItem[] = [
+  { label: "Saved hotels", href: routes.savedHotels, icon: FavoriteBorderRounded },
+  { label: "Saved travellers", href: routes.savedTravellers, icon: PeopleOutlineRounded },
 ];
 
 // Products under the logo, like Booking.com's Stays / Flights row. A product

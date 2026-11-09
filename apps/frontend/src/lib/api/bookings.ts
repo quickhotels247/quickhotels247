@@ -12,6 +12,9 @@ export const bookingsApi = {
   },
   get: (token: string, reference: string, signal?: AbortSignal) =>
     apiRequest<BookingDetails>(`/v1/bookings/${encodeURIComponent(reference)}`, { signal, headers: bearer(token) }),
+  // From the confirmation email's private link (?t=).
+  getByLink: (reference: string, linkToken: string, signal?: AbortSignal) =>
+    apiRequest<BookingDetails>(`/v1/bookings/link/${encodeURIComponent(reference)}?t=${encodeURIComponent(linkToken)}`, { signal }),
   // A guest's booking, opened with the key of the checkout that made it.
   getAsGuest: (checkoutKey: string, reference: string, signal?: AbortSignal) =>
     apiRequest<BookingDetails>(`/v1/bookings/guest/${encodeURIComponent(reference)}`, { signal, headers: { "X-Checkout-Token": checkoutKey } }),

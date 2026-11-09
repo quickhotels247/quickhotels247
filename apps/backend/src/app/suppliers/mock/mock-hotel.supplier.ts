@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { DestinationSuggestion, HotelSearchRequest, HotelSearchResult, RoomOption } from "@quickhotels/types/hotels";
-import type { HotelPageContent, HotelSupplier, SupplierReviewResult, SupplierRoomsResult, SupplierSearchResult } from "../hotel-supplier.js";
+import type { HotelPageContent, HotelSupplier, SupplierHotelBooking, SupplierHotelGuests, SupplierReviewResult, SupplierRoomsResult, SupplierSearchResult } from "../hotel-supplier.js";
 import { SupplierError } from "../supplier-error.js";
 import { MOCK_HOTELS, mockImageUrl } from "./mock-hotels.data.js";
 
@@ -96,7 +96,23 @@ export class MockHotelSupplier implements HotelSupplier {
   async reviewRoom(request: HotelSearchRequest, _roomsContext: unknown, optionId: string): Promise<SupplierReviewResult> {
     const option = (await this.hotelRooms(request)).options.find((rate) => rate.id === optionId);
     if (!option) throw new SupplierError("SOLD_OUT", `No sample rate ${optionId}.`, this.name, "mock");
-    return { option, context: null };
+    return { option, context: { bookingId: `MOCK-${optionId}-${Date.now()}` } };
+  }
+
+  // Sample bookings for testing the paid flow without TripJack: confirmed,
+  // unless the lead guest's last name is "Fail" (then the supplier says FAILED).
+  private readonly booked = new Map<string, "SUCCESS" | "FAILED">();
+
+  async bookRoom(reviewContext: unknown, _amount: number, guests: SupplierHotelGuests): Promise<void> {
+    const id = (reviewContext as { bookingId?: string } | null)?.bookingId ?? "MOCK";
+    const lead = guests.rooms[0]?.guests[0];
+    this.booked.set(id, lead?.lastName.trim().toLowerCase() === "fail" ? "FAILED" : "SUCCESS");
+  }
+
+  async hotelBooking(reviewContext: unknown): Promise<SupplierHotelBooking> {
+    const id = (reviewContext as { bookingId?: string } | null)?.bookingId ?? "MOCK";
+    const status = this.booked.get(id) ?? "IN_PROGRESS";
+    return { status, confirmation: status === "SUCCESS" ? `SAMPLE-${id.slice(-6)}` : null, supplierReference: id };
   }
 
   refForHotel(): string | null {

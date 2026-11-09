@@ -24,7 +24,9 @@ export default function ConfirmationBanner({ booking, checking, onCheckAgain }: 
         ? { icon: <HourglassTopRounded />, title: "Confirmation in progress", text: "Your payment is safe. We're waiting for the hotel to confirm, which usually takes a few minutes. Please don't book again; we'll email you as soon as it's confirmed.", sx: styles.waiting }
         : booking.status === "action_required"
           ? { icon: <ErrorOutlineRounded />, title: "We need to sort something out", text: "There was a problem confirming this booking with the hotel. Our team will contact you, and any amount paid is protected.", sx: styles.bad }
-          : { icon: <InfoOutlined />, title: "This booking has been cancelled", text: "See the cancellation and refund details below.", sx: styles.neutral };
+          : !booking.cancellation && (booking.status === "refunded" || booking.status === "refund_pending")
+            ? { icon: <ErrorOutlineRounded />, title: "We couldn't book this stay", text: "The hotel couldn't confirm it, so nothing is booked and your payment is refunded in full. Banks usually show it within 5–7 working days.", sx: styles.bad }
+            : { icon: <InfoOutlined />, title: "This booking has been cancelled", text: "See the cancellation and refund details below.", sx: styles.neutral };
   return (
     <Box sx={[styles.root, tone.sx]} role="status">
       <Box sx={styles.icon} aria-hidden="true">

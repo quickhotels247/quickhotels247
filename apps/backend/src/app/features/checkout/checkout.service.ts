@@ -10,6 +10,7 @@ import {
 } from "@nestjs/common";
 import type { CheckoutGuestDetails, CheckoutSummary } from "@quickhotels/types/checkout";
 import type { Money } from "@quickhotels/types/hotels";
+import type { PaymentOrder } from "@quickhotels/types/payments";
 import { BookingStatus } from "../../../generated/prisma/client.js";
 import { TERMS_VERSION } from "../../common/config/terms.js";
 import { hashCheckoutKey as hash, keyMatches } from "../../common/utils/checkout-key.js";
@@ -20,6 +21,8 @@ import { splitGuests } from "../hotels/room-guests.js";
 import { SearchSessionsRepository } from "../hotels/search-sessions.repository.js";
 import { nightsOf } from "../hotels/stay-rules.js";
 import { CouponsService } from "../coupons/coupons.service.js";
+import { PaymentsService } from "../payments/payments.service.js";
+import { HotelBookingService } from "./booking/hotel-booking.service.js";
 import { CheckoutRepository, payableOf, type CheckoutQuote, type StoredCheckout } from "./checkout.repository.js";
 
 // How long a reviewed rate is held for guest details and payment.
@@ -37,6 +40,17 @@ interface RoomsSessionContext {
 
 const ADULT_TITLES = new Set(["Mr", "Mrs", "Ms", "Miss"]);
 const CHILD_TITLES = new Set(["Master", "Miss"]);
+// Checkout statuses as the customer sees them.
+const CUSTOMER_STATUS: Partial<Record<BookingStatus, CheckoutSummary["status"]>> = {
+  AWAITING_PAYMENT: "payment",
+  PAYMENT_PENDING: "processing",
+  SUPPLIER_BOOKING_PENDING: "processing",
+  CONFIRMED: "confirmed",
+  SUPPLIER_BOOKING_FAILED: "failed",
+  REFUND_PENDING: "failed",
+  REFUNDED: "failed",
+};
+
 const EDITABLE: BookingStatus[] = [BookingStatus.INITIATED, BookingStatus.PRICE_REVIEW_PENDING, BookingStatus.AWAITING_PAYMENT];
 
 // Checkout (spec §4.4): re-checks the chosen rate with the supplier, holds a
@@ -55,6 +69,8 @@ export class CheckoutService {
     private readonly sessions: SearchSessionsRepository,
     private readonly hotels: HotelPageRepository,
     private readonly coupons: CouponsService,
+    private readonly payments: PaymentsService,
+    private readonly booking: HotelBookingService,
   ) {}
 
   // Starts a checkout for a rate from the hotel page. `key` is the browser's
@@ -134,7 +150,52 @@ export class CheckoutService {
   }
 
   async get(id: string, key: string): Promise<CheckoutSummary> {
-    return this.summary(await this.open(id, key));
+    const checkout = await this.open(id, key);
+    // Paid but stalled (e.g. a server restart): move it on.
+    this.booking.recover(checkout);
+    return this.summary(checkout);
+  }
+
+  // A Razorpay order for what's payable now (guests saved). The coupon is
+  // checked again (limits or dates may have changed since it was applied);
+  // if it no longer fits it's removed and the customer told.
+  async startPayment(id: string, key: string, userId: string | null = null): Promise<PaymentOrder> {
+    let checkout = await this.editable(id, key);
+    if (checkout.status !== BookingStatus.AWAITING_PAYMENT || !checkout.guestDetails) throw new ConflictException("Add the guest details before paying.");
+    if (userId) await this.checkouts.claim(checkout.id, userId);
+    const quote = checkout.quote!;
+    if (quote.coupon) {
+      try {
+        const coupon = await this.coupons.apply(quote.coupon.code, {
+          product: "HOTEL",
+          amount: quote.room.totalPrice.amount,
+          currency: quote.room.totalPrice.currency,
+          margin: quote.markup?.markup.amount ?? 0,
+          city: quote.hotel.city,
+          userId: userId ?? checkout.userId,
+        });
+        if (coupon.discount.amount !== quote.coupon.discount.amount) await this.checkouts.setQuote(checkout.id, { ...quote, coupon });
+      } catch (error) {
+        await this.checkouts.setQuote(checkout.id, { ...quote, coupon: null });
+        const total = payableOf({ ...quote, coupon: null });
+        throw new ConflictException(`Coupon ${quote.coupon.code} can't be used any more (${(error as Error).message.replace(/\.$/, "")}), so it was removed. Your total is now ₹${total.amount.toLocaleString("en-IN")}. Press Pay again to continue.`);
+      }
+      checkout = (await this.checkouts.find(checkout.id))!;
+    }
+    const details = checkout.guestDetails!;
+    const lead = details.rooms[0]?.guests[0];
+    const payable = payableOf(checkout.quote!);
+    return this.payments.createOrder({
+      target: { attemptId: checkout.id },
+      amount: payable.amount,
+      currency: payable.currency,
+      description: `${checkout.quote!.hotel.name}, ${checkout.quote!.nights} night${checkout.quote!.nights === 1 ? "" : "s"}`,
+      prefill: {
+        name: lead ? `${lead.firstName} ${lead.lastName}` : null,
+        email: details.contact.email,
+        contact: `${details.contact.phoneCode}${details.contact.phone}`.replace(/\s+/g, ""),
+      },
+    });
   }
 
   async saveGuests(id: string, key: string, details: CheckoutGuestDetails): Promise<CheckoutSummary> {
@@ -227,7 +288,8 @@ export class CheckoutService {
     const { markup: _markup, coupon, ...quote } = checkout.quote!;
     return {
       checkoutId: checkout.id,
-      status: checkout.status === BookingStatus.AWAITING_PAYMENT ? "payment" : "details",
+      status: CUSTOMER_STATUS[checkout.status] ?? "details",
+      bookingReference: checkout.booking?.reference ?? null,
       expiresAt: (checkout.expiresAt ?? new Date()).toISOString(),
       ...quote,
       coupon: coupon ?? null,

@@ -1,4 +1,6 @@
 import { BadRequestException, Controller, Get, Headers, Param, Query, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
+import { LIMITS } from "../../common/throttle/limits.js";
 import { requireCheckoutKey } from "../../common/utils/checkout-key.js";
 import { AuthGuard, CurrentUserId } from "../auth/auth.guard.js";
 import { BookingsQueryDto } from "./dto/bookings-query.dto.js";
@@ -27,6 +29,13 @@ export class BookingsController {
   @Get("guest/:reference")
   forCheckout(@Param("reference") ref: string, @Headers("x-checkout-token") key?: string) {
     return this.bookings.forCheckout(reference(ref), requireCheckoutKey(key, "X-Checkout-Token"));
+  }
+
+  // From the confirmation email: /bookings/link/QH-…?t=<link token>.
+  @Get("link/:reference")
+  @Throttle(LIMITS.sensitive)
+  forLink(@Param("reference") ref: string, @Query("t") token?: string) {
+    return this.bookings.forLink(reference(ref), token);
   }
 
   @Get(":reference")

@@ -9,11 +9,14 @@ import type {
   HotelSearchOptions,
   HotelSupplier,
   SupplierCallContext,
+  SupplierHotelBooking,
+  SupplierHotelGuests,
   SupplierReviewResult,
   SupplierRoomsResult,
   SupplierSearchResult,
 } from "../hotel-supplier.js";
 import { SupplierError } from "../supplier-error.js";
+import { toHotelBooking, toTripjackHotelBook, type TripjackHotelBookingDetails } from "./tripjack-hotel-booking.mapper.js";
 import { TripjackClient } from "./tripjack.client.js";
 import { landmarkFor } from "./city-centres.js";
 import { tripjackConfig, type TripjackConfig } from "./tripjack.config.js";
@@ -24,6 +27,7 @@ import { listingToResult, type CachedHotel } from "./tripjack.mapper.js";
 import { toTripjackRooms } from "./tripjack-occupancy.js";
 import { contentToHotelPage, toRoomOption } from "./tripjack-hotel-page.mapper.js";
 import type {
+  TripjackEnvelope,
   TripjackHotelContentResponse,
   TripjackListingResponse,
   TripjackPricingResponse,
@@ -318,5 +322,19 @@ export class TripjackHotelSupplier implements HotelSupplier {
     }
     const best = pickRegion(regions, names, country);
     return best ? regions.find((region) => region.regionId === best.regionId)! : null;
+  }
+
+  async bookRoom(reviewContext: unknown, amount: number, guests: SupplierHotelGuests, context: SupplierCallContext): Promise<void> {
+    const review = reviewContext as { bookingId?: string; totalPrice?: number } | null;
+    if (!review?.bookingId) throw new SupplierError("BAD_REQUEST", "No TripJack bookingId from Review.", this.name, context.correlationId);
+    // TripJack wants exactly its own total from Review.
+    await this.client.request("book", { correlationId: context.correlationId, body: toTripjackHotelBook(review.bookingId, review.totalPrice ?? amount, guests) });
+  }
+
+  async hotelBooking(reviewContext: unknown, context: SupplierCallContext): Promise<SupplierHotelBooking> {
+    const review = reviewContext as { bookingId?: string } | null;
+    if (!review?.bookingId) throw new SupplierError("BAD_REQUEST", "No TripJack bookingId from Review.", this.name, context.correlationId);
+    const response = await this.client.request<TripjackHotelBookingDetails & TripjackEnvelope>("bookingDetails", { correlationId: context.correlationId, body: { bookingId: review.bookingId } });
+    return toHotelBooking(response);
   }
 }

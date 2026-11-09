@@ -44,6 +44,25 @@ export interface HotelSupplier {
   // The reference a search's saved context holds for one of its hotels, so
   // its rooms are priced in the same supplier session; null if none.
   refForHotel(searchContext: unknown, supplierHotelId: string): string | null;
+  // Books the reviewed rate (instant booking: the supplier is paid `amount`,
+  // its own price). Not idempotent: never call twice for one checkout.
+  bookRoom(reviewContext: unknown, amount: number, guests: SupplierHotelGuests, context: SupplierCallContext): Promise<void>;
+  // The supplier's view of the booking after Book.
+  hotelBooking(reviewContext: unknown, context: SupplierCallContext): Promise<SupplierHotelBooking>;
+}
+
+export interface SupplierHotelGuests {
+  // Per room, in search order: adults then children.
+  rooms: { guests: { title: string; firstName: string; lastName: string; child: boolean; pan?: string; passportNumber?: string }[] }[];
+  contact: { email: string; phoneCode: string; phone: string };
+}
+
+export interface SupplierHotelBooking {
+  // SUCCESS (confirmed), FAILED / ABORTED (not booked), or still pending.
+  status: string;
+  // The hotel's or supplier's confirmation number, once confirmed.
+  confirmation: string | null;
+  supplierReference: string | null;
 }
 
 // What the hotel page adds to the basics kept for search.

@@ -62,5 +62,13 @@ export function useCheckout(checkoutId: string) {
     setState({ checkout, problem: null, message: null });
   }, [checkoutId]);
 
-  return { ...state, saveGuests, applyCoupon, removeCoupon };
+  // Reads the checkout again (after paying, or a change made by the server).
+  const reload = useCallback(async () => {
+    const key = checkoutKeyFor(checkoutId);
+    if (!key) return;
+    const checkout = await checkoutApi.get(checkoutId, key);
+    setState({ checkout, problem: null, message: null });
+  }, [checkoutId]);
+
+  return { ...state, saveGuests, applyCoupon, removeCoupon, reload };
 }

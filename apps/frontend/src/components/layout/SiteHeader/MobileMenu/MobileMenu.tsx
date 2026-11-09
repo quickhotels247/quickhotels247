@@ -14,7 +14,7 @@ import ListItemText from "@mui/material/ListItemText";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import HelpOutlineRounded from "@mui/icons-material/HelpOutlineRounded";
 import Logo from "@/components/brand/Logo";
-import { isActive, mainNav, productNav, routes } from "@/config/navigation";
+import { accountNav, isActive, mainNav, productNav, routes } from "@/config/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
 import { styles } from "./MobileMenu.styles";
 
@@ -23,10 +23,11 @@ interface MobileMenuProps {
   onClose: () => void;
 }
 
-// Stays and Flights first, then account links and help.
-const menuItems = [
+// Stays and Flights first, then account links (saved hotels and travellers
+// when signed in) and help.
+const menuItems = (signedIn: boolean) => [
   ...productNav.map(({ label, href, icon, matches }) => ({ label, href, icon, matches })),
-  ...[...mainNav, { label: "Help & support", href: routes.help, icon: HelpOutlineRounded }].map((item) => ({
+  ...[...mainNav, ...(signedIn ? accountNav : []), { label: "Help & support", href: routes.help, icon: HelpOutlineRounded }].map((item) => ({
     ...item,
     matches: (pathname: string) => isActive(pathname, item.href),
   })),
@@ -48,7 +49,7 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
       </Box>
       <Divider />
       <List component="nav" aria-label="Menu" sx={styles.list}>
-        {menuItems.map(({ label, href, icon: Icon, matches }) => {
+        {menuItems(Boolean(user)).map(({ label, href, icon: Icon, matches }) => {
           const active = matches(pathname);
           return (
             <ListItemButton

@@ -55,4 +55,12 @@ export class PricedHotelSupplier implements HotelSupplier {
   refForHotel(searchContext: unknown, supplierHotelId: string) {
     return this.inner.refForHotel(searchContext, supplierHotelId);
   }
+
+  bookRoom(...args: Parameters<HotelSupplier["bookRoom"]>) {
+    return this.inner.bookRoom(...args);
+  }
+
+  hotelBooking(...args: Parameters<HotelSupplier["hotelBooking"]>) {
+    return this.inner.hotelBooking(...args);
+  }
 }

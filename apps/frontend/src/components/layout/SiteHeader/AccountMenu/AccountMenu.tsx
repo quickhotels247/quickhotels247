@@ -16,13 +16,14 @@ import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 import LogoutRounded from "@mui/icons-material/LogoutRounded";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import type { User } from "@quickhotels/types/users";
-import { routes } from "@/config/navigation";
+import { accountNav, routes } from "@/config/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
 import { styles } from "./AccountMenu.styles";
 
 const initials = (user: User) => `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase() || "?";
 
-// The signed-in customer's initials; opens My bookings, Account settings and Sign out.
+// The signed-in customer's initials; opens My bookings, saved hotels and
+// travellers, Account settings and Sign out.
 export default function AccountMenu({ user, compact = false }: { user: User; compact?: boolean }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const { logout } = useAuth();
@@ -56,6 +57,14 @@ export default function AccountMenu({ user, compact = false }: { user: User; com
           </ListItemIcon>
           My bookings
         </MenuItem>
+        {accountNav.map(({ label, href, icon: Icon }) => (
+          <MenuItem key={href} component={Link} href={href} onClick={close}>
+            <ListItemIcon>
+              <Icon fontSize="small" />
+            </ListItemIcon>
+            {label}
+          </MenuItem>
+        ))}
         <MenuItem component={Link} href={routes.account} onClick={close}>
           <ListItemIcon>
             <SettingsOutlined fontSize="small" />

@@ -8,6 +8,8 @@ import type { HotelPageRepository, StoredHotel } from "../hotels/hotel-page.repo
 import type { SearchSessionsRepository } from "../hotels/search-sessions.repository.js";
 import type { CheckoutRepository, NewCheckout, StoredCheckout } from "./checkout.repository.js";
 import type { CouponsService } from "../coupons/coupons.service.js";
+import type { PaymentsService } from "../payments/payments.service.js";
+import type { HotelBookingService } from "./booking/hotel-booking.service.js";
 import { CheckoutService } from "./checkout.service.js";
 
 const isoDay = (offsetDays: number) => new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
@@ -30,7 +32,7 @@ function setup({ reviewed = rate(9000), shown = 9000, children = 0 }: { reviewed
     find: vi.fn(async (id: string) => rows.get(id) ?? null),
     create: vi.fn(async (checkout: NewCheckout) => {
       const id = `checkout-${rows.size + 1}`;
-      rows.set(id, { id, keyHash: checkout.keyHash, accessTokenHash: checkout.keyHash, status: checkout.status, expiresAt: checkout.expiresAt, quote: checkout.quote, guestDetails: null, termsVersion: null });
+      rows.set(id, { id, keyHash: checkout.keyHash, accessTokenHash: checkout.keyHash, status: checkout.status, expiresAt: checkout.expiresAt, quote: checkout.quote, guestDetails: null, termsVersion: null, userId: null, hotelId: "hotel-1", supplierContext: null, booking: null, updatedAt: new Date() });
       return id;
     }),
     saveGuests: vi.fn(async (id: string, _from: unknown, details: CheckoutGuestDetails) => {
@@ -54,7 +56,7 @@ function setup({ reviewed = rate(9000), shown = 9000, children = 0 }: { reviewed
     }),
   } as unknown as HotelSupplier;
   const hotels = { find: vi.fn(async () => hotel) };
-  const service = new CheckoutService(supplier, checkouts as unknown as CheckoutRepository, sessions as unknown as SearchSessionsRepository, hotels as unknown as HotelPageRepository, {} as CouponsService);
+  const service = new CheckoutService(supplier, checkouts as unknown as CheckoutRepository, sessions as unknown as SearchSessionsRepository, hotels as unknown as HotelPageRepository, {} as CouponsService, {} as PaymentsService, { recover: vi.fn() } as unknown as HotelBookingService);
   return { service, supplier, checkouts };
 }
 

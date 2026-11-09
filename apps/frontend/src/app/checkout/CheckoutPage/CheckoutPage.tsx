@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Container from "@mui/material/Container";
 import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
@@ -35,10 +36,26 @@ const hotelHref = (checkout: CheckoutSummary) => {
 // step (step 8 of the roadmap).
 export default function CheckoutPage() {
   const { checkoutId } = useParams<{ checkoutId: string }>();
-  const { checkout, problem, message, saveGuests, applyCoupon, removeCoupon } = useCheckout(checkoutId);
+  const router = useRouter();
+  const { checkout, problem, message, saveGuests, applyCoupon, removeCoupon, reload } = useCheckout(checkoutId);
   const [editing, setEditing] = useState(false);
   const [expired, setExpired] = useState(false);
   const onExpire = useCallback(() => setExpired(true), []);
+  const status = checkout?.status;
+  const reference = checkout?.bookingReference;
+  const paid = status === "processing" || status === "confirmed" || status === "failed";
+  // Paid: the booking's page shows the hotel's confirmation. Until the
+  // booking is recorded (a moment after payment), look again shortly.
+  useEffect(() => {
+    if (!paid) return;
+    if (reference) {
+      router.replace(`${routes.booking}/${encodeURIComponent(reference)}?checkout=${encodeURIComponent(checkoutId)}`);
+      return;
+    }
+    if (status !== "processing") return;
+    const timer = setTimeout(() => void reload().catch(() => undefined), 2000);
+    return () => clearTimeout(timer);
+  }, [paid, status, reference, checkoutId, router, reload, checkout]);
 
   if (problem) {
     return (
@@ -54,6 +71,28 @@ export default function CheckoutPage() {
         <Button variant="contained" component={Link} href={routes.home}>
           Search hotels
         </Button>
+      </Container>
+    );
+  }
+
+  if (paid) {
+    const failed = status === "failed" && !reference;
+    return (
+      <Container sx={styles.message}>
+        {!failed && <CircularProgress />}
+        <Typography component="h1" sx={styles.messageTitle}>
+          {failed ? "We couldn't book this stay" : "Payment received"}
+        </Typography>
+        <Typography sx={styles.messageText}>
+          {failed
+            ? "Nothing is booked, and any amount paid is refunded in full. Please choose your room again."
+            : "We're booking your room with the hotel. Please don't close this page or pay again."}
+        </Typography>
+        {failed && (
+          <Button variant="contained" component={Link} href={routes.home}>
+            Search hotels
+          </Button>
+        )}
       </Container>
     );
   }
@@ -104,7 +143,7 @@ export default function CheckoutPage() {
                 }}
               />
             ) : (
-              <PaymentNext checkout={checkout} onEdit={() => setEditing(true)} />
+              <PaymentNext checkout={checkout} onEdit={() => setEditing(true)} disabled={expired} onReload={reload} />
             )}
           </Box>
           <Box sx={styles.side}>

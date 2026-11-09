@@ -16,23 +16,29 @@ interface BookingState {
 }
 
 // Loads one booking: with this browser's checkout key when the booking came
-// from a checkout here (guests), else as the signed-in owner. `refresh`
+// from a checkout here (guests), the email's private link token, else as the
+// signed-in owner. `refresh`
 // reloads it, e.g. to see if a pending booking is confirmed yet.
-export function useBooking(reference: string, checkoutId: string | null) {
+export function useBooking(reference: string, checkoutId: string | null, linkToken: string | null = null) {
   const { token, status } = useAuth();
   const [state, setState] = useState<BookingState>({ booking: null, loading: true, problem: null, message: null });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const key = checkoutId ? checkoutKeyFor(checkoutId) : null;
-    if (!key && status === "loading") return;
-    if (!key && !token) {
+    if (!key && !linkToken && status === "loading") return;
+    if (!key && !linkToken && !token) {
       setState({ booking: null, loading: false, problem: "signin", message: null });
       return;
     }
     const controller = new AbortController();
     setState((previous) => ({ ...previous, loading: true }));
-    (key ? bookingsApi.getAsGuest(key, reference, controller.signal) : bookingsApi.get(token!, reference, controller.signal))
+    (key
+      ? bookingsApi.getAsGuest(key, reference, controller.signal)
+      : linkToken
+        ? bookingsApi.getByLink(reference, linkToken, controller.signal)
+        : bookingsApi.get(token!, reference, controller.signal)
+    )
       .then((booking) => setState({ booking, loading: false, problem: null, message: null }))
       .catch((error: Error) => {
         if (controller.signal.aborted) return;
@@ -40,7 +46,7 @@ export function useBooking(reference: string, checkoutId: string | null) {
         setState({ booking: null, loading: false, problem: missing ? "missing" : "error", message: error.message });
       });
     return () => controller.abort();
-  }, [reference, checkoutId, token, status, attempt]);
+  }, [reference, checkoutId, linkToken, token, status, attempt]);
 
   const refresh = useCallback(() => setAttempt((n) => n + 1), []);
   return { ...state, refresh };

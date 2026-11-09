@@ -407,6 +407,7 @@ model BookingAttempt {
   statusHistory BookingStatusHistory[]
 
   @@index([userId])
+  @@index([status, updatedAt])
   @@map("booking_attempts")
 }
 
@@ -432,6 +433,8 @@ model Booking {
   termsVersion             String?       @map("terms_version")
   confirmedAt              DateTime?     @map("confirmed_at") @db.Timestamptz
   cancelledAt              DateTime?     @map("cancelled_at") @db.Timestamptz
+  // When staff were told a paid booking still isn't confirmed.
+  opsAlertedAt             DateTime?     @map("ops_alerted_at") @db.Timestamptz
   createdAt                DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 

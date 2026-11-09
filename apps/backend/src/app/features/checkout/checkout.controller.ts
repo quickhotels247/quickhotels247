@@ -34,6 +34,14 @@ export class CheckoutController {
     return this.checkout.saveGuests(id, checkoutKey(key, "X-Checkout-Token"), body);
   }
 
+  // Pay: a Razorpay order for the amount due. A signed-in customer's
+  // checkout is linked to their account here.
+  @Post(":id/payment")
+  @Throttle(LIMITS.sensitive)
+  async startPayment(@Param("id", new ParseUUIDPipe()) id: string, @Headers("x-checkout-token") key?: string, @Headers("authorization") authorization?: string) {
+    return this.checkout.startPayment(id, checkoutKey(key, "X-Checkout-Token"), await this.user.from(authorization));
+  }
+
   // Coupon codes: throttled like other guessable inputs.
   @Put(":id/coupon")
   @Throttle(LIMITS.sensitive)

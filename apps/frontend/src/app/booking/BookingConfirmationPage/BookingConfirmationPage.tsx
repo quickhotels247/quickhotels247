@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
@@ -24,7 +25,14 @@ export default function BookingConfirmationPage() {
   const params = useSearchParams();
   const pathname = usePathname();
   const { user } = useAuth();
-  const { booking, problem, message, loading, refresh } = useBooking(decodeURIComponent(reference), params.get("checkout"));
+  const { booking, problem, message, loading, refresh } = useBooking(decodeURIComponent(reference), params.get("checkout"), params.get("t"));
+  // Waiting on the hotel: look again every 5 seconds.
+  const pending = booking?.status === "pending";
+  useEffect(() => {
+    if (!pending || loading) return;
+    const timer = setTimeout(refresh, 5000);
+    return () => clearTimeout(timer);
+  }, [pending, loading, refresh]);
 
   if (problem) return <BookingProblem problem={problem} message={message} next={`${pathname}?${params}`} />;
   return (

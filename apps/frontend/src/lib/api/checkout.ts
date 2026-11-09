@@ -1,4 +1,5 @@
 import type { CheckoutGuestDetails, CheckoutSummary, CreateCheckoutRequest } from "@quickhotels/types/checkout";
+import type { PaymentOrder } from "@quickhotels/types/payments";
 import { apiRequest, postJson } from "./client";
 
 // Checkout on our backend (spec §4.4). `key` is this browser's secret for the
@@ -15,6 +16,14 @@ export const checkoutApi = {
       method: "PUT",
       body: JSON.stringify(details),
       headers: { "X-Checkout-Token": key },
+    }),
+
+  // Pay: a Razorpay order for the amount due. A signed-in customer's token
+  // links the booking to their account.
+  startPayment: (checkoutId: string, key: string, token: string | null) =>
+    apiRequest<PaymentOrder>(`/v1/checkouts/${encodeURIComponent(checkoutId)}/payment`, {
+      method: "POST",
+      headers: { "X-Checkout-Token": key, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     }),
 
   // Coupons: a signed-in customer's token counts their own uses.
