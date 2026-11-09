@@ -5,6 +5,7 @@ import { MailService } from "../../../mail/mail.service.js";
 import { flightConfirmedEmail, flightFailedEmail } from "../../../mail/templates/flight-booking.templates.js";
 import { FLIGHT_SUPPLIER, type FlightSupplier, type SupplierFlightBooking } from "../../../suppliers/flight-supplier.js";
 import { SupplierError } from "../../../suppliers/supplier-error.js";
+import { bookingLinkToken } from "../../../common/utils/booking-links.js";
 import { frontendUrlFromEnv } from "../../auth/auth.config.js";
 import { CouponsService } from "../../coupons/coupons.service.js";
 import { PaymentsService } from "../../payments/payments.service.js";
@@ -187,7 +188,8 @@ export class FlightBookingService implements OnModuleInit {
       journeys: review.quote.journeys,
       booking,
       paid: payableOf(review.quote),
-      link: `${frontendUrlFromEnv()}/flights/booking/${review.id}`,
+      // Private link: opens the booking on any device, no sign-in needed.
+      link: `${frontendUrlFromEnv()}/flights/booking/${review.id}?t=${bookingLinkToken("flight", review.id)}`,
     };
     this.mail.sendInBackground(outcome === "confirmed" ? flightConfirmedEmail(input) : flightFailedEmail(input), { template: `flight-${outcome}`, userId: review.userId });
   }

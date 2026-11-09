@@ -12,6 +12,7 @@ import type { FlightReviewSummary } from "@quickhotels/types/flight-checkout";
 import { routes } from "@/config/navigation";
 import { ApiError } from "@/lib/api/client";
 import { flightReviewsApi } from "@/lib/api/flightReviews";
+import { useAuth } from "@/lib/auth/useAuth";
 import { rememberCheckout, startKey } from "@/lib/checkoutKeys";
 import { styles } from "./StartFlightReviewPage.styles";
 
@@ -19,10 +20,10 @@ import { styles } from "./StartFlightReviewPage.styles";
 // a review must not be sent twice, so the second run reuses the first.
 const starting = new Map<string, Promise<FlightReviewSummary>>();
 
-function startOnce(searchId: string, fares: { trip: string; id: string }[], key: string) {
+function startOnce(searchId: string, fares: { trip: string; id: string }[], key: string, token: string | null) {
   let start = starting.get(key);
   if (!start) {
-    start = flightReviewsApi.create({ searchId, fares }, key);
+    start = flightReviewsApi.create({ searchId, fares }, key, token);
     starting.set(key, start);
     start.catch(() => {}).finally(() => starting.delete(key));
   }
@@ -39,8 +40,11 @@ export default function StartFlightReviewPage() {
   const [attempt, setAttempt] = useState(0);
   const searchId = params.get("searchId");
   const fareParams = params.getAll("fare");
+  // Wait for a saved sign-in, so the booking is linked to the customer.
+  const { token, status: authStatus } = useAuth();
 
   useEffect(() => {
+    if (authStatus === "loading") return;
     const fares = fareParams.flatMap((value) => {
       const split = value.indexOf(":");
       return split > 0 ? [{ trip: value.slice(0, split), id: value.slice(split + 1) }] : [];
@@ -52,7 +56,7 @@ export default function StartFlightReviewPage() {
     let active = true;
     const key = startKey("flight", searchId, ...fares.map((fare) => fare.id));
     setError(null);
-    startOnce(searchId, fares, key)
+    startOnce(searchId, fares, key, token)
       .then((review) => {
         rememberCheckout(review.reviewId, key);
         if (active) router.replace(`${routes.flightReview}/${review.reviewId}`);
@@ -71,7 +75,7 @@ export default function StartFlightReviewPage() {
     };
     // fareParams is read from params, which searchId and the joined fares stand for.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchId, fareParams.join("|"), router, attempt]);
+  }, [searchId, fareParams.join("|"), router, attempt, authStatus]);
 
   return (
     <Container sx={styles.root}>

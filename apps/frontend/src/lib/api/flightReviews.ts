@@ -5,8 +5,9 @@ import { apiRequest, postJson } from "./client";
 // Flight fare review on our backend (flights step F4). `key` is this
 // browser's secret for the booking (see checkoutKeys).
 export const flightReviewsApi = {
-  create: (request: CreateFlightReviewRequest, key: string, signal?: AbortSignal) =>
-    postJson<FlightReviewSummary>("/v1/flights/reviews", request, { signal, headers: { "Idempotency-Key": key } }),
+  // A signed-in customer's token makes the booking theirs (My bookings).
+  create: (request: CreateFlightReviewRequest, key: string, token: string | null = null, signal?: AbortSignal) =>
+    postJson<FlightReviewSummary>("/v1/flights/reviews", request, { signal, headers: { "Idempotency-Key": key, ...(token ? { Authorization: `Bearer ${token}` } : {}) } }),
 
   get: (reviewId: string, key: string, signal?: AbortSignal) =>
     apiRequest<FlightReviewSummary>(`/v1/flights/reviews/${encodeURIComponent(reviewId)}`, { signal, headers: { "X-Checkout-Token": key } }),

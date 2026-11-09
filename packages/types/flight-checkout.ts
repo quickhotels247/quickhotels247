@@ -125,3 +125,26 @@ export interface CreateFlightReviewRequest {
   // One fare per list of the search, as chosen on the results page.
   fares: { trip: string; id: string }[];
 }
+
+// ---- My bookings: flights (GET /api/v1/flights/bookings) ----
+
+export type FlightBookingsTab = "upcoming" | "past" | "cancelled";
+
+export interface FlightBookingListItem {
+  id: string;
+  status: FlightReviewStatus;
+  // "HYD → CCU", "CCU → HYD"
+  legs: { from: string; to: string; departAt: string; airlines: string }[];
+  travellers: number;
+  pnrs: string[];
+  paid: Money;
+  paidAt: string | null;
+}
+
+export interface FlightBookingsPage {
+  tab: FlightBookingsTab;
+  items: FlightBookingListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}

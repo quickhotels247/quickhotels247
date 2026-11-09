@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -17,7 +17,9 @@ import JourneyRow from "@/components/flight/JourneyRow";
 import { CONTACT_EMAIL } from "@/config/site";
 import { routes } from "@/config/navigation";
 import { ApiError } from "@/lib/api/client";
+import { flightBookingsApi } from "@/lib/api/flightBookings";
 import { flightReviewsApi } from "@/lib/api/flightReviews";
+import { useAuth } from "@/lib/auth/useAuth";
 import { checkoutKeyFor } from "@/lib/checkoutKeys";
 import { formatPrice } from "@/lib/format";
 import { styles } from "./FlightBookingPage.styles";
@@ -28,17 +30,23 @@ const POLL_MS = 4_000;
 // PNR and tickets, or why it failed and the refund. Polls while processing.
 export default function FlightBookingPage() {
   const { reviewId } = useParams<{ reviewId: string }>();
+  const params = useSearchParams();
+  const link = params.get("t");
+  const { token, status: authStatus } = useAuth();
   const [review, setReview] = useState<FlightReviewSummary | null>(null);
   const [problem, setProblem] = useState<"missing" | "error" | null>(null);
 
+  // Opens with this tab's checkout key, else the private email link, else the
+  // signed-in owner's session.
   useEffect(() => {
+    if (authStatus === "loading") return;
     const key = checkoutKeyFor(reviewId);
-    if (!key) return setProblem("missing");
+    if (!key && !link && !token) return setProblem("missing");
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
       try {
-        const next = await flightReviewsApi.get(reviewId, key);
+        const next = key ? await flightReviewsApi.get(reviewId, key) : await flightBookingsApi.view(reviewId, { token, link });
         if (stopped) return;
         setReview(next);
         setProblem(null);
@@ -55,13 +63,13 @@ export default function FlightBookingPage() {
       stopped = true;
       clearTimeout(timer);
     };
-  }, [reviewId]);
+  }, [reviewId, link, token, authStatus]);
 
   if (problem === "missing") {
     return (
       <Container maxWidth="sm" sx={styles.root}>
         <Alert severity="info">
-          Open this page in the browser you booked with. Your PNR and tickets are also in the email we sent. For help, write to {CONTACT_EMAIL}.
+          Open this booking from the link in your confirmation email, or sign in with the account you booked with. Your PNR is also in that email. For help, write to {CONTACT_EMAIL}.
         </Alert>
       </Container>
     );

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { BadRequestException, ConflictException, GoneException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type { FlightReviewStatus, FlightReviewSummary, FlightTravellerDetails } from "@quickhotels/types/flight-checkout";
+import type { FlightBookingListItem, FlightBookingsPage, FlightBookingsTab, FlightReviewStatus, FlightReviewSummary, FlightTravellerDetails } from "@quickhotels/types/flight-checkout";
 import { TERMS_VERSION } from "../../../common/config/terms.js";
 import { hashCheckoutKey, keyMatches } from "../../../common/utils/checkout-key.js";
 import { todayInIndia } from "../../../common/utils/india-dates.js";
@@ -9,6 +9,7 @@ import { SupplierError, supplierHttpError } from "../../../suppliers/supplier-er
 import { FlightSearchSessionsRepository } from "../search/flight-search-sessions.repository.js";
 import { PricingService } from "../../../pricing/pricing.service.js";
 import type { PaymentOrder } from "@quickhotels/types/payments";
+import { bookingLinkValid } from "../../../common/utils/booking-links.js";
 import { CouponsService } from "../../coupons/coupons.service.js";
 import { PaymentsService } from "../../payments/payments.service.js";
 import { FlightBookingService } from "../booking/flight-booking.service.js";
@@ -49,11 +50,11 @@ export class FlightReviewService {
   ) {}
 
   // `key` is the browser's random key: the same key returns the same review.
-  create(searchId: string, fares: { trip: string; id: string }[], key: string): Promise<FlightReviewSummary> {
+  create(searchId: string, fares: { trip: string; id: string }[], key: string, userId: string | null = null): Promise<FlightReviewSummary> {
     const keyHash = hashCheckoutKey(key);
     const running = this.starting.get(keyHash);
     if (running) return running;
-    const start = this.start(searchId, fares, keyHash).finally(() => this.starting.delete(keyHash));
+    const start = this.start(searchId, fares, keyHash, userId).finally(() => this.starting.delete(keyHash));
     this.starting.set(keyHash, start);
     return start;
   }
@@ -63,6 +64,49 @@ export class FlightReviewService {
     // A paid booking left mid-way (restart, slow airline): carry on.
     this.booking.recover(review);
     return this.summary(review);
+  }
+
+  // A booking for its owner (signed in) or anyone with its private email link.
+  // Anything else looks like a missing booking.
+  async viewForCustomer(id: string, access: { userId: string | null; token: string | null }): Promise<FlightReviewSummary> {
+    const review = await this.reviews.find(id);
+    const allowed = review && ((access.userId && review.userId === access.userId) || bookingLinkValid("flight", id, access.token));
+    if (!review || !allowed) throw new NotFoundException("We couldn't find this booking.");
+    this.booking.recover(review);
+    return this.summary(review);
+  }
+
+  // My bookings → Flights: upcoming (not yet flown), past, or cancelled/failed.
+  async listForCustomer(userId: string, tab: FlightBookingsTab, query: string, page: number, pageSize = 10): Promise<FlightBookingsPage> {
+    const today = todayInIndia();
+    const needle = query.trim().toLowerCase();
+    const items = (await this.reviews.paidForUser(userId))
+      .map((review) => {
+        const pnrs = [...new Set(review.booking?.pnrs.map((item) => item.pnr) ?? [])];
+        return {
+          review,
+          item: {
+            id: review.id,
+            status: PUBLIC_STATUS[review.status] ?? "processing",
+            legs: review.quote.journeys.map((leg) => ({ from: leg.from, to: leg.to, departAt: leg.departAt, airlines: [...new Set(leg.segments.map((segment) => segment.airlineName))].join(", ") })),
+            travellers: review.quote.criteria.adults + review.quote.criteria.children + review.quote.criteria.infants,
+            pnrs,
+            paid: payableOf(review.quote),
+            paidAt: review.paidAt?.toISOString() ?? null,
+          } satisfies FlightBookingListItem,
+        };
+      })
+      .filter(({ review, item }) => {
+        const lastDay = (item.legs.at(-1)?.departAt ?? "").slice(0, 10);
+        if (tab === "cancelled") return review.status === "failed";
+        if (review.status === "failed") return false;
+        return tab === "past" ? lastDay < today : lastDay >= today;
+      })
+      .filter(({ item }) => !needle || item.pnrs.some((pnr) => pnr.toLowerCase().includes(needle)) || item.legs.some((leg) => `${leg.from} ${leg.to} ${leg.airlines}`.toLowerCase().includes(needle)))
+      .map(({ item }) => item);
+    // Upcoming: soonest first; past and cancelled: most recent first.
+    items.sort((a, b) => (tab === "upcoming" ? 1 : -1) * (a.legs[0]?.departAt ?? "").localeCompare(b.legs[0]?.departAt ?? ""));
+    return { tab, items: items.slice((page - 1) * pageSize, page * pageSize), total: items.length, page, pageSize };
   }
 
   // Step F6: a Razorpay order for what's payable now (travellers saved). The
@@ -163,7 +207,7 @@ export class FlightReviewService {
     return review;
   }
 
-  private async start(searchId: string, fares: { trip: string; id: string }[], keyHash: string): Promise<FlightReviewSummary> {
+  private async start(searchId: string, fares: { trip: string; id: string }[], keyHash: string, userId: string | null): Promise<FlightReviewSummary> {
     const existing = await this.reviews.findByKeyHash(keyHash);
     if (existing) return this.summary(existing);
 
@@ -210,6 +254,7 @@ export class FlightReviewService {
     };
     const id = await this.reviews.create({
       keyHash,
+      userId,
       searchSessionId: search.id,
       supplier: this.supplier.name,
       supplierBookingId: reviewed.supplierBookingId,

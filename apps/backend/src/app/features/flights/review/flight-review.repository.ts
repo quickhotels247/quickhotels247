@@ -37,6 +37,7 @@ export interface StoredFlightReview {
 
 export interface NewFlightReview {
   keyHash: string;
+  userId?: string | null;
   searchSessionId: string;
   supplier: string;
   supplierBookingId: string;
@@ -131,6 +132,16 @@ export class FlightReviewRepository {
     await this.db.flightCheckout.update({ where: { id }, data: { opsAlertedAt: new Date() } });
   }
 
+  // The customer's paid flight bookings (newest first), for My bookings.
+  async paidForUser(userId: string, limit = 300): Promise<StoredFlightReview[]> {
+    const rows = await this.db.flightCheckout.findMany({
+      where: { userId, status: { in: ["paid", "booking", "pending", "confirmed", "failed"] } },
+      orderBy: { paidAt: { sort: "desc", nulls: "last" } },
+      take: limit,
+    });
+    return rows.map(toStored);
+  }
+
   // A paid booking belongs to the signed-in customer who paid (My bookings).
   async claim(id: string, userId: string) {
     await this.db.flightCheckout.updateMany({ where: { id, userId: null }, data: { userId } });
@@ -180,6 +191,7 @@ export class FlightReviewRepository {
       const row = await this.db.flightCheckout.create({
         data: {
           keyHash: review.keyHash,
+          userId: review.userId ?? null,
           searchSessionId: review.searchSessionId,
           supplier: review.supplier,
           supplierBookingId: review.supplierBookingId,

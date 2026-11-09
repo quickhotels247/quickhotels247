@@ -19,8 +19,9 @@ export class FlightReviewController {
 
   @Post()
   @Throttle(LIMITS.search)
-  create(@Body() body: CreateFlightReviewDto, @Headers("idempotency-key") key?: string) {
-    return this.reviews.create(body.searchId, body.fares, requireCheckoutKey(key, "Idempotency-Key"));
+  async create(@Body() body: CreateFlightReviewDto, @Headers("idempotency-key") key?: string, @Headers("authorization") authorization?: string) {
+    // Signed in: the booking is the customer's from the start (My bookings).
+    return this.reviews.create(body.searchId, body.fares, requireCheckoutKey(key, "Idempotency-Key"), await this.user.from(authorization));
   }
 
   @Get(":id")

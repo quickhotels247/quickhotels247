@@ -1,4 +1,6 @@
 export const styles = {
+  kind: { alignSelf: "flex-start", "& .MuiToggleButton-root": { textTransform: "none", fontWeight: 600, px: 2, gap: 0.75 } },
+  kindIcon: { mr: 0.5 },
   root: { py: { xs: 3, md: 5 }, display: "flex", flexDirection: "column", gap: 2.5 },
   title: { fontSize: { xs: "1.5rem", md: "1.9rem" }, fontWeight: 800 },
   controls: { display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", gap: 1.5 },
