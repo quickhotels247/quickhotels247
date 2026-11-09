@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, ServiceUnavailableException } from "@nestjs
 import nodemailer, { type Transporter } from "nodemailer";
 import { PrismaService } from "../common/database/prisma.service.js";
 import { mailConfig, type MailConfig } from "./mail.config.js";
+import type { MailAttachment } from "./mime.js";
 import { GmailApiTransport, MailSendError } from "./transports/gmail-api.transport.js";
 
 export interface MailMessage {
@@ -9,6 +10,8 @@ export interface MailMessage {
   subject: string;
   text: string;
   html: string;
+  // Files sent with it (e.g. the PDF voucher or e-ticket).
+  attachments?: MailAttachment[];
 }
 
 // What a send is about, for the notifications table (admin and support).

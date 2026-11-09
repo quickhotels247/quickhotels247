@@ -5,6 +5,7 @@ import { SupplierError } from "../../../suppliers/supplier-error.js";
 import type { CouponsService } from "../../coupons/coupons.service.js";
 import type { PaymentsService } from "../../payments/payments.service.js";
 import type { CheckoutRepository, StoredCheckout } from "../checkout.repository.js";
+import type { BookingsRepository } from "../../bookings/bookings.repository.js";
 import type { HotelBookingsRepository } from "./hotel-bookings.repository.js";
 import { HotelBookingService } from "./hotel-booking.service.js";
 
@@ -52,6 +53,7 @@ function setup(book: () => Promise<void>, state: { status: string; confirmation?
   const service = new HotelBookingService(
     supplier as unknown as HotelSupplier, checkouts as unknown as CheckoutRepository, bookings as unknown as HotelBookingsRepository,
     payments as unknown as PaymentsService, coupons as unknown as CouponsService, mail as unknown as MailService,
+    { findByReference: vi.fn(async () => null) } as unknown as BookingsRepository,
   );
   return { service, supplier, payments, mail, coupons, bookings, statuses, current: () => row, set: (status: string) => void (row = { ...row, status } as StoredCheckout) };
 }

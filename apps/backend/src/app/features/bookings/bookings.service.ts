@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import type { BookingDetails, BookingsPage, BookingsTab } from "@quickhotels/types/bookings";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { hotelVoucherPdf } from "../../documents/hotel-voucher.pdf.js";
+import type { BookingDetails, BookingsPage, BookingsTab, CancelBookingRequest } from "@quickhotels/types/bookings";
+import { HotelCancellationService } from "./cancellation/hotel-cancellation.service.js";
 import { bookingLinkValid } from "../../common/utils/booking-links.js";
 import { hashCheckoutKey } from "../../common/utils/checkout-key.js";
 import { CheckoutRepository } from "../checkout/checkout.repository.js";
@@ -20,6 +22,7 @@ export class BookingsService {
     private readonly bookings: BookingsRepository,
     private readonly checkouts: CheckoutRepository,
     private readonly hotelBooking: HotelBookingService,
+    private readonly cancellation: HotelCancellationService,
   ) {}
 
   async list(userId: string, tab: BookingsTab, search: string | undefined, page: number): Promise<BookingsPage> {
@@ -46,6 +49,31 @@ export class BookingsService {
     const booking = await this.bookings.findByReference(reference.toUpperCase());
     if (!booking || !bookingLinkValid("hotel", booking.id, token)) throw new NotFoundException(NOT_FOUND);
     return this.details(booking);
+  }
+
+  // Cancels a booking the caller can open (owner, checkout key or link):
+  // only when the policy allows it now, and at the refund they were shown.
+  async cancel(reference: string, access: { userId?: string; checkoutKey?: string; link?: string }, request: CancelBookingRequest): Promise<BookingDetails> {
+    const ref = reference.toUpperCase();
+    const row = access.userId
+      ? await this.bookings.findForUser(ref, access.userId)
+      : access.checkoutKey
+        ? await this.bookings.findForCheckout(ref, hashCheckoutKey(access.checkoutKey))
+        : await this.bookings.findByReference(ref).then((found) => (found && bookingLinkValid("hotel", found.id, access.link) ? found : null));
+    if (!row) throw new NotFoundException(NOT_FOUND);
+    const quote = toDetails(row).cancelQuote!;
+    if (!quote.allowed) throw new ConflictException(quote.reason ?? "This booking can't be cancelled online.");
+    if (Math.abs(quote.refund.amount - request.expectedRefund) >= 1) {
+      throw new ConflictException(`The refund for cancelling now is ₹${quote.refund.amount.toLocaleString("en-IN")} (the cancellation fee changed). Please review and confirm again.`);
+    }
+    await this.cancellation.request(row.id, quote, request.reason?.trim() || null, "customer");
+    return toDetails((await this.bookings.findByReference(ref))!);
+  }
+
+  // The PDF voucher, once the hotel has confirmed.
+  async voucher(booking: BookingDetails): Promise<Buffer> {
+    if (booking.status !== "confirmed") throw new ConflictException("The voucher is ready once the hotel confirms your booking.");
+    return hotelVoucherPdf(booking);
   }
 
   // Still waiting on the hotel: make sure it's being checked.

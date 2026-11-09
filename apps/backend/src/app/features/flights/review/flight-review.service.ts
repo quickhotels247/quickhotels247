@@ -15,6 +15,8 @@ import { PaymentsService } from "../../payments/payments.service.js";
 import { FlightBookingService } from "../booking/flight-booking.service.js";
 import { FlightReviewRepository, payableOf, type FlightQuote, type StoredFlightReview } from "./flight-review.repository.js";
 import { checkTravellers } from "./traveller-rules.js";
+import { flightTicketPdf } from "../../../documents/flight-ticket.pdf.js";
+import { ticketInputOf } from "../booking/flight-booking.service.js";
 
 // Differences under ₹1 are rounding, not a price change.
 // Our row statuses as the customer sees them.
@@ -64,6 +66,17 @@ export class FlightReviewService {
     // A paid booking left mid-way (restart, slow airline): carry on.
     this.booking.recover(review);
     return this.summary(review);
+  }
+
+  // The PDF e-ticket, for whoever can open the booking (checkout key, owner
+  // or email link), once tickets are issued.
+  async ticket(id: string, access: { key: string | null; userId: string | null; token: string | null }): Promise<{ pdf: Buffer; name: string }> {
+    const review = access.key ? await this.open(id, access.key) : await this.reviews.find(id);
+    const allowed = review && (access.key || (access.userId && review.userId === access.userId) || bookingLinkValid("flight", id, access.token));
+    if (!review || !allowed) throw new NotFoundException("We couldn't find this booking.");
+    const input = review.status === "confirmed" ? ticketInputOf(review) : null;
+    if (!input) throw new ConflictException("The e-ticket is ready once the airline issues your tickets.");
+    return { pdf: await flightTicketPdf(input), name: `e-ticket-${input.booking.pnrs[0]?.pnr ?? input.booking.bookingId}.pdf` };
   }
 
   // A booking for its owner (signed in) or anyone with its private email link.

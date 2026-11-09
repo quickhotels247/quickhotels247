@@ -101,7 +101,7 @@ export class MockHotelSupplier implements HotelSupplier {
 
   // Sample bookings for testing the paid flow without TripJack: confirmed,
   // unless the lead guest's last name is "Fail" (then the supplier says FAILED).
-  private readonly booked = new Map<string, "SUCCESS" | "FAILED">();
+  private readonly booked = new Map<string, "SUCCESS" | "FAILED" | "CANCELLED">();
 
   async bookRoom(reviewContext: unknown, _amount: number, guests: SupplierHotelGuests): Promise<void> {
     const id = (reviewContext as { bookingId?: string } | null)?.bookingId ?? "MOCK";
@@ -113,6 +113,12 @@ export class MockHotelSupplier implements HotelSupplier {
     const id = (reviewContext as { bookingId?: string } | null)?.bookingId ?? "MOCK";
     const status = this.booked.get(id) ?? "IN_PROGRESS";
     return { status, confirmation: status === "SUCCESS" ? `SAMPLE-${id.slice(-6)}` : null, supplierReference: id };
+  }
+
+  // Sample bookings cancel at once.
+  async cancelRoom(reviewContext: unknown): Promise<void> {
+    const id = (reviewContext as { bookingId?: string } | null)?.bookingId ?? "MOCK";
+    this.booked.set(id, "CANCELLED");
   }
 
   refForHotel(): string | null {

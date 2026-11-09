@@ -1,6 +1,7 @@
 import { Controller, Get, Headers, Param, ParseUUIDPipe, Query, UseGuards } from "@nestjs/common";
 import { AuthGuard, CurrentUserId } from "../../auth/auth.guard.js";
 import { OptionalUser } from "../../auth/optional-user.js";
+import { pdfFile } from "../../../documents/pdf-response.js";
 import { FlightReviewService } from "../review/flight-review.service.js";
 import { BookingLinkQueryDto, FlightBookingsQueryDto } from "./dto/flight-bookings-query.dto.js";
 
@@ -17,6 +18,20 @@ export class FlightBookingsController {
   @UseGuards(AuthGuard)
   list(@CurrentUserId() userId: string, @Query() query: FlightBookingsQueryDto) {
     return this.reviews.listForCustomer(userId, query.tab, query.q, query.page);
+  }
+
+  // The PDF e-ticket: with the checkout key (same browser), as the owner, or
+  // with the email link (?t=).
+  @Get(":id/ticket")
+  async ticket(
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Query() query: BookingLinkQueryDto,
+    @Headers("authorization") authorization?: string,
+    @Headers("x-checkout-token") key?: string,
+  ) {
+    const userId = key ? null : await this.user.from(authorization);
+    const { pdf, name } = await this.reviews.ticket(id, { key: key ?? null, userId, token: query.t ?? null });
+    return pdfFile(pdf, name);
   }
 
   @Get(":id")

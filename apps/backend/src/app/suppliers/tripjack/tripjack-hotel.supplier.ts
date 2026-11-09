@@ -337,4 +337,11 @@ export class TripjackHotelSupplier implements HotelSupplier {
     const response = await this.client.request<TripjackHotelBookingDetails & TripjackEnvelope>("bookingDetails", { correlationId: context.correlationId, body: { bookingId: review.bookingId } });
     return toHotelBooking(response);
   }
+
+  // POST /oms/v3/hotel/cancel-booking/{bookingId}; never retried blindly.
+  async cancelRoom(reviewContext: unknown, context: SupplierCallContext): Promise<void> {
+    const review = reviewContext as { bookingId?: string } | null;
+    if (!review?.bookingId) throw new SupplierError("BAD_REQUEST", "No TripJack bookingId from Review.", this.name, context.correlationId);
+    await this.client.request("cancel", { correlationId: context.correlationId, pathSuffix: `/${encodeURIComponent(review.bookingId)}` });
+  }
 }

@@ -20,5 +20,6 @@ export const styles = {
     justifyContent: "space-between",
     gap: 2,
   },
+  faresNote: { mt: 1.5, fontSize: "0.75rem", color: "text.secondary" },
   summary: { fontSize: "0.9375rem", fontWeight: 600 },
 };

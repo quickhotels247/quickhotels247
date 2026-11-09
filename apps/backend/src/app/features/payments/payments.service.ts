@@ -167,6 +167,7 @@ export class PaymentsService {
     amount: number | null,
     reason: string,
     adminId: string | null,
+    cancellationId: string | null = null,
   ): Promise<{ status: "pending" | "processed" | "failed"; amount: number; currency: string }> {
     const payment = await this.payments.findCaptured(target);
     if (!payment?.providerPaymentId) throw new BadRequestException("There's no captured payment to refund.");
@@ -180,11 +181,11 @@ export class PaymentsService {
     try {
       const result = await this.razorpay.refund(payment.providerPaymentId, paise(value), { reason: reason.slice(0, 200) });
       const processed = result.status === "processed";
-      await this.payments.saveRefund(payment.id, { providerRefundId: result.id, amount: value, currency: payment.currency, status: processed ? "COMPLETED" : "PENDING", reason, adminId, full });
+      await this.payments.saveRefund(payment.id, { providerRefundId: result.id, amount: value, currency: payment.currency, status: processed ? "COMPLETED" : "PENDING", reason, adminId, full, cancellationId });
       return { status: processed ? "processed" : "pending", amount: value, currency: payment.currency };
     } catch (error) {
       this.alert("Refund failed", [`Refunding ${value} ${payment.currency} for Razorpay payment ${payment.providerPaymentId} failed: ${(error as Error).message}`, `Reason for the refund: ${reason}`], "Refund it from the Razorpay dashboard, then tell the customer.");
-      await this.payments.saveRefund(payment.id, { providerRefundId: null, amount: value, currency: payment.currency, status: "FAILED", reason, adminId, full });
+      await this.payments.saveRefund(payment.id, { providerRefundId: null, amount: value, currency: payment.currency, status: "FAILED", reason, adminId, full, cancellationId });
       return { status: "failed", amount: value, currency: payment.currency };
     }
   }

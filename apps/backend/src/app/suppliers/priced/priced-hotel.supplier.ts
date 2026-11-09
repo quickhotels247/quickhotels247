@@ -63,4 +63,8 @@ export class PricedHotelSupplier implements HotelSupplier {
   hotelBooking(...args: Parameters<HotelSupplier["hotelBooking"]>) {
     return this.inner.hotelBooking(...args);
   }
+
+  cancelRoom(...args: Parameters<HotelSupplier["cancelRoom"]>) {
+    return this.inner.cancelRoom(...args);
+  }
 }

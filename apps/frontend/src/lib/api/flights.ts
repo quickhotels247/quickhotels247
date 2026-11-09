@@ -1,4 +1,4 @@
-import type { FlightFilters, FlightSearchCriteria, FlightSearchResponse, FlightSort, PopularRouteFare } from "@quickhotels/types/flights";
+import type { FareCalendar, CabinClass, FlightFilters, FlightSearchCriteria, FlightSearchResponse, FlightSort, PopularRouteFare } from "@quickhotels/types/flights";
 import { apiRequest, postJson } from "./client";
 
 export interface FlightPageOptions extends FlightFilters {
@@ -32,4 +32,8 @@ export const flightsApi = {
 
   // Cheapest recent round-trip fares for the flights page (cached on the backend).
   popularRoutes: (signal?: AbortSignal) => apiRequest<PopularRouteFare[]>("/v1/flights/popular-routes", { signal }),
+
+  // Recent cheapest fares per adult by day, for the date picker.
+  fareCalendar: (params: { from: string; to: string; cabin: CabinClass; start: string; days: number }, signal?: AbortSignal) =>
+    apiRequest<FareCalendar>(`/v1/flights/fare-calendar?${new URLSearchParams({ ...params, days: String(params.days) })}`, { signal }),
 };

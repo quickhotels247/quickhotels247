@@ -8,11 +8,12 @@ import { CheckoutService } from "./checkout.service.js";
 import { HotelBookingService } from "./booking/hotel-booking.service.js";
 import { HotelBookingsRepository } from "./booking/hotel-bookings.repository.js";
 import { HotelReconciler } from "./booking/hotel-reconciler.service.js";
+import { BookingsRepository } from "../bookings/bookings.repository.js";
 
 @Module({
   imports: [AuthModule, SuppliersModule, HotelsModule],
   controllers: [CheckoutController],
-  providers: [CheckoutService, CheckoutRepository, HotelBookingsRepository, HotelBookingService, HotelReconciler],
+  providers: [CheckoutService, CheckoutRepository, BookingsRepository, HotelBookingsRepository, HotelBookingService, HotelReconciler],
   exports: [CheckoutRepository, HotelBookingService],
 })
 export class CheckoutModule {}

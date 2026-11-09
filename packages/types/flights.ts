@@ -149,3 +149,11 @@ export interface PopularRouteFare {
   price: { amount: number; currency: string };
   checkedAt: string;
 }
+
+// GET /api/v1/flights/fare-calendar?from=HYD&to=CCU&cabin=economy&start=2026-12-01&days=62
+// The cheapest fare per adult seen in searches on our site in the last few
+// hours, by departure day. Days nobody searched are left out.
+export interface FareCalendar {
+  currency: string;
+  days: { date: string; amount: number }[];
+}

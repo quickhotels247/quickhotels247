@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -22,7 +23,7 @@ const CANCELLATION_TEXT = {
 
 // The cancellation terms saved at booking time, and any cancellation or
 // refund in progress (refunds are shown separately from the cancellation).
-export default function PolicyCard({ booking }: { booking: BookingDetails }) {
+export default function PolicyCard({ booking, children }: { booking: BookingDetails; children?: ReactNode }) {
   const policy = booking.cancellationPolicy;
   const { cancellation, refunds } = booking;
   return (
@@ -61,6 +62,7 @@ export default function PolicyCard({ booking }: { booking: BookingDetails }) {
           {refund.status === "completed" ? "sent to your original payment method" : refund.status === "failed" ? "failed; our team will contact you" : "in progress"}.
         </Alert>
       ))}
+      {children}
     </Box>
   );
 }

@@ -1,6 +1,9 @@
 import { Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module.js";
 import { SuppliersModule } from "../../suppliers/suppliers.module.js";
+import { FareCalendarController } from "./fare-calendar/fare-calendar.controller.js";
+import { FareCalendarRepository } from "./fare-calendar/fare-calendar.repository.js";
+import { FareCalendarService } from "./fare-calendar/fare-calendar.service.js";
 import { PopularRoutesController } from "./popular-routes/popular-routes.controller.js";
 import { FlightBookingService } from "./booking/flight-booking.service.js";
 import { FlightBookingsController } from "./bookings/flight-bookings.controller.js";
@@ -17,8 +20,8 @@ import { FlightSearchSessionsRepository } from "./search/flight-search-sessions.
 // the flights page) and review/ (fare check, then travellers and payment).
 @Module({
   imports: [AuthModule, SuppliersModule],
-  controllers: [FlightSearchController, PopularRoutesController, FlightReviewController, FlightBookingsController],
+  controllers: [FlightSearchController, FareCalendarController, PopularRoutesController, FlightReviewController, FlightBookingsController],
   exports: [FlightBookingService, FlightReviewRepository],
-  providers: [FlightSearchService, FlightSearchSessionsRepository, PopularRoutesService, FlightReviewService, FlightReviewRepository, FlightBookingService, FlightReconciler],
+  providers: [FareCalendarService, FareCalendarRepository, FlightSearchService, FlightSearchSessionsRepository, PopularRoutesService, FlightReviewService, FlightReviewRepository, FlightBookingService, FlightReconciler],
 })
 export class FlightsModule {}

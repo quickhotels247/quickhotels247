@@ -37,5 +37,28 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   return body as T;
 }
 
+// Downloads a file from our API (e.g. a PDF voucher) and saves it with
+// `filename`. Uses fetch so access headers can go with it.
+export async function downloadFile(path: string, headers: Record<string, string>, filename: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/api${path}`, { headers });
+  } catch {
+    throw new ApiError("We couldn't reach QuickHotels24/7. Check your connection and try again.", 0);
+  }
+  if (!response.ok) {
+    const text = await response.text();
+    throw new ApiError(messageFrom(text ? (JSON.parse(text) as unknown) : null, response.status), response.status);
+  }
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
 export const postJson = <T>(path: string, data: unknown, init: RequestInit = {}) =>
   apiRequest<T>(path, { ...init, method: "POST", body: JSON.stringify(data) });

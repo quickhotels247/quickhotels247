@@ -49,6 +49,9 @@ export interface HotelSupplier {
   bookRoom(reviewContext: unknown, amount: number, guests: SupplierHotelGuests, context: SupplierCallContext): Promise<void>;
   // The supplier's view of the booking after Book.
   hotelBooking(reviewContext: unknown, context: SupplierCallContext): Promise<SupplierHotelBooking>;
+  // Asks the supplier to cancel a confirmed booking; the outcome comes from
+  // hotelBooking (CANCELLED, or CANCELLATION_PENDING while handled offline).
+  cancelRoom(reviewContext: unknown, context: SupplierCallContext): Promise<void>;
 }
 
 export interface SupplierHotelGuests {

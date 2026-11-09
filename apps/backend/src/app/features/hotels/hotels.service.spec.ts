@@ -39,6 +39,7 @@ const failingSupplier = (error: SupplierError): HotelSupplier => ({
   reviewRoom: vi.fn(async () => { throw new Error("not used"); }),
   bookRoom: vi.fn(),
   hotelBooking: vi.fn(),
+  cancelRoom: vi.fn(),
 });
 
 const hotel = (id: string, price: number): HotelSearchResult => ({
@@ -60,6 +61,7 @@ function pagedSupplier(): HotelSupplier {
     reviewRoom: vi.fn(async () => { throw new Error("not used"); }),
     bookRoom: vi.fn(),
     hotelBooking: vi.fn(),
+    cancelRoom: vi.fn(),
     searchHotels: vi.fn(async (_request, _context, options) => {
       const batch = (options?.cursor as number | undefined) ?? 0;
       const results = Array.from({ length: 10 }, (_, i) => hotel(`h${batch * 10 + i}`, 1000 + (batch * 10 + i) * 37 % 500));

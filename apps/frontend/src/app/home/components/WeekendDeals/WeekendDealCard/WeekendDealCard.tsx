@@ -9,6 +9,7 @@ import PlaceOutlined from "@mui/icons-material/PlaceOutlined";
 import type { HotelSearchResult } from "@quickhotels/types/hotels";
 import HotelPhoto from "@/components/hotel/HotelPhoto";
 import PriceTag from "@/components/hotel/PriceTag";
+import SaveHotelButton from "@/components/hotel/SaveHotelButton";
 import StarRating from "@/components/hotel/StarRating";
 import { hotelUrl } from "@/lib/hotelLinks";
 import { styles } from "./WeekendDealCard.styles";
@@ -42,6 +43,13 @@ export default function WeekendDealCard({ hotel, stay, nights }: WeekendDealCard
           </Box>
         </Box>
       </CardActionArea>
+      {/* Outside the link: a button can't sit inside one. */}
+      <Box sx={styles.heart}>
+        <SaveHotelButton
+          hotelId={hotel.id}
+          hotel={{ name: hotel.name, city: hotel.city || null, country: hotel.country || null, imageUrl: hotel.imageUrl || null, starRating: hotel.starRating }}
+        />
+      </Box>
     </Card>
   );
 }

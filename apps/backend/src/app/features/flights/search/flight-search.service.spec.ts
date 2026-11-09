@@ -5,6 +5,7 @@ import { addDays, todayInIndia, upcomingWeekendInIndia } from "../../../common/u
 import type { FlightSupplier } from "../../../suppliers/flight-supplier.js";
 import type { FlightSearchSessionsRepository } from "./flight-search-sessions.repository.js";
 import { FlightSearchService } from "./flight-search.service.js";
+import type { FareCalendarService } from "../fare-calendar/fare-calendar.service.js";
 
 const option = (id: string, price: number, departAt: string, durationMins: number, stops = 0): FlightOption => ({
   id, airlines: "IndiGo", fareType: "PUBLISHED", refundable: "REFUNDABLE", baggage: { checkIn: null, cabin: null }, seatsLeft: null, cabin: "ECONOMY",
@@ -34,7 +35,7 @@ function setup() {
     fareRules: vi.fn(async () => []),
   };
   const sessions = { create: vi.fn(async () => "flight-1"), find: vi.fn() };
-  return { service: new FlightSearchService(supplier, sessions as unknown as FlightSearchSessionsRepository), supplier };
+  return { service: new FlightSearchService(supplier, sessions as unknown as FlightSearchSessionsRepository, { remember: vi.fn() } as unknown as FareCalendarService), supplier };
 }
 
 describe("FlightSearchService", () => {

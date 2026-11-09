@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import ChevronLeftRounded from "@mui/icons-material/ChevronLeftRounded";
@@ -19,15 +19,20 @@ interface DateRangeCalendarProps {
   minDate: string;
   // Hotels need at least one night; a flight can return the same day.
   allowSameDay?: boolean;
+  // Fares under the dates (flights), by YYYY-MM-DD.
+  prices?: Record<string, { label: string; cheapest: boolean }>;
+  // The first month shown ("YYYY-MM"), whenever it changes.
+  onMonthChange?: (month: string) => void;
 }
 
 // Two months side by side (one on phones), like Booking.com's date picker.
 // In range mode the first click sets the start, the second the end, and the
 // days between are shaded, previewing as you hover.
-export default function DateRangeCalendar({ mode, start, end, onChange, minDate, allowSameDay = false }: DateRangeCalendarProps) {
+export default function DateRangeCalendar({ mode, start, end, onChange, minDate, allowSameDay = false, prices, onMonthChange }: DateRangeCalendarProps) {
   const [month, setMonth] = useState(() => monthOf(start || minDate));
   const [hovered, setHovered] = useState<string | null>(null);
   const firstMonth = monthOf(minDate);
+  useEffect(() => onMonthChange?.(month), [month, onMonthChange]);
 
   function pick(day: string) {
     if (mode === "single") return onChange(day, "");
@@ -38,7 +43,7 @@ export default function DateRangeCalendar({ mode, start, end, onChange, minDate,
 
   // While choosing the end, shade up to the hovered day.
   const previewEnd = mode === "range" && start && !end && hovered && hovered >= start ? hovered : "";
-  const shared = { start, end: end || previewEnd, minDate, onPick: pick, onHover: setHovered };
+  const shared = { start, end: end || previewEnd, minDate, onPick: pick, onHover: setHovered, prices };
 
   return (
     <Box sx={styles.root} onMouseLeave={() => setHovered(null)}>

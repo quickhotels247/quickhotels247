@@ -1,5 +1,6 @@
 export const styles = {
   card: {
+    position: "relative",
     height: "100%",
     borderRadius: 3,
     transition: "box-shadow 0.2s",
@@ -16,7 +17,9 @@ export const styles = {
     overflow: "hidden",
   },
   body: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 0.5, py: 0.25 },
-  name: { fontWeight: 700, fontSize: { xs: "1rem", sm: "1.125rem" }, lineHeight: 1.3 },
+  // Room for the heart in the top-right corner.
+  name: { fontWeight: 700, fontSize: { xs: "1rem", sm: "1.125rem" }, lineHeight: 1.3, pr: 4.5 },
+  heart: { position: "absolute", top: 6, right: 6, zIndex: 1 },
   location: {
     display: "flex",
     alignItems: "center",

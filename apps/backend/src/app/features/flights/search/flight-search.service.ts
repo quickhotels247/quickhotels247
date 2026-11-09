@@ -14,6 +14,7 @@ import { SupplierError, supplierHttpError } from "../../../suppliers/supplier-er
 import { filterFlights, flightFacets, flightHighlights } from "./flight-filters.js";
 import { sortFlights } from "./flight-sort.js";
 import { FlightSearchSessionsRepository, type StoredFlightSearch } from "./flight-search-sessions.repository.js";
+import { FareCalendarService } from "../fare-calendar/fare-calendar.service.js";
 
 export interface FlightPaging {
   trip?: string;
@@ -36,11 +37,13 @@ export class FlightSearchService {
   constructor(
     @Inject(FLIGHT_SUPPLIER) private readonly supplier: FlightSupplier,
     private readonly sessions: FlightSearchSessionsRepository,
+    private readonly fareCalendar: FareCalendarService,
   ) {}
 
   async search(criteria: FlightSearchCriteria, userId: string | null, paging: FlightPaging = DEFAULT_PAGING): Promise<FlightSearchResponse> {
     this.check(criteria);
     const found = await this.callSupplier(criteria);
+    this.fareCalendar.remember(criteria, found.trips);
     const id = await this.sessions.create({ criteria, userId, supplier: this.supplier.name, trips: found.trips, expiresAt: found.expiresAt });
     return this.page({ id, criteria, supplier: this.supplier.name, trips: found.trips, expiresAt: found.expiresAt }, paging);
   }
@@ -57,7 +60,9 @@ export class FlightSearchService {
   // Search without saving a session (used for popular-route fares).
   async quickSearch(criteria: FlightSearchCriteria): Promise<FlightTrip[]> {
     this.check(criteria);
-    return (await this.callSupplier(criteria)).trips;
+    const { trips } = await this.callSupplier(criteria);
+    this.fareCalendar.remember(criteria, trips);
+    return trips;
   }
 
   private page(search: StoredFlightSearch, { trip, page, pageSize, sort, filters = {} }: FlightPaging): FlightSearchResponse {

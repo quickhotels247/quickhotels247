@@ -70,6 +70,12 @@ export class PricingService {
         pricePerNight: { amount: cents(total.amount / Math.max(1, nights)), currency: total.currency },
         strikethroughPrice: option.strikethroughPrice ? add(option.strikethroughPrice, extra) : null,
         priceBreakup: { ...option.priceBreakup, base: cents(option.priceBreakup.base + extra) },
+        // A charged period keeps our markup too (never more than the total);
+        // free periods stay free. Refund = what the supplier refunds us.
+        cancellationCharges: (option.cancellationCharges ?? []).map((charge) => ({
+          ...charge,
+          amount: charge.amount.amount > 0 ? { amount: Math.min(total.amount, cents(charge.amount.amount + extra)), currency: charge.amount.currency } : charge.amount,
+        })),
       },
       applied,
     };

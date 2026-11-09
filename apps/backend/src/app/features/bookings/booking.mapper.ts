@@ -8,6 +8,7 @@ import type { GuestTitle } from "@quickhotels/types/checkout";
 import type { Money } from "@quickhotels/types/hotels";
 import type { BookingForList, BookingWithDetails } from "./bookings.repository.js";
 import { displayStatus } from "./booking-status.js";
+import { cancelQuote } from "./cancel-quote.js";
 
 const day = (date: Date) => date.toISOString().slice(0, 10);
 const DAY_MS = 86_400_000;
@@ -124,5 +125,11 @@ export function toDetails(booking: BookingWithDetails): BookingDetails {
     }, []),
     contact: { email: booking.contactEmail, phone: booking.contactPhone },
     specialRequests: booking.specialRequests,
+    cancelQuote: cancelQuote({
+      status: displayStatus(booking.status),
+      checkIn: booking.checkIn.toISOString().slice(0, 10),
+      paid: payment ? money(num(payment.amount)!, payment.currency) : money(num(booking.totalAmount)!, currency),
+      policy: policy(booking.rooms[0]?.cancellationPolicy, currency),
+    }),
   };
 }

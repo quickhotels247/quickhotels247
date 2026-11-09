@@ -156,6 +156,9 @@ export default function FlightSearchBar({ initialCriteria = emptyFlightCriteria,
             returnDate={criteria.return}
             onChange={(depart, returnDate) => update({ depart, return: returnDate })}
             invalid={Boolean(errors.dates)}
+            from={criteria.from}
+            to={criteria.to}
+            cabin={criteria.cabin}
             openSignal={openDates}
           />
           {travellersAndSearch}

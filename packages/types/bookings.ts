@@ -72,4 +72,22 @@ export interface BookingDetails extends BookingListItem {
   timeline: { status: BookingDisplayStatus; at: string }[];
   contact: { email: string; phone: string };
   specialRequests: string | null;
+  // Cancelling now: whether it's possible, the fee and the refund (from the
+  // policy saved at booking, at the current India time).
+  cancelQuote: BookingCancelQuote | null;
+}
+
+export interface BookingCancelQuote {
+  allowed: boolean;
+  // Why not, when not allowed.
+  reason: string | null;
+  fee: Money;
+  refund: Money;
+}
+
+// POST /api/v1/bookings/:reference/cancel (and the guest/link versions).
+// expectedRefund is what the customer saw; if it changed, the server says so.
+export interface CancelBookingRequest {
+  expectedRefund: number;
+  reason?: string;
 }

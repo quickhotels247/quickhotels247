@@ -2,6 +2,9 @@ import { randomUUID } from "node:crypto";
 import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { BookingStatus } from "../../../../generated/prisma/client.js";
 import { bookingLinkToken } from "../../../common/utils/booking-links.js";
+import { hotelVoucherPdf } from "../../../documents/hotel-voucher.pdf.js";
+import { toDetails } from "../../bookings/booking.mapper.js";
+import { BookingsRepository } from "../../bookings/bookings.repository.js";
 import { MailService } from "../../../mail/mail.service.js";
 import { hotelConfirmedEmail, hotelFailedEmail, type HotelMailInput } from "../../../mail/templates/hotel-booking.templates.js";
 import { HOTEL_SUPPLIER, type HotelSupplier, type SupplierHotelBooking, type SupplierHotelGuests } from "../../../suppliers/hotel-supplier.js";
@@ -39,6 +42,7 @@ export class HotelBookingService implements OnModuleInit {
     private readonly payments: PaymentsService,
     private readonly coupons: CouponsService,
     private readonly mail: MailService,
+    private readonly bookingDetails: BookingsRepository,
   ) {}
 
   onModuleInit() {
@@ -198,7 +202,17 @@ export class HotelBookingService implements OnModuleInit {
       // Private link: opens the booking on any device, no sign-in needed.
       link: hotelBookingLink(booking),
     };
-    this.mail.sendInBackground(outcome === "confirmed" ? hotelConfirmedEmail(input) : hotelFailedEmail(input), { template: `hotel-${outcome}`, userId: checkout.userId });
+    if (outcome === "failed") return this.mail.sendInBackground(hotelFailedEmail(input), { template: "hotel-failed", userId: checkout.userId });
+    // The voucher goes with the confirmation (the email still goes if the PDF fails).
+    void this.bookingDetails
+      .findByReference(booking.reference)
+      .then((row) => (row ? hotelVoucherPdf(toDetails(row)) : null))
+      .catch(() => null)
+      .then((voucher) => {
+        const message = hotelConfirmedEmail(input);
+        if (voucher) message.attachments = [{ filename: `voucher-${booking.reference}.pdf`, contentType: "application/pdf", content: voucher }];
+        this.mail.sendInBackground(message, { template: "hotel-confirmed", userId: checkout.userId });
+      });
   }
 }
 

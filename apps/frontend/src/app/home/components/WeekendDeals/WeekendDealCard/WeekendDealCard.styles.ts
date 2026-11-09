@@ -1,5 +1,6 @@
 export const styles = {
   card: {
+    position: "relative",
     width: "100%",
     borderRadius: 3,
     transition: "box-shadow 0.2s",
@@ -12,5 +13,7 @@ export const styles = {
   location: { display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.8125rem", color: "text.secondary" },
   locationIcon: { fontSize: 16 },
   price: { mt: "auto", pt: 1, textAlign: "right" },
+  // Top-right of the photo.
+  heart: { position: "absolute", top: 8, right: 8, zIndex: 1 },
   taxes: { fontSize: "0.75rem", color: "text.secondary" },
 };

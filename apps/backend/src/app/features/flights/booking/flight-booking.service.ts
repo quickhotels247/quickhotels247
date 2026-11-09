@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import type { FlightBookingResult } from "@quickhotels/types/flight-checkout";
 import { MailService } from "../../../mail/mail.service.js";
+import { flightTicketPdf, type FlightTicketInput } from "../../../documents/flight-ticket.pdf.js";
 import { flightConfirmedEmail, flightFailedEmail } from "../../../mail/templates/flight-booking.templates.js";
 import { FLIGHT_SUPPLIER, type FlightSupplier, type SupplierFlightBooking } from "../../../suppliers/flight-supplier.js";
 import { SupplierError } from "../../../suppliers/supplier-error.js";
@@ -179,8 +180,14 @@ export class FlightBookingService implements OnModuleInit {
   }
 
   private email(review: StoredFlightReview, booking: FlightBookingResult, outcome: "confirmed" | "failed") {
+    void this.sendEmail(review, booking, outcome).catch((error: Error) => this.logger.warn(`Flight ${outcome} email for ${review.id} failed: ${error.message}`));
+  }
+
+  private async sendEmail(review: StoredFlightReview, booking: FlightBookingResult, outcome: "confirmed" | "failed") {
     const details = review.travellerDetails;
     if (!details) return;
+    // The e-ticket goes with the confirmation (the email still goes if the PDF fails).
+    const ticket = outcome === "confirmed" ? await flightTicketPdf(ticketInputOf({ ...review, booking })!).catch(() => null) : null;
     const lead = details.travellers[0];
     const input = {
       to: details.contact.email,
@@ -191,6 +198,14 @@ export class FlightBookingService implements OnModuleInit {
       // Private link: opens the booking on any device, no sign-in needed.
       link: `${frontendUrlFromEnv()}/flights/booking/${review.id}?t=${bookingLinkToken("flight", review.id)}`,
     };
-    this.mail.sendInBackground(outcome === "confirmed" ? flightConfirmedEmail(input) : flightFailedEmail(input), { template: `flight-${outcome}`, userId: review.userId });
+    const message = outcome === "confirmed" ? flightConfirmedEmail(input) : flightFailedEmail(input);
+    if (ticket) message.attachments = [{ filename: `e-ticket-${booking.pnrs[0]?.pnr ?? booking.bookingId}.pdf`, contentType: "application/pdf", content: ticket }];
+    this.mail.sendInBackground(message, { template: `flight-${outcome}`, userId: review.userId });
   }
+}
+
+// What the e-ticket shows, for a ticketed booking (else null).
+export function ticketInputOf(review: Pick<StoredFlightReview, "quote" | "travellerDetails" | "booking">): FlightTicketInput | null {
+  if (!review.booking || !review.travellerDetails) return null;
+  return { journeys: review.quote.journeys, travellers: review.travellerDetails.travellers, contact: review.travellerDetails.contact, booking: review.booking, paid: payableOf(review.quote) };
 }

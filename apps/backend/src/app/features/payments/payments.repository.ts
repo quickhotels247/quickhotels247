@@ -73,12 +73,13 @@ export class PaymentsRepository {
   // `full`: this refund brings the total refunded to the whole payment.
   async saveRefund(
     paymentId: string,
-    refund: { providerRefundId: string | null; amount: number; currency: string; status: "PENDING" | "COMPLETED" | "FAILED"; reason: string; adminId?: string | null; full: boolean },
+    refund: { providerRefundId: string | null; amount: number; currency: string; status: "PENDING" | "COMPLETED" | "FAILED"; reason: string; adminId?: string | null; full: boolean; cancellationId?: string | null },
   ) {
     await this.db.$transaction([
       this.db.refund.create({
         data: {
           paymentId,
+          cancellationId: refund.cancellationId ?? null,
           providerRefundId: refund.providerRefundId,
           amount: refund.amount,
           currency: refund.currency,

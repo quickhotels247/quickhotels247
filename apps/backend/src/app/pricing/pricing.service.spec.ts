@@ -25,6 +25,21 @@ describe("PricingService", () => {
     expect(applied).toEqual({ ruleId: "r1", ruleVersion: 3, net: inr(5000), markup: inr(500) });
   });
 
+  it("adds the markup to charged cancellation periods, capped at the total", async () => {
+    const pricing = service([rule({})]);
+    const r = await pricing.hotelRule({ destination: "Goa, India", checkIn: "2026-12-01", checkOut: "2026-12-03", rooms: 1, adults: 2, children: 0 });
+    const room = {
+      totalPrice: inr(5000), pricePerNight: inr(2500), strikethroughPrice: null, priceBreakup: { base: 4200, taxes: 800, managementFee: 0, managementFeeTax: 0, discount: 0 },
+      cancellationCharges: [
+        { from: "2026-11-01T00:00", to: "2026-11-25T12:00", amount: inr(0) },
+        { from: "2026-11-25T12:00", to: "2026-11-30T12:00", amount: inr(2500) },
+        { from: "2026-11-30T12:00", to: "2026-12-01T12:00", amount: inr(5000) },
+      ],
+    } as RoomOption;
+    const { option } = pricing.markRoom(room, r, 2);
+    expect(option.cancellationCharges.map((c) => c.amount.amount)).toEqual([0, 3000, 5500]);
+  });
+
   it("marks up flights per traveller and matches the review to search", async () => {
     const pricing = service([rule({ product: "FLIGHT", markupType: "FIXED", value: 100 })]);
     const criteria = { adults: 2, children: 0, infants: 0 } as never;

@@ -82,3 +82,36 @@ export function hotelFailedEmail(input: HotelMailInput): MailMessage {
     }),
   };
 }
+
+export interface HotelCancelledInput {
+  to: string;
+  name: string;
+  hotel: string;
+  city: string | null;
+  checkIn: string;
+  checkOut: string;
+  reference: string;
+  refund: { status: "pending" | "processed" | "failed"; amount: { amount: number; currency: string } } | null;
+  link: string;
+}
+
+// Cancelled with the hotel, and what's refunded.
+export function hotelCancelledEmail(input: HotelCancelledInput): MailMessage {
+  const stay = `${input.hotel}${input.city ? `, ${input.city}` : ""} · ${day(input.checkIn)} → ${day(input.checkOut)}`;
+  const refundLine = !input.refund
+    ? "Under the cancellation policy for this booking, no refund is due."
+    : input.refund.status === "failed"
+      ? `We'll refund ${rupees(input.refund.amount)}; our team is processing it and will confirm by email.`
+      : `We've refunded ${rupees(input.refund.amount)} to your original payment method. Banks usually show it within 5–7 working days.`;
+  return {
+    to: input.to,
+    subject: `Booking cancelled: ${input.hotel} (${input.reference})`,
+    text: [`Hi ${input.name},`, "", `Your booking ${input.reference} is cancelled with the hotel.`, stay, "", refundLine, "", `Details: ${input.link}`].join("\n"),
+    html: renderEmail({
+      preheader: `${input.reference} is cancelled.`,
+      heading: "Your booking is cancelled",
+      paragraphs: [`Hi ${escapeHtml(input.name)}, booking <b>${escapeHtml(input.reference)}</b> is cancelled with the hotel.`, escapeHtml(stay), escapeHtml(refundLine)],
+      button: { label: "See details", url: input.link },
+    }),
+  };
+}

@@ -11,12 +11,13 @@ interface MonthGridProps {
   minDate: string;
   onPick: (day: string) => void;
   onHover: (day: string | null) => void;
+  prices?: Record<string, { label: string; cheapest: boolean }>;
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // One month: its name, the weekday row, and a week-by-week grid of days.
-export default function MonthGrid({ month, start, end, minDate, onPick, onHover }: MonthGridProps) {
+export default function MonthGrid({ month, start, end, minDate, onPick, onHover, prices }: MonthGridProps) {
   const [year, monthIndex] = month.split("-").map(Number);
   const first = new Date(year, monthIndex - 1, 1);
   const daysInMonth = new Date(year, monthIndex, 0).getDate();
@@ -48,6 +49,8 @@ export default function MonthGrid({ month, start, end, minDate, onPick, onHover 
               inRange={Boolean(start && end && day > start && day < end)}
               onPick={onPick}
               onHover={onHover}
+              withPrices={Boolean(prices)}
+              price={prices?.[day] ?? null}
             />
           ) : (
             <Box key={`blank-${index}`} aria-hidden="true" />

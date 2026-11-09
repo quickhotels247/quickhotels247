@@ -44,7 +44,8 @@ export class HotelBookingsRepository {
     const policy = {
       refundable: room.freeCancellation,
       freeCancellationUntil: room.freeCancellationUntil,
-      charges: room.cancellationCharges.map((charge) => ({ from: charge.from, to: charge.to, amount: charge.amount })),
+      // Never more than was paid (after any coupon).
+      charges: room.cancellationCharges.map((charge) => ({ from: charge.from, to: charge.to, amount: { amount: Math.min(charge.amount.amount, payable.amount), currency: charge.amount.currency } })),
     };
     for (let attempt = 0; ; attempt++) {
       try {

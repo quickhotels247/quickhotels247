@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { BookingDetails } from "@quickhotels/types/bookings";
+import type { BookingDetails, CancelBookingRequest } from "@quickhotels/types/bookings";
 import { ApiError } from "@/lib/api/client";
 import { bookingsApi } from "@/lib/api/bookings";
 import { useAuth } from "@/lib/auth/useAuth";
@@ -49,5 +49,18 @@ export function useBooking(reference: string, checkoutId: string | null, linkTok
   }, [reference, checkoutId, linkToken, token, status, attempt]);
 
   const refresh = useCallback(() => setAttempt((n) => n + 1), []);
-  return { ...state, refresh };
+  // The PDF voucher, with the same access that opened the booking.
+  const downloadVoucher = useCallback(
+    () => bookingsApi.voucher(reference, { key: checkoutId ? checkoutKeyFor(checkoutId) : null, link: linkToken, token }),
+    [reference, checkoutId, linkToken, token],
+  );
+  // Cancels with the same access; shows the updated booking.
+  const cancel = useCallback(
+    async (request: CancelBookingRequest) => {
+      const booking = await bookingsApi.cancel(reference, { key: checkoutId ? checkoutKeyFor(checkoutId) : null, link: linkToken, token }, request);
+      setState({ booking, loading: false, problem: null, message: null });
+    },
+    [reference, checkoutId, linkToken, token],
+  );
+  return { ...state, refresh, downloadVoucher, cancel };
 }

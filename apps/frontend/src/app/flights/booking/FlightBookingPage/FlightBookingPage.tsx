@@ -11,6 +11,7 @@ import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
+import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import ErrorOutlineRounded from "@mui/icons-material/ErrorOutlineRounded";
 import type { FlightReviewSummary } from "@quickhotels/types/flight-checkout";
 import JourneyRow from "@/components/flight/JourneyRow";
@@ -35,6 +36,19 @@ export default function FlightBookingPage() {
   const { token, status: authStatus } = useAuth();
   const [review, setReview] = useState<FlightReviewSummary | null>(null);
   const [problem, setProblem] = useState<"missing" | "error" | null>(null);
+  const [ticketBusy, setTicketBusy] = useState(false);
+  const [ticketError, setTicketError] = useState<string | null>(null);
+  async function downloadTicket(pnr: string) {
+    setTicketBusy(true);
+    setTicketError(null);
+    try {
+      await flightBookingsApi.ticket(reviewId, { key: checkoutKeyFor(reviewId), token, link }, `e-ticket-${pnr}.pdf`);
+    } catch (caught) {
+      setTicketError(caught instanceof Error ? caught.message : "The e-ticket didn't download. Please try again.");
+    } finally {
+      setTicketBusy(false);
+    }
+  }
 
   // Opens with this tab's checkout key, else the private email link, else the
   // signed-in owner's session.
@@ -109,6 +123,14 @@ export default function FlightBookingPage() {
               </Box>
             ))}
           </Box>
+          <Button variant="outlined" startIcon={<DownloadOutlined />} onClick={() => void downloadTicket(booking.pnrs[0]?.pnr ?? booking.bookingId)} disabled={ticketBusy} sx={styles.cta}>
+            {ticketBusy ? "Preparing e-ticket…" : "Download e-ticket (PDF)"}
+          </Button>
+          {ticketError && (
+            <Alert severity="error" sx={styles.alert}>
+              {ticketError}
+            </Alert>
+          )}
         </Box>
       )}
       {review.status === "failed" && (

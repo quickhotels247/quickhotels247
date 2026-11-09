@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import Alert from "@mui/material/Alert";
@@ -12,6 +13,7 @@ import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 import BookingProblem from "@/components/booking/BookingProblem";
 import BookingStatusChip from "@/components/booking/BookingStatusChip";
+import CancelBooking from "@/components/booking/CancelBooking";
 import PolicyCard from "@/components/booking/PolicyCard";
 import PriceCard from "@/components/booking/PriceCard";
 import StatusTimeline from "@/components/booking/StatusTimeline";
@@ -26,7 +28,15 @@ import { styles } from "./BookingDetailsPage.styles";
 export default function BookingDetailsPage() {
   const { reference } = useParams<{ reference: string }>();
   const pathname = usePathname();
-  const { booking, problem, message, loading, refresh } = useBooking(decodeURIComponent(reference), null);
+  const { booking, problem, message, loading, refresh, downloadVoucher, cancel } = useBooking(decodeURIComponent(reference), null);
+
+  // A cancellation in progress: look again every 5 seconds.
+  const cancelling = booking?.status === "cancellation_pending";
+  useEffect(() => {
+    if (!cancelling || loading) return;
+    const timer = setTimeout(refresh, 5000);
+    return () => clearTimeout(timer);
+  }, [cancelling, loading, refresh]);
 
   if (problem) return <BookingProblem problem={problem} message={message} next={pathname} />;
   return (
@@ -64,12 +74,14 @@ export default function BookingDetailsPage() {
           <Box sx={styles.grid}>
             <Box sx={styles.main}>
               <StayCard booking={booking} />
-              <PolicyCard booking={booking} />
+              <PolicyCard booking={booking}>
+                <CancelBooking booking={booking} onCancel={cancel} />
+              </PolicyCard>
               <StatusTimeline timeline={booking.timeline} />
             </Box>
             <Box sx={styles.side}>
               <PriceCard booking={booking} />
-              <SupportCard reference={booking.reference} voucherReady={booking.status === "confirmed"} />
+              <SupportCard reference={booking.reference} voucherReady={booking.status === "confirmed"} onDownloadVoucher={downloadVoucher} />
             </Box>
           </Box>
         </>
