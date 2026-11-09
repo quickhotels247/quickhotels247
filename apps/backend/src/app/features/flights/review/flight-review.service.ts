@@ -65,11 +65,33 @@ export class FlightReviewService {
     return this.summary(review);
   }
 
-  // Step F6: a Razorpay order for what's payable now (travellers saved).
-  async startPayment(id: string, key: string): Promise<PaymentOrder> {
-    const review = await this.editable(id, key);
+  // Step F6: a Razorpay order for what's payable now (travellers saved). The
+  // coupon is checked again (limits or dates may have changed since it was
+  // applied); if it no longer fits it's removed and the customer told.
+  async startPayment(id: string, key: string, userId: string | null = null): Promise<PaymentOrder> {
+    let review = await this.editable(id, key);
     if (review.status !== "payment" || !review.travellerDetails) throw new ConflictException("Add the travellers before paying.");
-    const lead = review.travellerDetails.travellers[0];
+    if (userId) await this.reviews.claim(review.id, userId);
+    if (review.quote.coupon) {
+      try {
+        const coupon = await this.coupons.apply(review.quote.coupon.code, {
+          product: "FLIGHT",
+          amount: review.quote.price.total.amount,
+          currency: review.quote.price.total.currency,
+          margin: review.quote.markup?.markup.amount ?? 0,
+          city: null,
+          userId: userId ?? review.userId,
+        });
+        if (coupon.discount.amount !== review.quote.coupon.discount.amount) await this.reviews.setQuote(review.id, { ...review.quote, coupon });
+      } catch (error) {
+        await this.reviews.setQuote(review.id, { ...review.quote, coupon: null });
+        const total = payableOf({ ...review.quote, coupon: null });
+        throw new ConflictException(`Coupon ${review.quote.coupon.code} can't be used any more (${(error as Error).message.replace(/\.$/, "")}), so it was removed. Your total is now ₹${total.amount.toLocaleString("en-IN")}. Press Pay again to continue.`);
+      }
+      review = (await this.reviews.find(review.id))!;
+    }
+    const details = review.travellerDetails!;
+    const lead = details.travellers[0];
     const route = review.quote.journeys.map((leg) => `${leg.from}–${leg.to}`).join(", ");
     const payable = payableOf(review.quote);
     return this.payments.createOrder({
@@ -79,8 +101,8 @@ export class FlightReviewService {
       description: `Flight ${route}`,
       prefill: {
         name: lead ? `${lead.firstName} ${lead.lastName}` : null,
-        email: review.travellerDetails.contact.email,
-        contact: `${review.travellerDetails.contact.phoneCode}${review.travellerDetails.contact.phone}`.replace(/\s+/g, ""),
+        email: details.contact.email,
+        contact: `${details.contact.phoneCode}${details.contact.phone}`.replace(/\s+/g, ""),
       },
     });
   }
@@ -105,6 +127,7 @@ export class FlightReviewService {
   // A coupon code: checked against this fare (never more than our markup).
   async applyCoupon(id: string, key: string, code: string, userId: string | null): Promise<FlightReviewSummary> {
     const review = await this.editable(id, key);
+    if (userId) await this.reviews.claim(review.id, userId);
     const coupon = await this.coupons.apply(code, {
       product: "FLIGHT",
       amount: review.quote.price.total.amount,

@@ -40,6 +40,22 @@ export class CouponsRepository {
     return { total, byCustomer };
   }
 
+  // A use of the coupon by a paid booking (counts towards its limits).
+  async recordUse(code: string, paymentId: string, userId: string | null, discount: number): Promise<void> {
+    const coupon = await this.findByCode(code);
+    if (!coupon) return;
+    await this.db.couponRedemption.upsert({
+      where: { paymentId },
+      create: { couponId: coupon.id, paymentId, userId, discountAmount: discount },
+      update: {},
+    });
+  }
+
+  // The booking didn't happen (refunded): the use no longer counts.
+  async releaseUse(paymentId: string): Promise<void> {
+    await this.db.couponRedemption.deleteMany({ where: { paymentId } });
+  }
+
   async publicOffers(now = new Date()): Promise<PublicOffer[]> {
     const rows = await this.db.coupon.findMany({
       where: { public: true, status: "ACTIVE", validFrom: { lte: now }, validTo: { gte: now }, title: { not: null } },

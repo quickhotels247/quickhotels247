@@ -31,6 +31,17 @@ export class PaymentsRepository {
     return this.db.payment.findFirst({ where: { ...target, status: { in: ["CAPTURED", "REFUNDED", "PARTIALLY_REFUNDED"] } }, include: { refunds: true } });
   }
 
+  // Unpaid orders from the last day, old enough that Checkout or the webhook
+  // should have reported a payment: the reconciler asks Razorpay about them.
+  ordersToCheck(limit = 20) {
+    const now = Date.now();
+    return this.db.payment.findMany({
+      where: { status: { in: ["CREATED", "FAILED"] }, createdAt: { gte: new Date(now - 24 * 3600_000), lte: new Date(now - 3 * 60_000) } },
+      orderBy: { createdAt: "asc" },
+      take: limit,
+    });
+  }
+
   // True only for the call that moved it to CAPTURED (repeats are no-ops).
   async markCaptured(id: string, paymentId: string, method: string | null): Promise<boolean> {
     const { count } = await this.db.payment.updateMany({
@@ -59,7 +70,11 @@ export class PaymentsRepository {
     await this.db.paymentWebhookEvent.updateMany({ where: { providerEventId: eventId }, data: { processedAt: new Date() } });
   }
 
-  async saveRefund(paymentId: string, refund: { providerRefundId: string | null; amount: number; currency: string; status: "PENDING" | "COMPLETED" | "FAILED"; reason: string }) {
+  // `full`: this refund brings the total refunded to the whole payment.
+  async saveRefund(
+    paymentId: string,
+    refund: { providerRefundId: string | null; amount: number; currency: string; status: "PENDING" | "COMPLETED" | "FAILED"; reason: string; adminId?: string | null; full: boolean },
+  ) {
     await this.db.$transaction([
       this.db.refund.create({
         data: {
@@ -69,10 +84,11 @@ export class PaymentsRepository {
           currency: refund.currency,
           status: refund.status,
           reason: refund.reason,
+          initiatedByAdminId: refund.adminId ?? null,
           ...(refund.status === "COMPLETED" ? { completedAt: new Date() } : {}),
         },
       }),
-      ...(refund.status === "FAILED" ? [] : [this.db.payment.update({ where: { id: paymentId }, data: { status: "REFUNDED" } })]),
+      ...(refund.status === "FAILED" ? [] : [this.db.payment.update({ where: { id: paymentId }, data: { status: refund.full ? "REFUNDED" : "PARTIALLY_REFUNDED" } })]),
     ]);
   }
 }

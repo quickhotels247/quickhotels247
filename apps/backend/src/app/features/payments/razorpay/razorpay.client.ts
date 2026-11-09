@@ -68,6 +68,11 @@ export class RazorpayClient {
     return this.call<RazorpayPayment>("GET", `/payments/${encodeURIComponent(paymentId)}`);
   }
 
+  // Payments made against an order (to find one whose confirmation never arrived).
+  orderPayments(orderId: string) {
+    return this.call<{ items: RazorpayPayment[] }>("GET", `/orders/${encodeURIComponent(orderId)}/payments`);
+  }
+
   // For accounts without automatic capture: take an authorised payment.
   capture(paymentId: string, amountPaise: number, currency: string) {
     return this.call<RazorpayPayment>("POST", `/payments/${encodeURIComponent(paymentId)}/capture`, { amount: amountPaise, currency });

@@ -29,6 +29,10 @@ export const flightReviewsApi = {
     apiRequest<FlightReviewSummary>(`/v1/flights/reviews/${encodeURIComponent(reviewId)}/coupon`, { method: "DELETE", headers: { "X-Checkout-Token": key } }),
 
   // Step F6: a Razorpay order for what's payable.
-  startPayment: (reviewId: string, key: string) =>
-    apiRequest<PaymentOrder>(`/v1/flights/reviews/${encodeURIComponent(reviewId)}/payment`, { method: "POST", headers: { "X-Checkout-Token": key } }),
+  // A signed-in customer's token links the paid booking to their account.
+  startPayment: (reviewId: string, key: string, token: string | null) =>
+    apiRequest<PaymentOrder>(`/v1/flights/reviews/${encodeURIComponent(reviewId)}/payment`, {
+      method: "POST",
+      headers: { "X-Checkout-Token": key, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    }),
 };

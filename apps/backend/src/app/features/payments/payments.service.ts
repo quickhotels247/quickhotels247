@@ -1,5 +1,9 @@
 import { BadRequestException, ConflictException, Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import type { ConfirmPaymentResponse, PaymentOrder } from "@quickhotels/types/payments";
+import { frontendUrlFromEnv } from "../auth/auth.config.js";
+import { supportInbox } from "../../mail/inbox.js";
+import { MailService } from "../../mail/mail.service.js";
+import { opsAlertEmail } from "../../mail/templates/ops-alert.template.js";
 import { RazorpayClient, RazorpayError, type RazorpayPayment } from "./razorpay/razorpay.client.js";
 import { PaymentsRepository, type PaymentTarget, type StoredPayment } from "./payments.repository.js";
 
@@ -28,7 +32,39 @@ export class PaymentsService {
   constructor(
     private readonly razorpay: RazorpayClient,
     private readonly payments: PaymentsRepository,
+    private readonly mail: MailService,
   ) {}
+
+  // Tells the team (support inbox) about a payment problem.
+  alert(subject: string, lines: string[], action?: string) {
+    const inbox = supportInbox();
+    this.logger.error(`${subject}: ${lines.join(" | ")}`);
+    if (inbox) this.mail.sendInBackground(opsAlertEmail(inbox, { subject, lines, action, link: `${frontendUrlFromEnv()}/admin` }), { template: "ops-alert" });
+  }
+
+  // The captured payment for a booking (id and amount), if any.
+  captured(target: PaymentTarget) {
+    return this.payments.findCaptured(target);
+  }
+
+  // Unpaid orders whose payment report never arrived (browser closed, webhook
+  // missing): ask Razorpay and settle any that were paid. Run by the reconciler.
+  async reconcileOpenOrders(): Promise<number> {
+    let settled = 0;
+    for (const payment of await this.payments.ordersToCheck()) {
+      try {
+        const { items } = await this.razorpay.orderPayments(payment.providerOrderId);
+        const paid = items.find((item) => item.status === "captured" || item.status === "authorized");
+        if (!paid) continue;
+        this.logger.warn(`Order ${payment.providerOrderId} was paid but never confirmed; settling now.`);
+        await this.settle(payment, paid);
+        settled++;
+      } catch (error) {
+        this.logger.warn(`Checking order ${payment.providerOrderId} failed: ${(error as Error).message}`);
+      }
+    }
+    return settled;
+  }
 
   // Flights / hotels register what to do once a payment is captured.
   registerFulfiller(kind: ConfirmPaymentResponse["kind"], fulfil: Fulfiller) {
@@ -93,7 +129,9 @@ export class PaymentsService {
   private async settle(payment: StoredPayment, remote: RazorpayPayment): Promise<void> {
     if (remote.order_id !== payment.providerOrderId) throw new BadRequestException("This payment belongs to another order.");
     if (remote.amount !== paise(Number(payment.amount)) || remote.currency !== payment.currency) {
-      this.logger.error(`Payment ${remote.id} amount ${remote.amount} ${remote.currency} doesn't match order ${payment.providerOrderId}.`);
+      this.alert("Payment amount mismatch", [
+        `Razorpay payment ${remote.id} is ${remote.amount / 100} ${remote.currency}, but order ${payment.providerOrderId} expects ${Number(payment.amount)} ${payment.currency}.`,
+      ], "Check the payment in Razorpay and refund it if needed; nothing was booked.");
       throw new BadRequestException("The amount paid doesn't match this booking. Please contact us.");
     }
     let status = remote.status;
@@ -104,7 +142,7 @@ export class PaymentsService {
     const target = kindOf(payment);
     const fulfil = target && this.fulfillers.get(target.kind);
     if (!target || !fulfil) {
-      this.logger.error(`Payment ${remote.id} captured with nothing to fulfil.`);
+      this.alert("Payment captured with nothing to book", [`Razorpay payment ${remote.id} (order ${payment.providerOrderId}) has no booking to fulfil.`], "Refund it from the Razorpay dashboard.");
       return;
     }
     // Booking takes a while; it continues after the customer's request returns.
@@ -112,21 +150,42 @@ export class PaymentsService {
   }
 
   // Refunds the captured payment for this booking in full (supplier couldn't
-  // book). Recorded either way; a failed refund shows up for staff.
+  // book). Recorded either way; a failed refund alerts the team.
   async refundAll(target: PaymentTarget, reason: string): Promise<{ status: "pending" | "processed" | "failed"; amount: number; currency: string } | null> {
-    const payment = await this.payments.findCaptured(target);
-    if (!payment?.providerPaymentId) return null;
-    if (payment.status === "REFUNDED") return { status: "pending", amount: Number(payment.amount), currency: payment.currency };
-    const amount = Number(payment.amount);
     try {
-      const refund = await this.razorpay.refund(payment.providerPaymentId, paise(amount), { reason: reason.slice(0, 200) });
-      const processed = refund.status === "processed";
-      await this.payments.saveRefund(payment.id, { providerRefundId: refund.id, amount, currency: payment.currency, status: processed ? "COMPLETED" : "PENDING", reason });
-      return { status: processed ? "processed" : "pending", amount, currency: payment.currency };
+      return await this.refund(target, null, reason, null);
     } catch (error) {
-      this.logger.error(`Refund for payment ${payment.providerPaymentId} failed: ${(error as Error).message}`);
-      await this.payments.saveRefund(payment.id, { providerRefundId: null, amount, currency: payment.currency, status: "FAILED", reason });
-      return { status: "failed", amount, currency: payment.currency };
+      if (error instanceof BadRequestException) return null; // nothing left to refund
+      throw error;
+    }
+  }
+
+  // Refunds `amount` (rupees; null = everything still refundable) of this
+  // booking's captured payment. Staff refunds carry the admin's id.
+  async refund(
+    target: PaymentTarget,
+    amount: number | null,
+    reason: string,
+    adminId: string | null,
+  ): Promise<{ status: "pending" | "processed" | "failed"; amount: number; currency: string }> {
+    const payment = await this.payments.findCaptured(target);
+    if (!payment?.providerPaymentId) throw new BadRequestException("There's no captured payment to refund.");
+    const paid = Number(payment.amount);
+    const refunded = payment.refunds.filter((item) => item.status !== "FAILED").reduce((sum, item) => sum + Number(item.amount), 0);
+    const remaining = Math.round((paid - refunded) * 100) / 100;
+    const value = amount ?? remaining;
+    if (value <= 0 || remaining <= 0) throw new BadRequestException("This payment is already fully refunded.");
+    if (value > remaining) throw new BadRequestException(`You can refund at most ${remaining} ${payment.currency}.`);
+    const full = Math.round((refunded + value) * 100) >= Math.round(paid * 100);
+    try {
+      const result = await this.razorpay.refund(payment.providerPaymentId, paise(value), { reason: reason.slice(0, 200) });
+      const processed = result.status === "processed";
+      await this.payments.saveRefund(payment.id, { providerRefundId: result.id, amount: value, currency: payment.currency, status: processed ? "COMPLETED" : "PENDING", reason, adminId, full });
+      return { status: processed ? "processed" : "pending", amount: value, currency: payment.currency };
+    } catch (error) {
+      this.alert("Refund failed", [`Refunding ${value} ${payment.currency} for Razorpay payment ${payment.providerPaymentId} failed: ${(error as Error).message}`, `Reason for the refund: ${reason}`], "Refund it from the Razorpay dashboard, then tell the customer.");
+      await this.payments.saveRefund(payment.id, { providerRefundId: null, amount: value, currency: payment.currency, status: "FAILED", reason, adminId, full });
+      return { status: "failed", amount: value, currency: payment.currency };
     }
   }
 }

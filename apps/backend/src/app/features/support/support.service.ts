@@ -1,18 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import type { CreateTicketResponse } from "@quickhotels/types/support";
 import { frontendUrlFromEnv } from "../auth/auth.config.js";
+import { supportInbox } from "../../mail/inbox.js";
 import { MailService } from "../../mail/mail.service.js";
 import { ticketAlertEmail, ticketReceivedEmail } from "../../mail/templates/support.templates.js";
 import type { CreateTicketDto } from "./dto/create-ticket.dto.js";
 import { SupportRepository } from "./support.repository.js";
 
-// Where new requests are announced: SUPPORT_EMAIL, else the sending address.
-function supportInbox(): string | null {
-  const configured = process.env.SUPPORT_EMAIL?.trim();
-  if (configured) return configured;
-  const from = process.env.MAIL_FROM ?? "";
-  return /<([^>]+)>/.exec(from)?.[1] ?? (from.includes("@") ? from.trim() : null);
-}
 
 // The /help contact form: a ticket for the team, an acknowledgement for the
 // customer, and an alert to the support inbox (both emails in the background).

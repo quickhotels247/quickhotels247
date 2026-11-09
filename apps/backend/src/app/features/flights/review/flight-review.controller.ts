@@ -38,8 +38,8 @@ export class FlightReviewController {
   // Step F6: a Razorpay order to pay what's payable.
   @Post(":id/payment")
   @Throttle(LIMITS.sensitive)
-  startPayment(@Param("id", new ParseUUIDPipe()) id: string, @Headers("x-checkout-token") key?: string) {
-    return this.reviews.startPayment(id, requireCheckoutKey(key, "X-Checkout-Token"));
+  async startPayment(@Param("id", new ParseUUIDPipe()) id: string, @Headers("x-checkout-token") key?: string, @Headers("authorization") authorization?: string) {
+    return this.reviews.startPayment(id, requireCheckoutKey(key, "X-Checkout-Token"), await this.user.from(authorization));
   }
 
   @Put(":id/coupon")

@@ -14,10 +14,17 @@ import type {
   ChangeAdminPasswordRequest,
   AddAdminRequest,
   AdminRole,
+  AdminFlightBooking,
+  AdminFlightBookingList,
+  AdminPaymentList,
+  AdminRefundRequest,
 } from "@quickhotels/types/admin";
 import { apiRequest, postJson } from "./client";
 
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
+// Query string without empty values.
+const query = (params: Record<string, string | number | undefined>) =>
+  new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== "").map(([key, value]) => [key, String(value)])).toString();
 
 // The admin console's backend (/api/admin/*). Admin sessions are separate
 // from customer sessions.
@@ -37,6 +44,17 @@ export const adminApi = {
     apiRequest<PricingRule[]>(`/admin/pricing-rules/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(rule), headers: bearer(token) }),
   deletePricingRule: (token: string, id: string) =>
     apiRequest<PricingRule[]>(`/admin/pricing-rules/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
+  // Bookings and payments.
+  flightBookings: (token: string, params: { status?: string; q?: string; page?: number }, signal?: AbortSignal) =>
+    apiRequest<AdminFlightBookingList>(`/admin/bookings/flights?${query(params)}`, { signal, headers: bearer(token) }),
+  flightBooking: (token: string, id: string, signal?: AbortSignal) =>
+    apiRequest<AdminFlightBooking>(`/admin/bookings/flights/${encodeURIComponent(id)}`, { signal, headers: bearer(token) }),
+  recheckFlightBooking: (token: string, id: string) =>
+    apiRequest<{ supplierStatus: string; booking: AdminFlightBooking }>(`/admin/bookings/flights/${encodeURIComponent(id)}/recheck`, { method: "POST", headers: bearer(token) }),
+  refundFlightBooking: (token: string, id: string, request: AdminRefundRequest) =>
+    apiRequest<AdminFlightBooking>(`/admin/bookings/flights/${encodeURIComponent(id)}/refund`, { method: "POST", body: JSON.stringify(request), headers: bearer(token) }),
+  payments: (token: string, params: { status?: string; q?: string; page?: number }, signal?: AbortSignal) =>
+    apiRequest<AdminPaymentList>(`/admin/payments?${query(params)}`, { signal, headers: bearer(token) }),
   // Coupons; every change returns the whole updated list.
   coupons: (token: string, signal?: AbortSignal) => apiRequest<Coupon[]>("/admin/coupons", { signal, headers: bearer(token) }),
   createCoupon: (token: string, coupon: CouponInput) =>

@@ -26,7 +26,7 @@ function setup(reviewed: Partial<FlightReviewResult> | Error = {}) {
     find: vi.fn(async (id: string) => rows.get(id) ?? null),
     create: vi.fn(async (review: NewFlightReview) => {
       const id = `review-${rows.size + 1}`;
-      rows.set(id, { id, keyHash: review.keyHash, status: "travellers", supplierBookingId: review.supplierBookingId, quote: review.quote, travellerDetails: null, expiresAt: review.expiresAt, userId: null, booking: null, failureReason: null, updatedAt: new Date() });
+      rows.set(id, { id, keyHash: review.keyHash, status: "travellers", supplierBookingId: review.supplierBookingId, quote: review.quote, travellerDetails: null, expiresAt: review.expiresAt, userId: null, booking: null, failureReason: null, paidAt: null, updatedAt: new Date() });
       return id;
     }),
   };

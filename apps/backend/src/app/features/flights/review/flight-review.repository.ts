@@ -30,6 +30,7 @@ export interface StoredFlightReview {
   travellerDetails: FlightTravellerDetails | null;
   booking: FlightBookingResult | null;
   failureReason: string | null;
+  paidAt: Date | null;
   expiresAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,7 @@ export interface NewFlightReview {
 }
 
 type Row = {
+  paidAt?: Date | null;
   id: string;
   keyHash: string;
   status: string;
@@ -67,6 +69,7 @@ const toStored = (row: Row): StoredFlightReview => ({
   userId: row.userId,
   booking: (row.bookingResult as FlightBookingResult | null) ?? null,
   failureReason: row.failureReason,
+  paidAt: row.paidAt ?? null,
   expiresAt: row.expiresAt,
   updatedAt: row.updatedAt,
 });
@@ -88,8 +91,49 @@ export class FlightReviewRepository {
 
   // Moves the status only from one of `from`; false if another request moved it first.
   async transition(id: string, from: string[], to: string): Promise<boolean> {
-    const { count } = await this.db.flightCheckout.updateMany({ where: { id, status: { in: from } }, data: { status: to } });
+    const { count } = await this.db.flightCheckout.updateMany({
+      where: { id, status: { in: from } },
+      data: { status: to, ...(to === "paid" ? { paidAt: new Date() } : {}) },
+    });
     return count > 0;
+  }
+
+  // Paid bookings the reconciler should move on: "paid" for a minute (Book
+  // never started), "booking" for 5 minutes (the process stopped mid-Book),
+  // "pending" not checked for 30 s (or 10 min once over an hour old).
+  async stuck(limit = 25): Promise<StoredFlightReview[]> {
+    const now = Date.now();
+    const rows = await this.db.flightCheckout.findMany({
+      where: {
+        OR: [
+          { status: "paid", updatedAt: { lt: new Date(now - 60_000) } },
+          { status: "booking", updatedAt: { lt: new Date(now - 5 * 60_000) } },
+          { status: "pending", updatedAt: { lt: new Date(now - 30_000) }, paidAt: { gte: new Date(now - 3600_000) } },
+          { status: "pending", updatedAt: { lt: new Date(now - 10 * 60_000) } },
+        ],
+      },
+      orderBy: { updatedAt: "asc" },
+      take: limit,
+    });
+    return rows.map(toStored);
+  }
+
+  // Pending for over 30 minutes and staff not told yet.
+  async slowToTell(): Promise<StoredFlightReview[]> {
+    const rows = await this.db.flightCheckout.findMany({
+      where: { status: { in: ["pending", "booking"] }, paidAt: { lt: new Date(Date.now() - 30 * 60_000) }, opsAlertedAt: null },
+      take: 10,
+    });
+    return rows.map(toStored);
+  }
+
+  async markAlerted(id: string) {
+    await this.db.flightCheckout.update({ where: { id }, data: { opsAlertedAt: new Date() } });
+  }
+
+  // A paid booking belongs to the signed-in customer who paid (My bookings).
+  async claim(id: string, userId: string) {
+    await this.db.flightCheckout.updateMany({ where: { id, userId: null }, data: { userId } });
   }
 
   async saveBooking(id: string, status: "confirmed" | "pending" | "failed", booking: FlightBookingResult, failureReason: string | null = null) {

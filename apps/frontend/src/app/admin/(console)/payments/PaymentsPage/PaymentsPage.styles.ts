@@ -1,0 +1,16 @@
+export const styles = {
+  tabs: { mb: 2, borderBottom: 1, borderColor: "divider", "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 44 } },
+  list: { display: "flex", flexDirection: "column", gap: 1, transition: "opacity 0.2s" },
+  loading: { opacity: 0.6 },
+  empty: { color: "text.secondary", py: 4, textAlign: "center" },
+  row: { display: "flex", gap: 2, p: 2, bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2.5, color: "inherit", textDecoration: "none" },
+  link: { "&:hover": { borderColor: "primary.main" } },
+  main: { flex: 1, minWidth: 0 },
+  title: { fontSize: "0.9375rem", overflowWrap: "anywhere" },
+  mono: { fontFamily: "ui-monospace, Menlo, monospace", fontSize: "0.75rem", color: "text.secondary" },
+  side: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.5, flexShrink: 0 },
+  refunded: { fontSize: "0.75rem", color: "info.main", fontWeight: 600 },
+  failed: { fontSize: "0.75rem", color: "error.main", fontWeight: 700 },
+  time: { fontSize: "0.75rem", color: "text.secondary" },
+  pagination: { display: "flex", justifyContent: "center", mt: 2 },
+};

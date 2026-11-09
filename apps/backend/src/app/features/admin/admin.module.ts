@@ -1,3 +1,7 @@
+import { FlightsModule } from "../flights/flights.module.js";
+import { AdminBookingsController } from "./bookings/admin-bookings.controller.js";
+import { AdminBookingsRepository } from "./bookings/admin-bookings.repository.js";
+import { AdminBookingsService } from "./bookings/admin-bookings.service.js";
 import { AdminCouponsController } from "./coupons/admin-coupons.controller.js";
 import { AdminCouponsService } from "./coupons/admin-coupons.service.js";
 import { AdminSupportController } from "./support/admin-support.controller.js";
@@ -23,8 +27,9 @@ import { AuditLogRepository } from "./audit-log.repository.js";
 
 // The admin dashboard, under /api/admin. Admins sign in separately from users.
 @Module({
-  imports: [ConfigModule.forFeature(adminConfig)],
+  imports: [ConfigModule.forFeature(adminConfig), FlightsModule],
   controllers: [
+    AdminBookingsController,
     AdminCouponsController,
     AdminSupportController,
     AdminPricingController,
@@ -35,6 +40,8 @@ import { AuditLogRepository } from "./audit-log.repository.js";
     AdminUsersController,
   ],
   providers: [
+    AdminBookingsService,
+    AdminBookingsRepository,
     AdminCouponsService,
     AdminSupportService,
     AdminSupportRepository,

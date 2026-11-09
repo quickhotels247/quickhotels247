@@ -60,5 +60,13 @@ export function useFlightReview(reviewId: string) {
     setState({ review, problem: null, message: null });
   }, [reviewId]);
 
-  return { ...state, saveTravellers, applyCoupon, removeCoupon };
+  // Reads the review again (e.g. after the server removed a coupon at payment).
+  const reload = useCallback(async () => {
+    const key = checkoutKeyFor(reviewId);
+    if (!key) return;
+    const review = await flightReviewsApi.get(reviewId, key);
+    setState({ review, problem: null, message: null });
+  }, [reviewId]);
+
+  return { ...state, saveTravellers, applyCoupon, removeCoupon, reload };
 }

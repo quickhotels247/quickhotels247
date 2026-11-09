@@ -36,6 +36,14 @@ export class CouponsService {
     return { code: row.code, title: row.title, discount: { amount: result.discount, currency: target.currency } };
   }
 
+  recordUse(coupon: AppliedCoupon, paymentId: string, userId: string | null) {
+    return this.coupons.recordUse(coupon.code, paymentId, userId, coupon.discount.amount);
+  }
+
+  releaseUse(paymentId: string) {
+    return this.coupons.releaseUse(paymentId);
+  }
+
   publicOffers(): Promise<PublicOffer[]> {
     return this.coupons.publicOffers();
   }

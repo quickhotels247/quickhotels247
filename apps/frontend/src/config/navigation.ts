@@ -45,6 +45,8 @@ export const routes = {
   adminPricing: "/admin/pricing",
   adminSupport: "/admin/support",
   adminCoupons: "/admin/coupons",
+  adminBookings: "/admin/bookings",
+  adminPayments: "/admin/payments",
 } as const;
 
 // Account links for the phone menu. Home and hotel search live under Stays.

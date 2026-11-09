@@ -332,6 +332,9 @@ model FlightCheckout {
   termsAcceptedAt   DateTime? @map("terms_accepted_at") @db.Timestamptz
   // After payment (step F6): the supplier's PNRs/tickets and when booked, or why it failed.
   bookingResult     Json?     @map("booking_result")
+  // When the payment was captured, and when staff were alerted about a slow booking.
+  paidAt            DateTime? @map("paid_at") @db.Timestamptz
+  opsAlertedAt      DateTime? @map("ops_alerted_at") @db.Timestamptz
   bookedAt          DateTime? @map("booked_at") @db.Timestamptz
   failureReason     String?   @map("failure_reason")
   // When the supplier stops holding the fares.
@@ -343,6 +346,7 @@ model FlightCheckout {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([status, updatedAt])
   @@map("flight_checkouts")
 }
 
@@ -566,6 +570,7 @@ model Payment {
   flightCheckout FlightCheckout? @relation(fields: [flightCheckoutId], references: [id], onDelete: SetNull)
   booking        Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   refunds        Refund[]
+  couponRedemption CouponRedemption?
 
   @@index([bookingId])
   @@index([flightCheckoutId])
@@ -693,13 +698,16 @@ model CouponRedemption {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   couponId       String   @map("coupon_id") @db.Uuid
   userId         String?  @map("user_id") @db.Uuid
-  bookingId      String   @unique @map("booking_id") @db.Uuid
+  // Hotel bookings (once booked); flights and hotel payments link the payment.
+  bookingId      String?  @unique @map("booking_id") @db.Uuid
+  paymentId      String?  @unique @map("payment_id") @db.Uuid
   discountAmount Decimal  @map("discount_amount") @db.Decimal(12, 2)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  coupon  Coupon  @relation(fields: [couponId], references: [id], onDelete: Restrict)
-  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  coupon  Coupon   @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 
   @@index([couponId])
   @@map("coupon_redemptions")

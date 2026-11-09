@@ -39,8 +39,8 @@ const SECTIONS: { title: string; items: Item[] }[] = [
   {
     title: "Operations",
     items: [
-      { label: "Bookings", icon: BookOnlineOutlined },
-      { label: "Payments & refunds", icon: PaymentsOutlined },
+      { label: "Bookings", href: routes.adminBookings, icon: BookOnlineOutlined, permission: "bookings" },
+      { label: "Payments & refunds", href: routes.adminPayments, icon: PaymentsOutlined, permission: "bookings" },
       { label: "Support", href: routes.adminSupport, icon: SupportAgentOutlined, permission: "support" },
     ],
   },

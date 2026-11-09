@@ -35,7 +35,7 @@ const city = (code: string) => airportByCode(code)?.city ?? code;
 export default function FlightReviewPage() {
   const { reviewId } = useParams<{ reviewId: string }>();
   const router = useRouter();
-  const { review, problem, message, saveTravellers, applyCoupon, removeCoupon } = useFlightReview(reviewId);
+  const { review, problem, message, saveTravellers, applyCoupon, removeCoupon, reload } = useFlightReview(reviewId);
   const [expired, setExpired] = useState(false);
   const onExpire = useCallback(() => setExpired(true), []);
   // 0 review fare, 1 travellers, 2 payment.
@@ -126,7 +126,7 @@ export default function FlightReviewPage() {
                 }}
               />
             )}
-            {step === 2 && <PaymentStep review={review} onEdit={() => goTo(1)} />}
+            {step === 2 && <PaymentStep review={review} onEdit={() => goTo(1)} onReload={reload} />}
           </Box>
           <Box sx={styles.side}>
             <FarePriceCard price={review.price} coupon={review.coupon} payable={review.payable}>

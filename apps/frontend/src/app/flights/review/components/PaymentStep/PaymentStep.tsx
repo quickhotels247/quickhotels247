@@ -9,6 +9,8 @@ import Typography from "@mui/material/Typography";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import type { FlightReviewSummary } from "@quickhotels/types/flight-checkout";
 import { routes } from "@/config/navigation";
+import { useAuth } from "@/lib/auth/useAuth";
+import { ApiError } from "@/lib/api/client";
 import { flightReviewsApi } from "@/lib/api/flightReviews";
 import { paymentsApi } from "@/lib/api/payments";
 import { checkoutKeyFor } from "@/lib/checkoutKeys";
@@ -19,11 +21,14 @@ import { styles } from "./PaymentStep.styles";
 interface PaymentStepProps {
   review: FlightReviewSummary;
   onEdit: () => void;
+  // Re-reads the review when the server changed it (a coupon removed).
+  onReload: () => Promise<void>;
 }
 
 // After travellers: who's flying and where tickets go, then Pay (Razorpay).
 // Once paid, the booking page shows ticketing and the PNR.
-export default function PaymentStep({ review, onEdit }: PaymentStepProps) {
+export default function PaymentStep({ review, onEdit, onReload }: PaymentStepProps) {
+  const { token } = useAuth();
   const router = useRouter();
   const details = review.travellerDetails;
   const [busy, setBusy] = useState(false);
@@ -35,12 +40,14 @@ export default function PaymentStep({ review, onEdit }: PaymentStepProps) {
     setBusy(true);
     setError(null);
     try {
-      const order = await flightReviewsApi.startPayment(review.reviewId, key);
+      const order = await flightReviewsApi.startPayment(review.reviewId, key, token);
       const result = await payWithRazorpay(order);
       await paymentsApi.confirm(result);
       router.push(`${routes.flightBooking}/${review.reviewId}`);
     } catch (caught) {
       if (!(caught instanceof PaymentCancelled)) setError(caught instanceof Error ? caught.message : "The payment didn't go through. Please try again.");
+      // A coupon removed at payment changes the total shown.
+      if (caught instanceof ApiError && caught.status === 409) await onReload().catch(() => undefined);
       setBusy(false);
     }
   }

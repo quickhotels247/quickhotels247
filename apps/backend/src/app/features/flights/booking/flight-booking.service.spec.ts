@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MailService } from "../../../mail/mail.service.js";
 import type { FlightSupplier } from "../../../suppliers/flight-supplier.js";
 import { SupplierError } from "../../../suppliers/supplier-error.js";
+import type { CouponsService } from "../../coupons/coupons.service.js";
 import type { PaymentsService } from "../../payments/payments.service.js";
 import type { FlightReviewRepository, StoredFlightReview } from "../review/flight-review.repository.js";
 import { FlightBookingService } from "./flight-booking.service.js";
@@ -11,7 +12,7 @@ const money = (amount: number) => ({ amount, currency: "INR" });
 function setup(book: () => Promise<void>, details: { status: string; pnrs?: { route: string; pnr: string }[] }) {
   let row = {
     id: "fc1", keyHash: "k", status: "payment", userId: null, supplierBookingId: "TJS1",
-    quote: { journeys: [], price: { total: money(6000) }, markup: { net: money(5864), markup: money(136), ruleId: "r", ruleVersion: 1 } },
+    quote: { journeys: [], price: { total: money(6000) }, markup: { net: money(5864), markup: money(136), ruleId: "r", ruleVersion: 1 }, coupon: { code: "SAVE100", title: null, discount: money(100) } },
     travellerDetails: { travellers: [{ type: "adult", title: "Mr", firstName: "Ravi", lastName: "K" }], contact: { email: "r@example.com", phoneCode: "+91", phone: "9876543210" }, acceptTerms: true },
     booking: null, failureReason: null, expiresAt: new Date(Date.now() + 600_000), updatedAt: new Date(),
   } as unknown as StoredFlightReview;
@@ -21,10 +22,17 @@ function setup(book: () => Promise<void>, details: { status: string; pnrs?: { ro
     saveBooking: vi.fn(async (_id: string, status: string, booking: unknown) => void (row = { ...row, status, booking } as StoredFlightReview)),
   };
   const supplier = { bookFlights: vi.fn(book), flightBooking: vi.fn(async () => ({ pnrs: [], tickets: [], ...details })) };
-  const payments = { registerFulfiller: vi.fn(), refundAll: vi.fn(async () => ({ status: "processed", amount: 6000, currency: "INR" })) };
+  const payments = {
+    registerFulfiller: vi.fn(),
+    refundAll: vi.fn(async () => ({ status: "processed", amount: 5900, currency: "INR" })),
+    captured: vi.fn(async () => ({ id: "pay-row-1" })),
+    alert: vi.fn(),
+  };
   const mail = { sendInBackground: vi.fn() };
-  const service = new FlightBookingService(supplier as unknown as FlightSupplier, reviews as unknown as FlightReviewRepository, payments as unknown as PaymentsService, mail as unknown as MailService);
-  return { service, supplier, payments, mail, current: () => row };
+  const coupons = { recordUse: vi.fn(async () => {}), releaseUse: vi.fn(async () => {}) };
+  Object.assign(reviews, { markAlerted: vi.fn() });
+  const service = new FlightBookingService(supplier as unknown as FlightSupplier, reviews as unknown as FlightReviewRepository, payments as unknown as PaymentsService, mail as unknown as MailService, coupons as unknown as CouponsService);
+  return { service, supplier, payments, mail, coupons, current: () => row, set: (changes: Partial<StoredFlightReview>) => void (row = { ...row, ...changes }) };
 }
 
 describe("FlightBookingService", () => {
@@ -42,6 +50,9 @@ describe("FlightBookingService", () => {
     expect(t.current().status).toBe("confirmed");
     expect(t.current().booking?.pnrs).toEqual([{ route: "HYD-CCU", pnr: "ABC123" }]);
     expect(t.mail.sendInBackground).toHaveBeenCalledWith(expect.objectContaining({ to: "r@example.com" }), expect.objectContaining({ template: "flight-confirmed" }));
+    // The coupon counts once the booking is paid.
+    expect(t.coupons.recordUse).toHaveBeenCalledWith(expect.objectContaining({ code: "SAVE100" }), "pay-row-1", null);
+    expect(t.coupons.releaseUse).not.toHaveBeenCalled();
   });
 
   it("refunds when the airline rejects the booking", async () => {
@@ -52,6 +63,24 @@ describe("FlightBookingService", () => {
     expect(t.payments.refundAll).toHaveBeenCalledWith({ flightCheckoutId: "fc1" }, expect.any(String));
     expect(t.current().status).toBe("failed");
     expect(t.supplier.flightBooking).not.toHaveBeenCalled();
+    // Not booked: the coupon use is released and the team told.
+    expect(t.coupons.releaseUse).toHaveBeenCalledWith("pay-row-1");
+    expect(t.payments.alert).toHaveBeenCalledWith(expect.stringContaining("failed"), expect.any(Array), undefined);
+  });
+
+  it("resumes a booking left mid-Book by only asking for its status", async () => {
+    const t = setup(async () => {}, { status: "SUCCESS", pnrs: [{ route: "DEL-BOM", pnr: "QWE456" }] });
+    t.set({ status: "booking" });
+    await run(t.service.resume(t.current()));
+    expect(t.supplier.bookFlights).not.toHaveBeenCalled();
+    expect(t.current().status).toBe("confirmed");
+  });
+
+  it("books a payment that never started booking", async () => {
+    const t = setup(async () => {}, { status: "SUCCESS" });
+    t.set({ status: "paid" });
+    await run(t.service.resume(t.current()));
+    expect(t.supplier.bookFlights).toHaveBeenCalledTimes(1);
   });
 
   it("never books twice: a timeout only asks for the status", async () => {
