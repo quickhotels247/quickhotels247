@@ -51,6 +51,9 @@ export const adminApi = {
     apiRequest<Promotion[]>(`/admin/promotions/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(promotion), headers: bearer(token) }),
   deletePromotion: (token: string, id: string) =>
     apiRequest<Promotion[]>(`/admin/promotions/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
+  marginGst: (token: string, signal?: AbortSignal) => apiRequest<{ percent: number }>("/admin/pricing-settings/margin-gst", { signal, headers: bearer(token) }),
+  saveMarginGst: (token: string, percent: number) =>
+    apiRequest<{ percent: number }>("/admin/pricing-settings/margin-gst", { method: "PUT", body: JSON.stringify({ percent }), headers: bearer(token) }),
   pricingRules: (token: string, signal?: AbortSignal) => apiRequest<PricingRule[]>("/admin/pricing-rules", { signal, headers: bearer(token) }),
   createPricingRule: (token: string, rule: PricingRuleInput) =>
     apiRequest<PricingRule[]>("/admin/pricing-rules", { method: "POST", body: JSON.stringify(rule), headers: bearer(token) }),

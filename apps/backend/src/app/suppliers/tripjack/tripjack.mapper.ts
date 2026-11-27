@@ -1,6 +1,7 @@
 import type { HotelSearchResult } from "@quickhotels/types/hotels";
 import type { TripjackHotelContent, TripjackListingResponse, TripjackOption } from "./tripjack.types.js";
 import { toAmenities } from "./tripjack-amenities.js";
+import { gstBreakup } from "./tripjack-hotel-page.mapper.js";
 
 // ─── Static content → our hotels / hotel_content_cache rows ────────────────
 
@@ -96,6 +97,9 @@ export function listingToResult(
   if (!option) return null;
   const total = option.pricing.totalPrice;
   const currency = option.pricing.currency || "INR";
+  // GST (worked out when folded into the rate) plus TripJack's fee and its tax.
+  const split = gstBreakup(option.pricing, nights, Math.max(1, option.roomInfo?.length ?? 1));
+  const taxesAndFees = Math.round((split.taxes + split.managementFee + split.managementFeeTax) * 100) / 100;
   return {
     id: cached.id,
     name: cached.name || listed.name,
@@ -116,5 +120,6 @@ export function listingToResult(
     pricePerNight: { amount: Math.round((total / nights) * 100) / 100, currency },
     totalPrice: { amount: total, currency },
     taxesIncluded: true,
+    taxesAndFees: { amount: taxesAndFees, currency },
   };
 }

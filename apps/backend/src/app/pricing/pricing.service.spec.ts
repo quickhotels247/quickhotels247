@@ -5,14 +5,20 @@ import type { MarkupRule } from "./markup.js";
 import type { PricingRulesRepository } from "./pricing-rules.repository.js";
 import type { ActivePromotion } from "./promotions.js";
 import type { PromotionsRepository } from "./promotions.repository.js";
+import type { CompanySettingsService } from "../settings/company-settings.service.js";
+import { sellHotel } from "./hotel-sale.js";
 import { PricingService } from "./pricing.service.js";
 
 const rule = (changes: Partial<MarkupRule>): MarkupRule => ({
   id: "r1", version: 3, product: "HOTEL", scope: "ALL", scopeValue: null, markupType: "PERCENTAGE", value: 10,
   priority: 0, validFrom: null, validTo: null, updatedAt: new Date(), ...changes,
 });
-const service = (rules: MarkupRule[], promotions: ActivePromotion[] = []) =>
-  new PricingService({ active: async () => rules } as unknown as PricingRulesRepository, { active: async () => promotions } as unknown as PromotionsRepository);
+const service = (rules: MarkupRule[], promotions: ActivePromotion[] = [], marginGstPercent = 0) =>
+  new PricingService(
+    { active: async () => rules } as unknown as PricingRulesRepository,
+    { active: async () => promotions } as unknown as PromotionsRepository,
+    { marginGstPercent: async () => marginGstPercent } as unknown as CompanySettingsService,
+  );
 const promotion = (changes: Partial<ActivePromotion>): ActivePromotion => ({
   id: "p1", version: 2, name: "Winter sale", discountType: "PERCENTAGE", value: 5, maxDiscount: null, validFrom: null, validTo: null, updatedAt: new Date(), ...changes,
 });
@@ -20,7 +26,43 @@ const request = { destination: "Hyderabad, India", checkIn: "2026-11-27", checkO
 const netRoom = () => ({ totalPrice: inr(2007), pricePerNight: inr(2007), strikethroughPrice: null, priceBreakup: { base: 1911.43, taxes: 95.57, managementFee: 0, managementFeeTax: 0, discount: 0 }, cancellationCharges: [] }) as unknown as RoomOption;
 const inr = (amount: number) => ({ amount, currency: "INR" });
 
+describe("sellHotel (agent model)", () => {
+  it("adds GST on the margin and keeps the rounding in the margin", () => {
+    // Vivanta: net ₹10,018.35, 9% = ₹901.65 → GST 18% = ₹162.30.
+    const sale = sellHotel(10018.35, 901.65, 0.18);
+    expect(sale.marginGst).toBe(162.3);
+    expect(sale.total).toBe(11083);
+    expect(sale.margin).toBeCloseTo(902.35, 2);
+  });
+
+  it("charges nothing extra without a margin", () => {
+    expect(sellHotel(2007, 0, 0.18)).toEqual({ margin: 0, marginGst: 0, total: 2007 });
+  });
+});
+
 describe("PricingService", () => {
+  it("puts GST on our margin into taxes and records it (Option B)", async () => {
+    const pricing = service([rule({ value: 9 })], [], 18);
+    const { rule: r, promotion: p, marginGstRate } = await pricing.hotelPricing(request);
+    expect(marginGstRate).toBe(0.18);
+    const { option, applied } = pricing.markRoom(netRoom(), r, 1, p, marginGstRate);
+    // ₹2,007 + 9% (rounded up to ₹181) + 18% GST on it (₹32.58) = ₹2,220.58 → ₹2,221.
+    expect(option.totalPrice.amount).toBe(2221);
+    expect(applied.marginGst).toEqual(inr(32.58));
+    expect(option.priceBreakup.taxes).toBeCloseTo(95.57 + 32.58, 2);
+    // Price + taxes and fees = total.
+    expect(option.priceBreakup.base + option.priceBreakup.taxes).toBeCloseTo(2221, 2);
+  });
+
+  it("shrinks the margin GST with a promotion and never goes below net", async () => {
+    const pricing = service([rule({ value: 9 })], [promotion({ value: 40 })], 18);
+    const { rule: r, promotion: p, marginGstRate } = await pricing.hotelPricing(request);
+    const { option, applied } = pricing.markRoom(netRoom(), r, 1, p, marginGstRate);
+    expect(option.totalPrice.amount).toBe(2007);
+    expect(applied.marginGst).toEqual(inr(0));
+    expect(option.strikethroughPrice?.amount).toBe(2221);
+  });
+
   it("takes a running promotion off the regular price and shows the regular price crossed out", async () => {
     const pricing = service([rule({ value: 9 })], [promotion({})]);
     const { rule: r, promotion: p } = await pricing.hotelPricing(request);
@@ -30,7 +72,7 @@ describe("PricingService", () => {
     expect(option.totalPrice.amount).toBe(2079);
     expect(option.priceBreakup.promotion).toBe(109);
     expect(option.promotion).toEqual({ name: "Winter sale", percentOff: 5 });
-    expect(applied.promotion).toEqual({ id: "p1", version: 2, name: "Winter sale", amount: inr(109) });
+    expect(applied.promotion).toEqual({ id: "p1", version: 2, name: "Winter sale", amount: inr(109), marginAmount: 109 });
   });
 
   it("never discounts below the supplier's net price", async () => {
@@ -68,7 +110,7 @@ describe("PricingService", () => {
     expect(option.pricePerNight.amount).toBe(2750);
     expect(option.priceBreakup.base).toBe(4700);
     expect(option.strikethroughPrice?.amount).toBe(6500);
-    expect(applied).toEqual({ ruleId: "r1", ruleVersion: 3, net: inr(5000), markup: inr(500), promotion: null });
+    expect(applied).toEqual({ ruleId: "r1", ruleVersion: 3, net: inr(5000), markup: inr(500), promotion: null, marginGst: inr(0) });
   });
 
   it("adds the markup to charged cancellation periods, capped at the total", async () => {

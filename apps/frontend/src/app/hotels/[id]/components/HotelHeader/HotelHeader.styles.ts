@@ -19,5 +19,6 @@ export const styles = {
   side: { display: "flex", flexDirection: { xs: "row", md: "column" }, alignItems: { xs: "center", md: "flex-end" }, justifyContent: "space-between", gap: 1, flexShrink: 0 },
   from: { fontSize: "0.875rem", color: "text.secondary" },
   amount: { fontFamily: HEADING_FONT, fontSize: "1.4rem", fontWeight: 800, color: "text.primary" },
+  unit: { fontSize: "0.8125rem", color: "text.secondary" },
   reserve: { px: 4, whiteSpace: "nowrap" },
 };

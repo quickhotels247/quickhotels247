@@ -140,7 +140,8 @@ export class AdminHotelBookingsRepository {
         coupon: snapshot?.couponCode ? { code: snapshot.couponCode, discount: money(Number(snapshot.discount), currency) } : null,
         supplierNet: net == null ? null : money(net, currency),
         markup: snapshot ? money(Number(snapshot.markup), currency) : null,
-        margin: net == null ? null : money(base.total.amount - net, currency),
+        // What we keep: paid − supplier net − GST collected on our margin.
+        margin: net == null ? null : money(base.total.amount - net - Number(snapshot?.marginGst ?? 0), currency),
         ruleVersion: snapshot?.pricingRuleVersion ?? null,
       },
       policy,

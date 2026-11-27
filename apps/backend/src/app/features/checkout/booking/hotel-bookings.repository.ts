@@ -71,6 +71,7 @@ export class HotelBookingsRepository {
                   supplierAmount: quote.markup?.net.amount ?? room.totalPrice.amount,
                   taxes: room.priceBreakup.taxes,
                   markup: quote.markup?.markup.amount ?? 0,
+                  marginGst: quote.markup?.marginGst?.amount ?? 0,
                   // Coupon plus any automatic promotion.
                   discount: (quote.coupon?.discount.amount ?? 0) + (quote.markup?.promotion?.amount.amount ?? 0),
                   customerTotal: payable.amount,

@@ -22,6 +22,7 @@ export const styles = {
   total: { fontFamily: HEADING_FONT, display: "flex", alignItems: "center", gap: 0.5, fontSize: "1.35rem", fontWeight: 800, lineHeight: 1.3 },
   info: { fontSize: 16, color: "text.secondary", cursor: "help" },
   breakup: { fontSize: "0.8125rem", lineHeight: 1.6 },
+  taxes: { fontSize: "0.8125rem", color: "text.secondary" },
   perNight: { fontSize: "0.75rem", color: "text.secondary" },
   reserve: { mt: 1.25, px: 4, alignSelf: { xs: "stretch", sm: "flex-end" } },
 };

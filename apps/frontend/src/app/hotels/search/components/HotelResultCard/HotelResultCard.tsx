@@ -13,6 +13,7 @@ import HotelPhoto from "@/components/hotel/HotelPhoto";
 import SaveHotelButton from "@/components/hotel/SaveHotelButton";
 import StarRating from "@/components/hotel/StarRating";
 import { formatPrice } from "@/lib/format";
+import { priceParts } from "@/lib/priceParts";
 import { hotelUrl } from "@/lib/hotelLinks";
 import { AMENITY_LABELS } from "@/config/hotelAmenities";
 import { styles } from "./HotelResultCard.styles";
@@ -33,6 +34,8 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
 // includes, and the price for the whole stay (spec §4.2: say what it covers).
 export default function HotelResultCard({ hotel, criteria, nights, centre, searchId }: HotelResultCardProps) {
   const href = hotelUrl(hotel.id, criteria, searchId);
+  const parts = priceParts(hotel.totalPrice, hotel.taxesAndFees?.amount, hotel.strikethroughPrice);
+  const money = (amount: number) => formatPrice({ amount, currency: hotel.totalPrice.currency });
   const guests = [
     plural(criteria.adults, "adult"),
     criteria.children > 0 && (criteria.children === 1 ? "1 child" : `${criteria.children} children`),
@@ -105,12 +108,12 @@ export default function HotelResultCard({ hotel, criteria, nights, centre, searc
         {hotel.strikethroughPrice && (
           <Typography component="div" sx={styles.was}>
             {hotel.percentOff ? <Box component="span" sx={styles.off}>{hotel.percentOff}% off</Box> : null}
-            <Box component="span" sx={styles.strike}>{formatPrice(hotel.strikethroughPrice)}</Box>
+            <Box component="span" sx={styles.strike}>{money(parts.was ?? hotel.strikethroughPrice.amount)}</Box>
           </Typography>
         )}
-        <Typography sx={styles.total}>{formatPrice(hotel.totalPrice)}</Typography>
-        <Typography sx={styles.perNight}>
-          {formatPrice(hotel.pricePerNight)} per night{hotel.taxesIncluded ? " · incl. GST & fees" : ""}
+        <Typography sx={styles.total}>{money(parts.price)}</Typography>
+        <Typography sx={styles.taxes}>
+          {parts.taxes > 0 ? `+${money(parts.taxes)} taxes and fees` : hotel.taxesIncluded ? "Includes taxes and fees" : "Before taxes and fees"}
         </Typography>
         <Button component={Link} href={href} variant="contained" endIcon={<ChevronRightRounded />} sx={styles.cta}>
           See availability

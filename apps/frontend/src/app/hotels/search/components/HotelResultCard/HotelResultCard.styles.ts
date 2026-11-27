@@ -59,6 +59,7 @@ export const styles = {
   },
   stay: { fontSize: "0.8125rem", color: "text.secondary" },
   total: { fontFamily: HEADING_FONT, fontSize: { xs: "1.3rem", md: "1.45rem" }, fontWeight: 800, lineHeight: 1.2 },
+  taxes: { fontSize: "0.8125rem", color: "text.secondary" },
   perNight: { fontSize: "0.75rem", color: "text.secondary" },
   was: { display: "flex", alignItems: "center", gap: 0.75 },
   strike: { fontSize: "0.875rem", color: "text.secondary", textDecoration: "line-through" },

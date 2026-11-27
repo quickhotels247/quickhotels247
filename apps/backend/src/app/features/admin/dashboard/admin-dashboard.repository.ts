@@ -61,7 +61,7 @@ export class AdminDashboardRepository {
         count(b.id) FILTER (WHERE b.confirmed_at IS NULL AND b.status::text IN ('SUPPLIER_BOOKING_FAILED', 'REFUND_PENDING', 'REFUNDED', 'MANUAL_REVIEW', 'PAYMENT_FAILED')) AS failed,
         count(b.id) FILTER (WHERE b.confirmed_at IS NOT NULL AND b.status::text IN ('CANCELLATION_PENDING', 'CANCELLED', 'REFUND_PENDING', 'REFUNDED')) AS cancelled,
         coalesce(sum(b.total_amount) FILTER (WHERE b.confirmed_at IS NOT NULL), 0) AS value,
-        coalesce(sum(ps.customer_total - ps.supplier_amount) FILTER (WHERE b.status::text = 'CONFIRMED'), 0) AS earnings
+        coalesce(sum(ps.customer_total - ps.supplier_amount - ps.margin_gst) FILTER (WHERE b.status::text = 'CONFIRMED'), 0) AS earnings
       FROM bookings b
       LEFT JOIN booking_price_snapshots ps ON ps.booking_id = b.id
       WHERE b.created_at >= ${start} AND b.created_at < ${end}`;

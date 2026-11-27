@@ -13,6 +13,7 @@ import Typography from "@mui/material/Typography";
 import type { HotelSearchCriteria, RoomOption } from "@quickhotels/types/hotels";
 import { criteriaFromParams, criteriaParams, searchUrl, validateCriteria } from "@/components/search/HotelSearchBar/searchCriteria";
 import { routes } from "@/config/navigation";
+import { roomPriceParts } from "@/lib/priceParts";
 import HotelFacilities from "../components/HotelFacilities";
 import HotelHeader from "../components/HotelHeader";
 import HotelLocation from "../components/HotelLocation";
@@ -89,7 +90,11 @@ export default function HotelDetailsPage() {
     { id: "policies", label: "House rules" },
     { id: "location", label: "Location" },
   ];
-  const fromPrice = rooms.data?.options[0]?.pricePerNight ?? null;
+  // The cheapest rate, per night and before taxes (as on the room cards).
+  const cheapest = rooms.data?.options[0] ?? null;
+  const fromPrice = cheapest
+    ? { amount: roomPriceParts(cheapest).price / Math.max(1, rooms.data?.nights ?? 1), currency: cheapest.totalPrice.currency }
+    : null;
 
   return (
     <Container sx={styles.page}>

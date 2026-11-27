@@ -98,6 +98,8 @@ export interface HotelSearchResult extends HotelSummary {
   // Every night of the stay, for all rooms; pricePerNight is the average.
   totalPrice: Money;
   taxesIncluded: boolean;
+  // GST plus the supplier's fees inside totalPrice, for "₹X + ₹Y taxes and fees".
+  taxesAndFees?: Money | null;
   // With a running promotion: the regular price (crossed out) and the % off.
   strikethroughPrice?: Money | null;
   percentOff?: number | null;

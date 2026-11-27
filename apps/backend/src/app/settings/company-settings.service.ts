@@ -3,6 +3,9 @@ import type { CompanyGst, CompanyGstSetting } from "@quickhotels/types/admin";
 import { PrismaService } from "../common/database/prisma.service.js";
 
 const GST_KEY = "company.gst";
+const MARGIN_GST_KEY = "pricing.margin_gst_percent";
+// GST on our margin (agent model) when no admin has changed it.
+export const DEFAULT_MARGIN_GST_PERCENT = 18;
 const CACHE_MS = 60_000;
 
 // Business settings kept in the database and edited by admins (Admin →
@@ -11,6 +14,7 @@ const CACHE_MS = 60_000;
 export class CompanySettingsService {
   private readonly logger = new Logger(CompanySettingsService.name);
   private cached: { value: CompanyGstSetting; at: number } | null = null;
+  private marginGstCache: { percent: number; at: number } | null = null;
 
   constructor(private readonly db: PrismaService) {}
 
@@ -42,6 +46,31 @@ export class CompanySettingsService {
     });
     this.cached = null;
     return this.gstSetting();
+  }
+
+  // GST charged on our hotel margin, in percent (0 turns it off). Read while
+  // pricing, so cached; a failed read keeps the last value or the default.
+  async marginGstPercent(): Promise<number> {
+    if (this.marginGstCache && Date.now() - this.marginGstCache.at < CACHE_MS) return this.marginGstCache.percent;
+    try {
+      const row = await this.db.appSetting.findUnique({ where: { key: MARGIN_GST_KEY } });
+      const percent = row ? Number((row.value as { percent?: number }).percent ?? DEFAULT_MARGIN_GST_PERCENT) : DEFAULT_MARGIN_GST_PERCENT;
+      this.marginGstCache = { percent, at: Date.now() };
+    } catch (error) {
+      this.logger.error(`Couldn't read the margin GST setting: ${(error as Error).message}`);
+      if (!this.marginGstCache) return DEFAULT_MARGIN_GST_PERCENT;
+    }
+    return this.marginGstCache!.percent;
+  }
+
+  async saveMarginGstPercent(percent: number, adminId: string): Promise<number> {
+    await this.db.appSetting.upsert({
+      where: { key: MARGIN_GST_KEY },
+      create: { key: MARGIN_GST_KEY, value: { percent }, updatedBy: adminId },
+      update: { value: { percent }, updatedBy: adminId },
+    });
+    this.marginGstCache = null;
+    return this.marginGstPercent();
   }
 
   async clearGst(): Promise<CompanyGstSetting> {

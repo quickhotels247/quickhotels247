@@ -17,6 +17,7 @@ import { adminApi } from "@/lib/api/admin";
 import { useAdminAuth } from "@/lib/admin/AdminAuthProvider";
 import { useApiData } from "@/lib/hooks/useApiData";
 import { useRequest } from "@/lib/hooks/useRequest";
+import MarginGstCard from "../components/MarginGstCard";
 import PricingRuleDialog from "../components/PricingRuleDialog";
 import PricingRuleRow from "../components/PricingRuleRow";
 import { styles } from "./PricingPage.styles";
@@ -53,6 +54,7 @@ export default function PricingPage() {
         For each price, the active rule with the <b>highest priority</b> applies; on a tie, the more specific one (destination, then airline or country, then all). Only one rule applies. Selling prices are rounded up to whole rupees, and every checkout records the rule and version it used.
       </Alert>
       {error && <Alert severity="error">{error}</Alert>}
+      {token && <MarginGstCard token={token} />}
       {PRODUCTS.map(({ product, title, empty }) => {
         const list = rules?.filter((rule) => rule.product === product) ?? [];
         return (

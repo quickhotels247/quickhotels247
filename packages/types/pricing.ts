@@ -37,8 +37,11 @@ export interface AppliedMarkup {
   ruleVersion: number | null;
   net: { amount: number; currency: string };
   markup: { amount: number; currency: string };
-  // An automatic discount taken off the selling price (out of the markup).
-  promotion?: { id: string; version: number; name: string; amount: { amount: number; currency: string } } | null;
+  // An automatic discount taken off the selling price (out of the markup):
+  // `amount` is what the customer saves, `marginAmount` the part of our margin.
+  promotion?: { id: string; version: number; name: string; amount: { amount: number; currency: string }; marginAmount?: number } | null;
+  // Hotels: GST charged on our margin (Option B, agent model), owed to the government.
+  marginGst?: { amount: number; currency: string };
 }
 
 // ---- Promotions (admin → Promotions): automatic discounts on all hotels ----

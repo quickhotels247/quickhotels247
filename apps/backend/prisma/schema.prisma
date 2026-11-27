@@ -525,6 +525,8 @@ model BookingPriceSnapshot {
   taxes              Decimal  @default(0) @db.Decimal(12, 2)
   markup             Decimal  @default(0) @db.Decimal(12, 2)
   discount           Decimal  @default(0) @db.Decimal(12, 2)
+  // GST charged on our margin (agent model): collected for the government, not earnings.
+  marginGst          Decimal  @default(0) @map("margin_gst") @db.Decimal(12, 2)
   customerTotal      Decimal  @map("customer_total") @db.Decimal(12, 2)
   currency           String   @db.Char(3)
   pricingRuleVersion Int?     @map("pricing_rule_version")

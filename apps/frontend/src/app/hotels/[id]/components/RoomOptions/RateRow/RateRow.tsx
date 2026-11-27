@@ -10,6 +10,7 @@ import NoMealsOutlined from "@mui/icons-material/NoMealsOutlined";
 import type { RoomOption } from "@quickhotels/types/hotels";
 import { formatClock, formatShortDate } from "@/lib/dates";
 import { formatPrice } from "@/lib/format";
+import { roomPriceParts } from "@/lib/priceParts";
 import { styles } from "./RateRow.styles";
 
 interface RateRowProps {
@@ -29,6 +30,7 @@ function deadline(iso: string) {
 // for the whole stay, and "Reserve".
 export default function RateRow({ option, stayLabel, reserveHref }: RateRowProps) {
   const { priceBreakup: p, totalPrice } = option;
+  const parts = roomPriceParts(option);
   const money = (amount: number) => formatPrice({ amount, currency: totalPrice.currency });
   const breakup = [
     `Room price (excl. GST): ${money(p.base)}`,
@@ -72,16 +74,16 @@ export default function RateRow({ option, stayLabel, reserveHref }: RateRowProps
         {option.strikethroughPrice && (
           <Typography component="div" sx={styles.was}>
             {option.promotion && <Box component="span" sx={styles.off}>{option.promotion.percentOff}% off</Box>}
-            <Box component="span" sx={styles.strike}>{formatPrice(option.strikethroughPrice)}</Box>
+            <Box component="span" sx={styles.strike}>{money(parts.was ?? option.strikethroughPrice.amount)}</Box>
           </Typography>
         )}
         <Typography sx={styles.total}>
-          {formatPrice(totalPrice)}
+          {money(parts.price)}
           <Tooltip title={<Box sx={styles.breakup}>{breakup.map((line) => <div key={line}>{line}</div>)}</Box>}>
             <InfoOutlined sx={styles.info} aria-label={`Price details: ${breakup.join(", ")}`} />
           </Tooltip>
         </Typography>
-        <Typography sx={styles.perNight}>{formatPrice(option.pricePerNight)} per night · incl. GST & fees</Typography>
+        <Typography sx={styles.taxes}>{parts.taxes > 0 ? `+${money(parts.taxes)} taxes and fees` : "Includes taxes and fees"}</Typography>
         {reserveHref ? (
           <Button component={Link} href={reserveHref} variant="contained" sx={styles.reserve}>
             Reserve

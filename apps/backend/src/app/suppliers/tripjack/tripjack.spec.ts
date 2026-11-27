@@ -144,6 +144,8 @@ describe("listingToResult", () => {
       pricePerNight: { amount: 3500, currency: "INR" },
       totalPrice: { amount: 7000, currency: "INR" },
       taxesIncluded: true,
+      // GST folded into ₹7,000 for 2 nights (₹3,500 a night → 5%): ₹7,000 − ₹7,000 ÷ 1.05.
+      taxesAndFees: { amount: 333.33, currency: "INR" },
     });
   });
 

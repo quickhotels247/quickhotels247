@@ -37,4 +37,4 @@ export const percentOff = (discount: number, regular: number) => (discount > 0 &
 
 // What's left of our margin after the promotion: the most a coupon may take off.
 export const marginAfterPromotion = (applied: AppliedMarkup | null | undefined) =>
-  Math.max(0, Math.round(((applied?.markup.amount ?? 0) - (applied?.promotion?.amount.amount ?? 0)) * 100) / 100);
+  Math.max(0, Math.round(((applied?.markup.amount ?? 0) - (applied?.promotion?.marginAmount ?? applied?.promotion?.amount.amount ?? 0)) * 100) / 100);

@@ -14,6 +14,7 @@ import { AdminSupportRepository } from "./support/admin-support.repository.js";
 import { AdminSupportService } from "./support/admin-support.service.js";
 import { AdminPricingController } from "./pricing/admin-pricing.controller.js";
 import { AdminPricingService } from "./pricing/admin-pricing.service.js";
+import { AdminPricingSettingsController } from "./pricing/admin-pricing-settings.controller.js";
 import { AdminMailController } from "./admin-mail.controller.js";
 import { AdminCompanyController } from "./settings/admin-company.controller.js";
 import { AdminDashboardController } from "./dashboard/admin-dashboard.controller.js";
@@ -39,6 +40,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
 @Module({
   imports: [ConfigModule.forFeature(adminConfig), FlightsModule, BookingsModule, CheckoutModule, SuppliersModule],
   controllers: [
+    AdminPricingSettingsController,
     AdminPromotionsController,
     AdminDashboardController,
     AdminCompanyController,

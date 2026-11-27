@@ -61,6 +61,7 @@ export default function HotelHeader({ hotel, fromPrice, roomsLoading, onReserve 
         ) : fromPrice ? (
           <Typography sx={styles.from}>
             from <Box component="span" sx={styles.amount}>{formatPrice(fromPrice)}</Box>
+            <Box component="span" sx={styles.unit}> per night + taxes</Box>
           </Typography>
         ) : null}
         <Button variant="contained" size="large" onClick={onReserve} sx={styles.reserve}>
