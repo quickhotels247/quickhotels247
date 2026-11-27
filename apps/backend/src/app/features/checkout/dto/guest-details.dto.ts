@@ -36,7 +36,7 @@ export class GuestDto implements CheckoutGuest {
 
   @IsOptional()
   @Transform(upper)
-  @Matches(/^[A-Z]{5}[0-9]{4}[A-Z]$/, { message: "PAN must look like ABCDE1234F." })
+  @Matches(/^[A-Z]{5}[0-9]{4}[A-Z]$/, { message: "PAN must be 10 characters, like ABCPK1234D." })
   pan?: string;
 
   @IsOptional()

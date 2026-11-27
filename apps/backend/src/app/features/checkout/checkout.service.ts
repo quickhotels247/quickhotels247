@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { marginAfterPromotion } from "../../pricing/promotions.js";
+import { panProblem } from "../../common/utils/pan.js";
 import {
   BadRequestException,
   ConflictException,
@@ -170,7 +172,7 @@ export class CheckoutService {
           product: "HOTEL",
           amount: quote.room.totalPrice.amount,
           currency: quote.room.totalPrice.currency,
-          margin: quote.markup?.markup.amount ?? 0,
+          margin: marginAfterPromotion(quote.markup),
           city: quote.hotel.city,
           userId: userId ?? checkout.userId,
         });
@@ -225,7 +227,7 @@ export class CheckoutService {
       product: "HOTEL",
       amount: quote.room.totalPrice.amount,
       currency: quote.room.totalPrice.currency,
-      margin: quote.markup?.markup.amount ?? 0,
+      margin: marginAfterPromotion(quote.markup),
       city: quote.hotel.city,
       userId,
     });
@@ -258,7 +260,8 @@ export class CheckoutService {
   }
 
   // Guests must match the rooms as priced: adults then children in each room,
-  // titles that fit, PAN or passport when the rate needs them, and a
+  // titles that fit, PAN (main guest only, as TripJack asks) or passport when
+  // the rate needs them, and a
   // different lead guest name in each room (TripJack's rule).
   private checkGuests(quote: CheckoutQuote, details: CheckoutGuestDetails) {
     if (details.rooms.length !== quote.rooms.length) throw new BadRequestException(`Give guests for all ${quote.rooms.length} rooms.`);
@@ -274,7 +277,11 @@ export class CheckoutService {
         if (!(child ? CHILD_TITLES : ADULT_TITLES).has(guest.title)) {
           throw new BadRequestException(`${who}: choose ${child ? "Master or Miss" : "Mr, Mrs, Ms or Miss"}.`);
         }
-        if (quote.requirements.pan && !guest.pan) throw new BadRequestException(`${who}: PAN is needed for this rate.`);
+        if (quote.requirements.pan && g === 0) {
+          if (!guest.pan) throw new BadRequestException(`${who}: PAN is needed for this rate.`);
+          const problem = panProblem(guest.pan, guest.firstName, guest.lastName);
+          if (problem) throw new BadRequestException(`${who}: ${problem}`);
+        }
         if (quote.requirements.passport && !guest.passportNumber) throw new BadRequestException(`${who}: a passport number is needed for this rate.`);
       });
       const lead = `${guests[0]!.firstName} ${guests[0]!.lastName}`.toLowerCase();

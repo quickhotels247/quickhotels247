@@ -37,4 +37,29 @@ export interface AppliedMarkup {
   ruleVersion: number | null;
   net: { amount: number; currency: string };
   markup: { amount: number; currency: string };
+  // An automatic discount taken off the selling price (out of the markup).
+  promotion?: { id: string; version: number; name: string; amount: { amount: number; currency: string } } | null;
+}
+
+// ---- Promotions (admin → Promotions): automatic discounts on all hotels ----
+
+export interface PromotionInput {
+  name: string; // shown to customers, e.g. "Winter sale"
+  discountType: "PERCENTAGE" | "FIXED";
+  // PERCENTAGE of the regular price, or FIXED ₹ per booking.
+  value: number;
+  // Caps a percentage discount (₹ per booking).
+  maxDiscount: number | null;
+  validFrom: string | null; // YYYY-MM-DD, India days
+  validTo: string | null;
+  status: PricingRuleStatus;
+}
+
+export interface Promotion extends PromotionInput {
+  id: string;
+  version: number;
+  updatedAt: string;
+  createdBy: string | null;
+  // Running now (active and within its dates).
+  live: boolean;
 }

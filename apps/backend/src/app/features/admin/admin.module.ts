@@ -15,6 +15,11 @@ import { AdminSupportService } from "./support/admin-support.service.js";
 import { AdminPricingController } from "./pricing/admin-pricing.controller.js";
 import { AdminPricingService } from "./pricing/admin-pricing.service.js";
 import { AdminMailController } from "./admin-mail.controller.js";
+import { AdminCompanyController } from "./settings/admin-company.controller.js";
+import { AdminDashboardController } from "./dashboard/admin-dashboard.controller.js";
+import { AdminPromotionsController } from "./promotions/admin-promotions.controller.js";
+import { AdminPromotionsService } from "./promotions/admin-promotions.service.js";
+import { AdminDashboardRepository } from "./dashboard/admin-dashboard.repository.js";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { adminConfig } from "./admin.config.js";
@@ -34,6 +39,9 @@ import { AuditLogRepository } from "./audit-log.repository.js";
 @Module({
   imports: [ConfigModule.forFeature(adminConfig), FlightsModule, BookingsModule, CheckoutModule, SuppliersModule],
   controllers: [
+    AdminPromotionsController,
+    AdminDashboardController,
+    AdminCompanyController,
     AdminBookingsController,
     AdminCouponsController,
     AdminSupportController,
@@ -45,6 +53,8 @@ import { AuditLogRepository } from "./audit-log.repository.js";
     AdminUsersController,
   ],
   providers: [
+    AdminPromotionsService,
+    AdminDashboardRepository,
     AdminBookingsService,
     AdminBookingsRepository,
     AdminHotelBookingsService,

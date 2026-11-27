@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
@@ -5,6 +6,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
 import EditOutlined from "@mui/icons-material/EditOutlined";
+import InsightsOutlined from "@mui/icons-material/InsightsOutlined";
 import type { Coupon } from "@quickhotels/types/coupons";
 import { formatPrice } from "@/lib/format";
 import { styles } from "./CouponRow.styles";
@@ -24,8 +26,7 @@ interface CouponRowProps {
 }
 
 export default function CouponRow({ coupon, onEdit, onDelete }: CouponRowProps) {
-  const today = new Date().toISOString().slice(0, 10);
-  const expired = coupon.validTo < today;
+  const expired = coupon.expired;
   const status = expired ? { label: "Expired", color: "default" as const } : coupon.status === "ACTIVE" ? { label: "Active", color: "success" as const } : { label: coupon.status === "DRAFT" ? "Draft" : "Off", color: "default" as const };
   const scope = [coupon.product === "HOTEL" ? "Hotels" : coupon.product === "FLIGHT" ? "Flights" : "Hotels & flights", coupon.eligibleDestinations.length ? coupon.eligibleDestinations.join(", ") : null, coupon.minBookingAmount ? `min ${inr(coupon.minBookingAmount)}` : null]
     .filter(Boolean)
@@ -34,7 +35,8 @@ export default function CouponRow({ coupon, onEdit, onDelete }: CouponRowProps) 
     <Box sx={[styles.root, (coupon.status !== "ACTIVE" || expired) && styles.muted]}>
       <Box sx={styles.code}>{coupon.code}</Box>
       <Box sx={styles.main}>
-        <Typography sx={styles.title}>
+        {/* A div: the chips are divs and can't sit inside a <p>. */}
+        <Typography component="div" sx={styles.title}>
           {discountText(coupon)}
           <Chip label={status.label} color={status.color} size="small" variant="outlined" sx={styles.chip} />
           {coupon.public && <Chip label="On Home" size="small" color="primary" variant="outlined" sx={styles.chip} />}
@@ -42,9 +44,15 @@ export default function CouponRow({ coupon, onEdit, onDelete }: CouponRowProps) 
         <Typography sx={styles.meta}>
           {scope} · {day(coupon.validFrom)} – {day(coupon.validTo)} · used {coupon.redemptions}
           {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ""}
+          {coupon.discountGiven > 0 ? ` · ${inr(coupon.discountGiven)} given` : ""}
         </Typography>
       </Box>
       <Box sx={styles.actions}>
+        <Tooltip title="Report: who used it">
+          <IconButton component={Link} href={`/admin/coupons/${coupon.id}`} aria-label={`Report for ${coupon.code}`}>
+            <InsightsOutlined fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Edit">
           <IconButton aria-label={`Edit ${coupon.code}`} onClick={onEdit}>
             <EditOutlined fontSize="small" />

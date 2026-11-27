@@ -18,6 +18,7 @@ import { DestinationsModule } from "./features/destinations/destinations.module.
 import { HotelsModule } from "./features/hotels/hotels.module.js";
 import { MailModule } from "./mail/mail.module.js";
 import { PricingModule } from "./pricing/pricing.module.js";
+import { SettingsModule } from "./settings/settings.module.js";
 import { AppController } from "./app.controller.js";
 import { AppService } from "./app.service.js";
 
@@ -30,6 +31,7 @@ import { AppService } from "./app.service.js";
     DatabaseModule,
     MailModule,
     PricingModule,
+    SettingsModule,
     AuthModule,
     AccountModule,
     SupportModule,

@@ -1,3 +1,4 @@
+import { panProblem } from "@/lib/pan";
 import type { SavedTraveller } from "@quickhotels/types/travellers";
 import type { User } from "@quickhotels/types/users";
 import { fillContact } from "@/lib/contactFill";
@@ -10,8 +11,8 @@ export const CHILD_TITLES: GuestTitle[] = ["Master", "Miss"];
 
 const NAME = /^[A-Za-z][A-Za-z .'-]{1,39}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PAN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 const PASSPORT = /^[A-Z0-9]{6,12}$/;
+
 
 const blankGuest = (child: boolean): CheckoutGuest => ({ title: child ? "Master" : "Mr", firstName: "", lastName: "" });
 
@@ -50,7 +51,10 @@ export function validateDetails(details: CheckoutGuestDetails, checkout: Checkou
       const who = `Room ${r + 1}, guest ${g + 1}`;
       if (!NAME.test(guest.firstName.trim())) errors[fieldId(r, g, "first")] = `${who}: first name needs 2–40 letters (A–Z).`;
       if (!NAME.test(guest.lastName.trim())) errors[fieldId(r, g, "last")] = `${who}: last name needs 2–40 letters (A–Z).`;
-      if (checkout.requirements.pan && !PAN.test((guest.pan ?? "").trim().toUpperCase())) errors[fieldId(r, g, "pan")] = `${who}: PAN must look like ABCDE1234F.`;
+      if (checkout.requirements.pan && g === 0) {
+        const problem = panProblem(guest.pan ?? "", guest.firstName, guest.lastName);
+        if (problem) errors[fieldId(r, g, "pan")] = `${who}: ${problem}`;
+      }
       if (checkout.requirements.passport && !PASSPORT.test((guest.passportNumber ?? "").trim().toUpperCase())) {
         errors[fieldId(r, g, "passport")] = `${who}: enter a passport number (6–12 letters and digits).`;
       }
@@ -66,16 +70,16 @@ export function validateDetails(details: CheckoutGuestDetails, checkout: Checkou
   return errors;
 }
 
-// What's sent: trimmed names, PAN and passport in capitals, only when asked for.
+// What's sent: trimmed names, PAN (main guest) and passport in capitals, only when asked for.
 export function cleanDetails(details: CheckoutGuestDetails, checkout: CheckoutSummary): CheckoutGuestDetails {
   return {
     contact: { email: details.contact.email.trim(), phoneCode: details.contact.phoneCode.trim(), phone: details.contact.phone.replace(/[\s-]/g, "") },
     rooms: details.rooms.map((room) => ({
-      guests: room.guests.map((guest) => ({
+      guests: room.guests.map((guest, g) => ({
         title: guest.title,
         firstName: guest.firstName.trim(),
         lastName: guest.lastName.trim(),
-        ...(checkout.requirements.pan ? { pan: (guest.pan ?? "").trim().toUpperCase() } : {}),
+        ...(checkout.requirements.pan && g === 0 ? { pan: (guest.pan ?? "").trim().toUpperCase() } : {}),
         ...(checkout.requirements.passport ? { passportNumber: (guest.passportNumber ?? "").trim().toUpperCase() } : {}),
       })),
     })),

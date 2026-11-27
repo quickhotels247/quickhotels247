@@ -1,6 +1,7 @@
 import type { FlightReviewSummary, FlightTraveller, FlightTravellerDetails, FlightTravellerTitle, FlightTravellerType } from "@quickhotels/types/flight-checkout";
 import type { SavedTraveller } from "@quickhotels/types/travellers";
 import { todayIso } from "@/lib/dates";
+import { panProblem } from "@/lib/pan";
 
 // The travellers form's rules, mirroring the backend (which checks again).
 
@@ -14,7 +15,6 @@ export const TYPE_HINT: Record<FlightTravellerType, string> = { adult: "12 years
 
 const NAME = /^[A-Za-z][A-Za-z .'-]*$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PAN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 const GSTIN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
 export const fieldId = (...parts: (string | number)[]) => `flight-${parts.join("-")}`;
@@ -85,7 +85,10 @@ export function validateDetails(details: FlightTravellerDetails, review: FlightR
       if (needs.passportExpiry && !passport?.expiry) errors[id("expiry")] = `${who}: enter the passport expiry date.`;
       else if (passport?.expiry && passport.expiry <= lastFlight) errors[id("expiry")] = `${who}: the passport must be valid beyond the last flight.`;
     }
-    if (needs.pan && !PAN.test((traveller.pan ?? "").trim().toUpperCase())) errors[id("pan")] = `${who}: enter a PAN like ABCDE1234F.`;
+    if (needs.pan) {
+      const problem = panProblem(traveller.pan ?? "", traveller.firstName, traveller.lastName);
+      if (problem) errors[id("pan")] = `${who}: ${problem}`;
+    }
   });
 
   const { contact } = details;

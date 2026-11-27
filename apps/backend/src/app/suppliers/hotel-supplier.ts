@@ -57,6 +57,8 @@ export interface HotelSupplier {
 export interface SupplierHotelGuests {
   // Per room, in search order: adults then children.
   rooms: { guests: { title: string; firstName: string; lastName: string; child: boolean; pan?: string; passportNumber?: string }[] }[];
+  // Our company's GST registration (Admin → Settings), for rates that need it.
+  gst?: { gstNumber: string; registeredName: string } | null;
   contact: { email: string; phoneCode: string; phone: string };
 }
 

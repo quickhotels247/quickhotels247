@@ -8,6 +8,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MuiLink from "@mui/material/Link";
 import TextField from "@mui/material/TextField";
+import PasswordField from "@/components/forms/PasswordField";
 import Typography from "@mui/material/Typography";
 import { routes } from "@/config/navigation";
 import { CLERK_PUBLISHABLE_KEY } from "@/lib/auth/ClerkSetup";
@@ -177,9 +178,8 @@ function ClerkLoginForm({ next }: LoginFormProps) {
       />
       {!forgot && (
         <Box>
-          <TextField
+          <PasswordField
             label="Password"
-            type="password"
             autoComplete="current-password"
             fullWidth
             value={password}

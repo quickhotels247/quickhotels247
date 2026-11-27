@@ -120,7 +120,7 @@ export default function RoomOptions({
         />
       ))}
       <Typography sx={styles.footnote}>
-        Prices are live and include taxes and fees. They&apos;re checked again before you pay.
+        Prices are live and include GST and fees. They&apos;re checked again before you pay.
       </Typography>
     </Box>
   );

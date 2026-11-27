@@ -16,7 +16,8 @@ const sameStay = (a: HotelSearchCriteria, b: HotelSearchCriteria) =>
   a.rooms === b.rooms &&
   a.adults === b.adults &&
   a.children === b.children &&
-  [...(a.childAges ?? [])].sort().join() === [...(b.childAges ?? [])].sort().join();
+  [...(a.childAges ?? [])].sort().join() === [...(b.childAges ?? [])].sort().join() &&
+  (a.nationality ?? "IN") === (b.nationality ?? "IN");
 
 // The hotel page (spec §4.3): the hotel's content, and its rooms with live
 // rates for the visitor's stay.

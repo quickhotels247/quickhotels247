@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import type { FlightTravellerDetails, FlightTravellerTitle, FlightTravellerType } from "@quickhotels/types/flight-checkout";
 import type { FlightQuote } from "./flight-review.repository.js";
+import { panProblem } from "../../../common/utils/pan.js";
 
 // Airline rules for traveller details, checked against the fare's needs
 // (TripJack's review conditions) and the trip's dates. Messages name the
@@ -12,7 +13,6 @@ const TITLES: Record<FlightTravellerType, FlightTravellerTitle[]> = {
   infant: ["Master", "Ms"],
 };
 const NAME = /^[A-Za-z][A-Za-z .'-]*$/;
-const PAN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 const GSTIN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
 // Whole years from `birth` to `on` (both YYYY-MM-DD).
@@ -80,7 +80,11 @@ export function checkTravellers(quote: FlightQuote, details: FlightTravellerDeta
       if (passport!.expiry && passport!.expiry <= lastFlight) fail(`${who}: the passport must be valid beyond the last flight.`);
       if (passport!.issueDate && passport!.issueDate > today) fail(`${who}: the passport issue date can't be in the future.`);
     }
-    if (needs.pan && (!traveller.pan || !PAN.test(traveller.pan))) fail(`${who}: a PAN like ABCDE1234F is needed.`);
+    if (needs.pan) {
+      if (!traveller.pan) fail(`${who}: a PAN is needed for this fare.`);
+      const problem = panProblem(traveller.pan!, traveller.firstName, traveller.lastName);
+      if (problem) fail(`${who}: ${problem}`);
+    }
   }
 
   const { contact, gst, emergencyContact } = details;

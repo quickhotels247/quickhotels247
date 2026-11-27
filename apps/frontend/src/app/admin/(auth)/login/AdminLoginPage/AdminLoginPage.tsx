@@ -8,6 +8,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MuiLink from "@mui/material/Link";
 import TextField from "@mui/material/TextField";
+import PasswordField from "@/components/forms/PasswordField";
 import AdminAuthCard from "@/components/admin/AdminAuthCard";
 import { routes } from "@/config/navigation";
 import { adminApi } from "@/lib/api/admin";
@@ -59,7 +60,7 @@ export default function AdminLoginPage() {
       <Box component="form" onSubmit={submit} sx={styles.form}>
         {error && <Alert severity="error">{error}</Alert>}
         <TextField label="Email" type="email" autoComplete="username" autoFocus required value={email} onChange={(event) => setEmail(event.target.value)} disabled={busy} />
-        <TextField label="Password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} disabled={busy} />
+        <PasswordField label="Password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} disabled={busy} />
         <Button type="submit" variant="contained" size="large" disabled={busy || !email || !password}>
           {busy ? "Signing in…" : "Sign in"}
         </Button>

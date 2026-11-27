@@ -10,6 +10,7 @@ import PeopleOutlineRounded from "@mui/icons-material/PeopleOutlineRounded";
 import type { CheckoutSummary } from "@quickhotels/types/checkout";
 import HotelPhoto from "@/components/hotel/HotelPhoto";
 import StarRating from "@/components/hotel/StarRating";
+import { countries } from "@/lib/countries";
 import { formatClock, formatDayDate, formatShortDate } from "@/lib/dates";
 import PriceBreakdown from "./PriceBreakdown";
 import { styles } from "./BookingSummary.styles";
@@ -64,6 +65,9 @@ export default function BookingSummary({ checkout, coupon }: BookingSummaryProps
           <PeopleOutlineRounded sx={styles.icon} />
           {guests}
           {stay.rooms > 1 ? ` · ${plural(stay.rooms, "room")}` : ""}
+          {stay.nationality && stay.nationality !== "IN"
+            ? ` · from ${countries().find((country) => country.code === stay.nationality)?.name ?? stay.nationality}`
+            : ""}
         </Typography>
         <Typography sx={[styles.fact, styles.strong]}>{room.roomName}</Typography>
         <Typography sx={[styles.fact, room.mealPlan ? styles.good : styles.muted]}>

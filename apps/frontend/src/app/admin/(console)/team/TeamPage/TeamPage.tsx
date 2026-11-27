@@ -76,7 +76,8 @@ export default function TeamPage() {
               <Box key={admin.id} sx={styles.row}>
                 <Avatar sx={styles.avatar}>{admin.name.charAt(0).toUpperCase()}</Avatar>
                 <Box sx={styles.text}>
-                  <Typography sx={styles.name}>
+                  {/* A div, not a <p>: the "You" chip is a div and can't sit inside a paragraph. */}
+                  <Typography component="div" sx={styles.name}>
                     {admin.name} {admin.id === me?.id && <Chip label="You" size="small" sx={styles.you} />}
                   </Typography>
                   <Typography sx={styles.meta}>{admin.email}</Typography>

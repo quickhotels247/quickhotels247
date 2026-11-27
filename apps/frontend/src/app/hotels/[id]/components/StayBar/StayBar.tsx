@@ -26,12 +26,26 @@ export default function StayBar({ stay, onChange }: StayBarProps) {
     setErrors({});
   };
 
+  // Reprices when the stay is valid; shows what's wrong otherwise.
+  function apply(next: HotelSearchCriteria) {
+    // No destination here: the hotel is the destination.
+    const { destination: _destination, ...found } = validateCriteria({ ...next, destination: "-" });
+    setErrors(found);
+    if (!Object.keys(found).length) onChange(next);
+  }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // No destination here: the hotel is the destination.
-    const { destination: _destination, ...found } = validateCriteria({ ...draft, destination: "-" });
-    setErrors(found);
-    if (!Object.keys(found).length) onChange(draft);
+    apply(draft);
+  }
+
+  // A finished date range reprices straight away, so the rates below never
+  // show prices for dates other than the ones in the bar.
+  function changeDates(checkIn: string, checkOut: string) {
+    const next = { ...draft, checkIn, checkOut };
+    setDraft(next);
+    setErrors({});
+    if (checkIn && checkOut && (checkIn !== stay.checkIn || checkOut !== stay.checkOut)) apply(next);
   }
 
   const messages = Object.values(errors);
@@ -41,7 +55,7 @@ export default function StayBar({ stay, onChange }: StayBarProps) {
         <StayDatesField
           checkIn={draft.checkIn}
           checkOut={draft.checkOut}
-          onChange={(checkIn, checkOut) => update({ checkIn, checkOut })}
+          onChange={changeDates}
           invalid={Boolean(errors.dates)}
         />
         <GuestsField
@@ -49,6 +63,7 @@ export default function StayBar({ stay, onChange }: StayBarProps) {
           adults={draft.adults}
           childCount={draft.children}
           childAges={draft.childAges ?? []}
+          nationality={draft.nationality ?? "IN"}
           invalid={Boolean(errors.guests)}
           onChange={(guests) => update(guests)}
         />

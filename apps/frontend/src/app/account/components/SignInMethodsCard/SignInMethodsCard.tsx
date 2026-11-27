@@ -76,7 +76,7 @@ export default function SignInMethodsCard({ security, token, accountEmail, onCha
 
       <Box sx={styles.method}>
         <Box sx={styles.methodMain}>
-          <Typography sx={styles.methodName}>
+          <Typography component="div" sx={styles.methodName}>
             Google {google.length > 0 && <Chip label="Connected" size="small" color="success" variant="outlined" sx={styles.chip} />}
           </Typography>
           {google.length === 0 && <Typography sx={styles.methodText}>Sign in with one click using your Google account.</Typography>}

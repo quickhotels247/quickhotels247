@@ -5,7 +5,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
-import TextField from "@mui/material/TextField";
+import PasswordField from "@/components/forms/PasswordField";
 import Typography from "@mui/material/Typography";
 import { passwordStrength, validatePassword } from "@/lib/auth/validation";
 import { useRequest } from "@/lib/hooks/useRequest";
@@ -57,9 +57,8 @@ export default function NewPasswordStep({ email, submitLabel, onSubmit, onStartO
         </Alert>
       )}
       <Box>
-        <TextField
+        <PasswordField
           label="Password"
-          type="password"
           autoComplete="new-password"
           autoFocus
           fullWidth
@@ -76,9 +75,8 @@ export default function NewPasswordStep({ email, submitLabel, onSubmit, onStartO
           </Box>
         )}
       </Box>
-      <TextField
+      <PasswordField
         label="Confirm password"
-        type="password"
         autoComplete="new-password"
         fullWidth
         value={confirmPassword}

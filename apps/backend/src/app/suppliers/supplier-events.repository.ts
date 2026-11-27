@@ -11,7 +11,8 @@ export interface SupplierEventInput {
   durationMs: number;
   success: boolean;
   errorCode?: string;
-  // Safe metadata only: paths, counts, codes. Never keys, names or contact details.
+  // Safe metadata only: paths, counts, codes and the supplier's short error
+  // message. Never keys, card data or our customers' contact details.
   requestMeta?: Prisma.InputJsonObject;
   responseMeta?: Prisma.InputJsonObject;
 }

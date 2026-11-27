@@ -41,9 +41,12 @@ export default function CheckoutPage() {
   const [editing, setEditing] = useState(false);
   const [expired, setExpired] = useState(false);
   const onExpire = useCallback(() => setExpired(true), []);
+  // Set as soon as Razorpay says paid: the server may still show "payment"
+  // for a moment while it records the payment and starts the booking.
+  const [justPaid, setJustPaid] = useState(false);
   const status = checkout?.status;
   const reference = checkout?.bookingReference;
-  const paid = status === "processing" || status === "confirmed" || status === "failed";
+  const paid = justPaid || status === "processing" || status === "confirmed" || status === "failed";
   // Paid: the booking's page shows the hotel's confirmation. Until the
   // booking is recorded (a moment after payment), look again shortly.
   useEffect(() => {
@@ -52,8 +55,8 @@ export default function CheckoutPage() {
       router.replace(`${routes.booking}/${encodeURIComponent(reference)}?checkout=${encodeURIComponent(checkoutId)}`);
       return;
     }
-    if (status !== "processing") return;
-    const timer = setTimeout(() => void reload().catch(() => undefined), 2000);
+    if (status === "failed") return;
+    const timer = setTimeout(() => void reload().catch(() => undefined), 1500);
     return () => clearTimeout(timer);
   }, [paid, status, reference, checkoutId, router, reload, checkout]);
 
@@ -143,7 +146,7 @@ export default function CheckoutPage() {
                 }}
               />
             ) : (
-              <PaymentNext checkout={checkout} onEdit={() => setEditing(true)} disabled={expired} onReload={reload} />
+              <PaymentNext checkout={checkout} onEdit={() => setEditing(true)} disabled={expired} onReload={reload} onPaid={() => setJustPaid(true)} />
             )}
           </Box>
           <Box sx={styles.side}>

@@ -23,7 +23,13 @@ export default function PriceCard({ booking }: { booking: BookingDetails }) {
       </Typography>
       {price.taxes.amount > 0 && (
         <Box sx={styles.row}>
-          <Typography sx={styles.label}>Taxes and fees</Typography>
+          <Typography sx={styles.label}>Room price (excl. GST)</Typography>
+          <Typography sx={styles.value}>{formatPrice({ amount: price.total.amount + price.discount.amount - price.taxes.amount, currency: price.total.currency })}</Typography>
+        </Box>
+      )}
+      {price.taxes.amount > 0 && (
+        <Box sx={styles.row}>
+          <Typography sx={styles.label}>GST</Typography>
           <Typography sx={styles.value}>{formatPrice(price.taxes)}</Typography>
         </Box>
       )}

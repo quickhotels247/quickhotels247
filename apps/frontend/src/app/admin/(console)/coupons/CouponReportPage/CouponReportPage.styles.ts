@@ -1,0 +1,17 @@
+export const styles = {
+  crumbs: { mb: 2, fontSize: "0.875rem" },
+  crumb: { fontSize: "0.875rem", color: "text.primary" },
+  code: { fontFamily: "ui-monospace, Menlo, monospace" },
+  summary: { display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 2, color: "text.secondary", fontSize: "0.9375rem" },
+  chip: { height: 22, fontSize: "0.75rem", fontWeight: 600 },
+  stats: { display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" }, gap: 2, mb: 3 },
+  card: { bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 3, p: { xs: 2, md: 3 } },
+  cardTitle: { fontSize: "1.125rem", fontWeight: 800, mb: 1.5 },
+  empty: { color: "text.secondary", fontSize: "0.9375rem" },
+  tableWrap: { overflowX: "auto" },
+  table: { minWidth: 760, "& th": { fontWeight: 700, color: "text.secondary", fontSize: "0.8125rem", whiteSpace: "nowrap" }, "& td": { fontSize: "0.875rem" } },
+  muted: { color: "text.secondary", fontSize: "0.8125rem" },
+  right: { textAlign: "right", whiteSpace: "nowrap" },
+  actions: { display: "flex", gap: 1, flexWrap: "wrap" },
+  note: { mt: 1.5, color: "text.secondary", fontSize: "0.8125rem" },
+};

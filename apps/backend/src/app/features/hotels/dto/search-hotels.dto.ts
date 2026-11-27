@@ -1,16 +1,5 @@
 import { Transform } from "class-transformer";
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsInt,
-  IsOptional,
-  IsString,
-  Matches,
-  Max,
-  MaxLength,
-  Min,
-  MinLength,
-} from "class-validator";
+import { ArrayMaxSize, IsArray, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from "class-validator";
 import type { HotelSearchRequest } from "@quickhotels/types/hotels";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -55,4 +44,10 @@ export class SearchHotelsDto implements Omit<HotelSearchRequest, "checkIn" | "ch
   @Min(0, { each: true })
   @Max(17, { each: true })
   childAges?: number[];
+
+  // The guests' nationality (ISO code like "AE"); India when missing.
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === "string" ? value.trim().toUpperCase() : value))
+  @Matches(/^[A-Z]{2}$/, { message: "nationality must be a 2-letter country code, like IN or AE." })
+  nationality?: string;
 }

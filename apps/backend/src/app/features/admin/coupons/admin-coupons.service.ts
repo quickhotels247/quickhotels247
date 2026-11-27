@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import type { Coupon } from "@quickhotels/types/coupons";
+import type { Coupon, CouponAction, CouponReport } from "@quickhotels/types/coupons";
 import { CouponsRepository } from "../../coupons/coupons.repository.js";
 import { AuditLogRepository } from "../audit-log.repository.js";
 import type { CouponDto } from "./dto/coupon.dto.js";
@@ -28,6 +28,20 @@ export class AdminCouponsService {
 
   list(): Promise<Coupon[]> {
     return this.coupons.list();
+  }
+
+  async report(id: string): Promise<CouponReport> {
+    const report = await this.coupons.report(id);
+    if (!report) throw new NotFoundException("That coupon no longer exists.");
+    return report;
+  }
+
+  // Pause, resume or end now; returns the updated report.
+  async act(id: string, action: CouponAction, adminId: string): Promise<CouponReport> {
+    if (!(await this.coupons.act(id, action))) throw new NotFoundException("That coupon no longer exists.");
+    const report = await this.report(id);
+    await this.audit.record(adminId, `coupon.${action}`, id, { code: report.coupon.code });
+    return report;
   }
 
   async create(dto: CouponDto, adminId: string): Promise<Coupon[]> {

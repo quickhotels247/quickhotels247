@@ -5,6 +5,7 @@ import { SupplierEventsRepository } from "../supplier-events.repository.js";
 import { tripjackConfig, type TripjackConfig } from "./tripjack.config.js";
 import { TRIPJACK_ENDPOINTS, type TripjackOperation } from "./tripjack.endpoints.js";
 import type { TripjackEnvelope } from "./tripjack.types.js";
+import type { Prisma } from "../../../generated/prisma/client.js";
 
 const SUPPLIER = "tripjack";
 
@@ -59,6 +60,8 @@ export class TripjackClient {
 
     const started = Date.now();
     let httpStatus: number | undefined;
+    // TripJack's own error codes and message, kept in the call log (short).
+    let errorMeta: { errors: { type?: string; code?: string; message?: string }[] } | undefined;
     const send = () =>
       fetch(url, {
         method: endpoint.method,
@@ -98,11 +101,23 @@ export class TripjackClient {
       // TripJack reports some failures inside an HTTP 200.
       const status = data.status?.httpStatus ?? response.status;
       if (!response.ok || data.status?.success === false) {
+        errorMeta = {
+          errors: (data.errors ?? []).slice(0, 3).map((error) => ({
+            type: error.errorType,
+            code: error.errCode === undefined ? undefined : String(error.errCode),
+            message: error.message?.slice(0, 200),
+          })),
+        };
         const detail =
           data.errors?.map((error) => `${error.errorType ? `${error.errorType} ` : ""}${error.errCode ?? "?"}: ${error.message ?? ""}`).join("; ") ||
           `HTTP ${status}`;
         // Review answers OPTION_SOLD_OUT when the rate is gone (expected < 1%).
-        const code = /SOLD_OUT|sold out/i.test(detail) ? "SOLD_OUT" : codeForStatus(status >= 400 ? status : response.status);
+        // NATIONALITY_RESTRICTED (6534) comes as a 403, which isn't a key problem.
+        const code = /SOLD_OUT|sold out/i.test(detail)
+          ? "SOLD_OUT"
+          : /NATIONALITY_RESTRICTED|\b6534\b/.test(detail)
+            ? "NATIONALITY_RESTRICTED"
+            : codeForStatus(status >= 400 ? status : response.status);
         throw new SupplierError(code, `TripJack ${operation} failed (${detail})`, SUPPLIER, correlationId, status);
       }
       this.log(operation, path, correlationId, started, true, httpStatus);
@@ -117,7 +132,7 @@ export class TripjackClient {
               SUPPLIER,
               correlationId,
             );
-      this.log(operation, path, correlationId, started, false, httpStatus, error.code);
+      this.log(operation, path, correlationId, started, false, httpStatus, error.code, errorMeta);
       throw error;
     } finally {
       this.release();
@@ -149,6 +164,7 @@ export class TripjackClient {
     success: boolean,
     httpStatus?: number,
     errorCode?: string,
+    errorMeta?: { errors: { type?: string; code?: string; message?: string }[] },
   ) {
     void this.events.record({
       supplier: SUPPLIER,
@@ -159,6 +175,7 @@ export class TripjackClient {
       success,
       errorCode,
       requestMeta: { path },
+      ...(errorMeta ? { responseMeta: JSON.parse(JSON.stringify(errorMeta)) as Prisma.InputJsonObject } : {}),
     });
   }
 }

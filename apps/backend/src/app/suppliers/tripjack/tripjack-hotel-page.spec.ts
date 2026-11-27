@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bestImageUrl, contentToHotelPage, time, toRoomOption } from "./tripjack-hotel-page.mapper.js";
+import { bestImageUrl, contentToHotelPage, time, toRoomOption, gstBreakup } from "./tripjack-hotel-page.mapper.js";
 import type { TripjackHotelContent, TripjackOption } from "./tripjack.types.js";
 
 describe("contentToHotelPage", () => {
@@ -110,5 +110,38 @@ describe("toRoomOption", () => {
     expect(room.freeCancellation).toBe(false);
     expect(room.freeCancellationUntil).toBeNull();
     expect(toRoomOption(option({ mealBasis: "Room Only" }), 1).mealPlan).toBeNull();
+  });
+
+  it("drops policy text that arrives as JSON pieces in inclusions", () => {
+    const inclusions = [
+      '{"know_before_you_go":"Only registered guests are allowed. "}',
+      "Free WiFi",
+      '{"Special Instructions":"Contact the property before travel. ","Instructions":"Special requests may incur charges',
+      'special requests cannot be guaranteed. "}',
+      '{"Optional":"Airport shuttle fee: INR 800 per vehicle. "}',
+      " Welcome drink ",
+    ];
+    expect(toRoomOption(option({ inclusions }), 1).inclusions).toEqual(["Free WiFi", "Welcome drink"]);
+  });
+});
+
+describe("gstBreakup", () => {
+  const pricing = (basePrice: number, taxes: number) => ({ totalPrice: basePrice + taxes, basePrice, taxes, discount: 0, mf: 0, mft: 0, currency: "INR" });
+
+  it("keeps TripJack's GST when it's sent separately", () => {
+    expect(gstBreakup(pricing(28894.34, 5200.38), 2, 1)).toEqual({ base: 28894.34, taxes: 5200.38, managementFee: 0, managementFeeTax: 0, discount: 0 });
+  });
+
+  it("works GST out of a tax-inclusive rate at 5% up to ₹7,500 a room-night", () => {
+    const split = gstBreakup(pricing(2007, 0), 1, 1);
+    expect(split).toMatchObject({ base: 1911.43, taxes: 95.57, gstWorkedOut: true });
+    expect(split.base + split.taxes).toBeCloseTo(2007, 2);
+  });
+
+  it("uses 18% above ₹7,500 a room-night, per room and night", () => {
+    // 2 nights × 1 room at ₹11,800 incl. GST → ₹10,000 + 18%.
+    expect(gstBreakup(pricing(23600, 0), 2, 1)).toMatchObject({ base: 20000, taxes: 3600, gstWorkedOut: true });
+    // Same total over 2 rooms → ₹5,900 a room-night → 5%.
+    expect(gstBreakup(pricing(23600, 0), 2, 2)).toMatchObject({ taxes: 1123.81 });
   });
 });

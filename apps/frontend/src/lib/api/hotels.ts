@@ -52,6 +52,7 @@ export const hotelsApi = {
       children: String(stay.children),
     });
     if (stay.children > 0 && stay.childAges?.length) params.set("childAges", stay.childAges.join(","));
+    if (stay.nationality && stay.nationality !== "IN") params.set("nationality", stay.nationality);
     if (searchId) params.set("searchId", searchId);
     return apiRequest<HotelRoomsResponse>(`/v1/hotels/${encodeURIComponent(hotelId)}/rooms?${params}`, { signal });
   },

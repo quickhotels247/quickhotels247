@@ -1,4 +1,4 @@
-import { GatewayTimeoutException, HttpException, ServiceUnavailableException } from "@nestjs/common";
+import { ConflictException, GatewayTimeoutException, HttpException, ServiceUnavailableException } from "@nestjs/common";
 
 // A supplier call that failed, with a code the rest of the app can act on.
 // Messages here are for logs; customers get the safe text from `publicMessage`.
@@ -10,7 +10,8 @@ export type SupplierErrorCode =
   | "UNAVAILABLE" // network error or 5xx
   | "BAD_REQUEST" // the supplier rejected what we sent
   | "BAD_RESPONSE" // we couldn't read what came back
-  | "SOLD_OUT"; // the chosen rate is no longer available
+  | "SOLD_OUT" // the chosen rate is no longer available
+  | "NATIONALITY_RESTRICTED"; // guests of this nationality can't book it (or we can't search for them)
 
 export class SupplierError extends Error {
   constructor(
@@ -26,6 +27,9 @@ export class SupplierError extends Error {
 
   // Safe text for customers, about `what` failed ("Hotel search", "Room prices").
   publicMessageFor(what: string) {
+    if (this.code === "NATIONALITY_RESTRICTED") {
+      return "Guests of the chosen nationality can't book this. Try another hotel, or check the nationality under Guests.";
+    }
     return this.code === "TIMEOUT" || this.code === "UNAVAILABLE" || this.code === "RATE_LIMITED"
       ? `${what} is taking longer than usual. Please try again in a moment.`
       : `${what} isn't available right now. Please try again later.`;
@@ -40,5 +44,6 @@ export class SupplierError extends Error {
 // with a short reference to find the full details in the logs.
 export function supplierHttpError(error: SupplierError, what = "Hotel search"): HttpException {
   const message = `${error.publicMessageFor(what)} (Reference: ${error.correlationId.slice(0, 8)})`;
+  if (error.code === "NATIONALITY_RESTRICTED") return new ConflictException(message);
   return error.code === "TIMEOUT" ? new GatewayTimeoutException(message) : new ServiceUnavailableException(message);
 }

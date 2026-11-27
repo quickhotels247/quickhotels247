@@ -3,16 +3,62 @@ import type { RoomOption } from "@quickhotels/types/hotels";
 import type { FlightOption } from "@quickhotels/types/flights";
 import type { MarkupRule } from "./markup.js";
 import type { PricingRulesRepository } from "./pricing-rules.repository.js";
+import type { ActivePromotion } from "./promotions.js";
+import type { PromotionsRepository } from "./promotions.repository.js";
 import { PricingService } from "./pricing.service.js";
 
 const rule = (changes: Partial<MarkupRule>): MarkupRule => ({
   id: "r1", version: 3, product: "HOTEL", scope: "ALL", scopeValue: null, markupType: "PERCENTAGE", value: 10,
   priority: 0, validFrom: null, validTo: null, updatedAt: new Date(), ...changes,
 });
-const service = (rules: MarkupRule[]) => new PricingService({ active: async () => rules } as unknown as PricingRulesRepository);
+const service = (rules: MarkupRule[], promotions: ActivePromotion[] = []) =>
+  new PricingService({ active: async () => rules } as unknown as PricingRulesRepository, { active: async () => promotions } as unknown as PromotionsRepository);
+const promotion = (changes: Partial<ActivePromotion>): ActivePromotion => ({
+  id: "p1", version: 2, name: "Winter sale", discountType: "PERCENTAGE", value: 5, maxDiscount: null, validFrom: null, validTo: null, updatedAt: new Date(), ...changes,
+});
+const request = { destination: "Hyderabad, India", checkIn: "2026-11-27", checkOut: "2026-11-28", rooms: 1, adults: 2, children: 0 };
+const netRoom = () => ({ totalPrice: inr(2007), pricePerNight: inr(2007), strikethroughPrice: null, priceBreakup: { base: 1911.43, taxes: 95.57, managementFee: 0, managementFeeTax: 0, discount: 0 }, cancellationCharges: [] }) as unknown as RoomOption;
 const inr = (amount: number) => ({ amount, currency: "INR" });
 
 describe("PricingService", () => {
+  it("takes a running promotion off the regular price and shows the regular price crossed out", async () => {
+    const pricing = service([rule({ value: 9 })], [promotion({})]);
+    const { rule: r, promotion: p } = await pricing.hotelPricing(request);
+    const { option, applied } = pricing.markRoom(netRoom(), r, 1, p);
+    // ₹2,007 net + 9% = ₹2,188 regular; 5% off = ₹109 → ₹2,079.
+    expect(option.strikethroughPrice?.amount).toBe(2188);
+    expect(option.totalPrice.amount).toBe(2079);
+    expect(option.priceBreakup.promotion).toBe(109);
+    expect(option.promotion).toEqual({ name: "Winter sale", percentOff: 5 });
+    expect(applied.promotion).toEqual({ id: "p1", version: 2, name: "Winter sale", amount: inr(109) });
+  });
+
+  it("never discounts below the supplier's net price", async () => {
+    const pricing = service([rule({ value: 9 })], [promotion({ value: 40 })]);
+    const { rule: r, promotion: p } = await pricing.hotelPricing(request);
+    const { option } = pricing.markRoom(netRoom(), r, 1, p);
+    // 40% would be ₹875, but our markup is only ₹181.
+    expect(option.totalPrice.amount).toBe(2007);
+    expect(option.priceBreakup.promotion).toBe(181);
+  });
+
+  it("gives no promotion without a markup, or outside its dates", async () => {
+    const none = service([], [promotion({})]);
+    const a = await none.hotelPricing(request);
+    expect(none.markRoom(netRoom(), a.rule, 1, a.promotion).option.totalPrice.amount).toBe(2007);
+    const later = service([rule({ value: 9 })], [promotion({ validFrom: new Date(Date.now() + 86_400_000) })]);
+    const b = await later.hotelPricing(request);
+    expect(b.promotion).toBeNull();
+    expect(later.markRoom(netRoom(), b.rule, 1, b.promotion).option.totalPrice.amount).toBe(2188);
+  });
+
+  it("shows the promotion on search results too", async () => {
+    const pricing = service([rule({ value: 9 })], [promotion({})]);
+    const { rule: r, promotion: p } = await pricing.hotelPricing(request);
+    const result = pricing.markHotelResult({ totalPrice: inr(2007), pricePerNight: inr(2007) } as never, r, 1, p);
+    expect(result).toMatchObject({ totalPrice: inr(2079), strikethroughPrice: inr(2188), percentOff: 5 });
+  });
+
   it("marks up a room, folding the markup into the base rate and recording it", async () => {
     const pricing = service([rule({})]);
     const r = await pricing.hotelRule({ destination: "Goa, India", checkIn: "2026-12-01", checkOut: "2026-12-03", rooms: 1, adults: 2, children: 0 });
@@ -22,7 +68,7 @@ describe("PricingService", () => {
     expect(option.pricePerNight.amount).toBe(2750);
     expect(option.priceBreakup.base).toBe(4700);
     expect(option.strikethroughPrice?.amount).toBe(6500);
-    expect(applied).toEqual({ ruleId: "r1", ruleVersion: 3, net: inr(5000), markup: inr(500) });
+    expect(applied).toEqual({ ruleId: "r1", ruleVersion: 3, net: inr(5000), markup: inr(500), promotion: null });
   });
 
   it("adds the markup to charged cancellation periods, capped at the total", async () => {

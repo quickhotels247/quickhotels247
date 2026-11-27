@@ -38,6 +38,9 @@ export interface HotelSearchCriteria {
   children: number;
   // One age (0–17) per child, in any order. Suppliers need them to price rooms.
   childAges?: number[];
+  // The guests' nationality (ISO 3166 code, e.g. "AE"). Suppliers price,
+  // allow and set ID rules by it. Missing means India ("IN").
+  nationality?: string;
 }
 
 // ─── GET /api/v1/destinations/suggestions?q= ────────────────────────────────
@@ -95,6 +98,9 @@ export interface HotelSearchResult extends HotelSummary {
   // Every night of the stay, for all rooms; pricePerNight is the average.
   totalPrice: Money;
   taxesIncluded: boolean;
+  // With a running promotion: the regular price (crossed out) and the % off.
+  strikethroughPrice?: Money | null;
+  percentOff?: number | null;
 }
 
 export type HotelSort = "recommended" | "price_asc" | "price_desc" | "stars_desc" | "distance";
@@ -244,7 +250,14 @@ export interface RoomOption {
   pricePerNight: Money;
   // A crossed-out reference price, when the supplier gives one.
   strikethroughPrice: Money | null;
-  priceBreakup: { base: number; taxes: number; managementFee: number; managementFeeTax: number; discount: number };
+  // base + taxes + managementFee + managementFeeTax = totalPrice. `taxes` is the
+  // GST; when the supplier folds it into the rate, it's worked out from the
+  // hotel slabs (5% up to ₹7,500 a room-night, else 18%) and gstWorkedOut is set.
+  // `promotion`: our automatic discount, taken off after the lines above
+  // (totalPrice = base + taxes + fees − promotion).
+  priceBreakup: { base: number; taxes: number; managementFee: number; managementFeeTax: number; discount: number; gstWorkedOut?: boolean; promotion?: number };
+  // The running promotion, when it lowered this price (strikethroughPrice is then the regular price).
+  promotion?: { name: string; percentOff: number } | null;
   panRequired: boolean;
   passportRequired: boolean;
 }

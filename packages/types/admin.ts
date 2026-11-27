@@ -4,7 +4,19 @@ import type { SignedInWith } from "@quickhotels/types/users";
 // Spec §1.1 roles. What each can do is decided on the server; the console
 // gets the signed-in admin's permissions to show only what they can use.
 export type AdminRole = "SUPER_ADMIN" | "OPERATIONS_ADMIN" | "SUPPORT_AGENT";
-export type AdminPermission = "team" | "pricing" | "coupons" | "customers" | "support" | "email" | "bookings" | "refunds";
+export type AdminPermission = "team" | "pricing" | "coupons" | "customers" | "support" | "email" | "bookings" | "refunds" | "company";
+
+// Our company's GST registration. TripJack needs it on hotel rates marked
+// RESELLER or PASSTHROUGH (GET/PUT/DELETE /api/admin/company/gst).
+export interface CompanyGst {
+  gstNumber: string;
+  registeredName: string;
+}
+
+export interface CompanyGstSetting {
+  gst: CompanyGst | null;
+  updatedAt: string | null;
+}
 
 export interface AdminProfile {
   id: string;
@@ -87,6 +99,70 @@ export interface AuditEntry {
   target: string | null;
   details: Record<string, unknown>;
   createdAt: string;
+}
+
+// ---- Dashboard (GET /api/admin/dashboard?from=&to=, spec §5.2) ----
+
+export type DashboardProduct = "hotel" | "flight";
+
+// One product's numbers for the chosen dates (India days). Money is INR.
+export interface DashboardProductStats {
+  // Checkouts opened (rate re-checked).
+  attempts: number;
+  // Paid by the customer.
+  paid: number;
+  // Paid and confirmed by the supplier (including ones cancelled later).
+  confirmed: number;
+  // Paid, supplier failed (refunded or being refunded).
+  failed: number;
+  // Cancelled after confirmation (hotels).
+  cancelled: number;
+  // What customers paid for confirmed bookings. Not revenue.
+  bookingValue: number;
+  // Our margin on confirmed, not-cancelled bookings: price paid − supplier net.
+  earnings: number;
+}
+
+export interface DashboardAttentionItem {
+  kind: "awaiting_confirmation" | "cancellation_pending" | "refund_pending" | "refund_failed" | "manual_review";
+  product: DashboardProduct;
+  // Opens the booking in the admin console.
+  bookingId: string;
+  reference: string;
+  title: string;
+  detail: string;
+  amount: number | null;
+  // When it entered this state (or was last touched).
+  since: string;
+  // Needs action now (e.g. paid over 30 minutes ago and still unconfirmed).
+  urgent: boolean;
+}
+
+export interface DashboardRecentBooking {
+  product: DashboardProduct;
+  bookingId: string;
+  reference: string;
+  title: string;
+  customer: string | null;
+  amount: number;
+  status: string;
+  paidAt: string;
+}
+
+export interface AdminDashboard {
+  range: { from: string; to: string };
+  generatedAt: string;
+  hotels: DashboardProductStats;
+  flights: DashboardProductStats;
+  // Payments captured and refunds sent in the range (all products).
+  money: { collected: number; refunded: number };
+  // Paid bookings and their value per India day.
+  trend: { date: string; bookings: number; value: number }[];
+  // Live, whatever the dates: what someone should look at.
+  attention: DashboardAttentionItem[];
+  recent: DashboardRecentBooking[];
+  // TripJack calls in the last 24 hours.
+  supplier: { calls: number; failed: number; averageMs: number | null; lastFailureAt: string | null; lastFailure: string | null };
 }
 
 export interface AdminOverview {

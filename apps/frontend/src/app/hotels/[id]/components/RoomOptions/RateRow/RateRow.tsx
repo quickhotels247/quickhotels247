@@ -31,11 +31,12 @@ export default function RateRow({ option, stayLabel, reserveHref }: RateRowProps
   const { priceBreakup: p, totalPrice } = option;
   const money = (amount: number) => formatPrice({ amount, currency: totalPrice.currency });
   const breakup = [
-    `Room price: ${money(p.base)}`,
-    p.taxes ? `Taxes: ${money(p.taxes)}` : null,
+    `Room price (excl. GST): ${money(p.base)}`,
+    p.taxes ? `GST: ${money(p.taxes)}` : null,
     p.managementFee ? `Service fee: ${money(p.managementFee)}` : null,
     p.managementFeeTax ? `Tax on service fee: ${money(p.managementFeeTax)}` : null,
     p.discount ? `Discount: −${money(p.discount)}` : null,
+    p.promotion ? `${option.promotion?.name ?? "Promotion"}: −${money(p.promotion)}` : null,
   ].filter(Boolean);
 
   return (
@@ -62,20 +63,25 @@ export default function RateRow({ option, stayLabel, reserveHref }: RateRowProps
         {option.notes && <Typography sx={styles.notes}>{option.notes}</Typography>}
         {(option.panRequired || option.passportRequired) && (
           <Typography sx={styles.notes}>
-            {option.passportRequired ? "Passport details needed at booking." : "PAN card details needed at booking."}
+            {option.passportRequired ? "Passport details needed at booking." : "An Indian PAN card is needed at booking."}
           </Typography>
         )}
       </Box>
       <Box sx={styles.price}>
         <Typography sx={styles.stay}>{stayLabel}</Typography>
-        {option.strikethroughPrice && <Typography sx={styles.strike}>{formatPrice(option.strikethroughPrice)}</Typography>}
+        {option.strikethroughPrice && (
+          <Typography component="div" sx={styles.was}>
+            {option.promotion && <Box component="span" sx={styles.off}>{option.promotion.percentOff}% off</Box>}
+            <Box component="span" sx={styles.strike}>{formatPrice(option.strikethroughPrice)}</Box>
+          </Typography>
+        )}
         <Typography sx={styles.total}>
           {formatPrice(totalPrice)}
           <Tooltip title={<Box sx={styles.breakup}>{breakup.map((line) => <div key={line}>{line}</div>)}</Box>}>
             <InfoOutlined sx={styles.info} aria-label={`Price details: ${breakup.join(", ")}`} />
           </Tooltip>
         </Typography>
-        <Typography sx={styles.perNight}>{formatPrice(option.pricePerNight)} per night · incl. taxes & fees</Typography>
+        <Typography sx={styles.perNight}>{formatPrice(option.pricePerNight)} per night · incl. GST & fees</Typography>
         {reserveHref ? (
           <Button component={Link} href={reserveHref} variant="contained" sx={styles.reserve}>
             Reserve

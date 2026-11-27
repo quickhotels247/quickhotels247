@@ -44,7 +44,8 @@ export default function RoomGuests({ index, room, roomName, showRoomTitle, guest
           index={g}
           guest={guest}
           childAge={childAge}
-          needsPan={needsPan}
+          // TripJack wants the PAN of the main guest only.
+          needsPan={needsPan && g === 0}
           needsPassport={needsPassport}
           errors={errors}
           onChange={(next) => onChange(guests.map((current, i) => (i === g ? next : current)))}

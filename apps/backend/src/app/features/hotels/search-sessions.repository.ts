@@ -48,6 +48,7 @@ export class SearchSessionsRepository {
           adults: request.adults,
           children: request.children,
           childAges: request.childAges ?? [],
+          nationality: request.nationality ?? "IN",
         },
         supplier: session.supplier,
         supplierSearchId: session.supplierSearchId,
@@ -65,7 +66,7 @@ export class SearchSessionsRepository {
   async find(id: string): Promise<StoredSearch | null> {
     const row = await this.db.searchSession.findUnique({ where: { id } });
     if (!row) return null;
-    const occupancy = row.occupancy as { rooms: number; adults: number; children: number; childAges: number[] };
+    const occupancy = row.occupancy as { rooms: number; adults: number; children: number; childAges: number[]; nationality?: string };
     return {
       id: row.id,
       request: {
@@ -76,6 +77,7 @@ export class SearchSessionsRepository {
         adults: occupancy.adults,
         children: occupancy.children,
         ...(occupancy.childAges.length ? { childAges: occupancy.childAges } : {}),
+        ...(occupancy.nationality && occupancy.nationality !== "IN" ? { nationality: occupancy.nationality } : {}),
       },
       supplier: row.supplier,
       supplierContext: row.supplierContext,

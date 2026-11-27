@@ -46,6 +46,12 @@ export class HotelRoomsQueryDto {
   @Max(17, { each: true })
   childAges?: number[];
 
+  // The guests' nationality (ISO code like "AE"); India when missing.
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === "string" ? value.trim().toUpperCase() : value))
+  @Matches(/^[A-Z]{2}$/, { message: "nationality must be a 2-letter country code, like IN or AE." })
+  nationality?: string;
+
   // The visitor's results search, to price in the same supplier session.
   @IsOptional()
   @IsUUID()

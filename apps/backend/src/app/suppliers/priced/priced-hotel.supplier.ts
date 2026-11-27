@@ -5,8 +5,8 @@ import type { HotelSearchOptions, HotelSupplier, SupplierCallContext, SupplierRe
 const nightsOf = (request: HotelSearchRequest) =>
   Math.max(1, Math.round((Date.parse(`${request.checkOut}T00:00:00Z`) - Date.parse(`${request.checkIn}T00:00:00Z`)) / 86_400_000));
 
-// Wraps the real hotel supplier and adds our markup to every price it returns
-// (search, rooms, review). Everything after it sees selling prices; the net
+// Wraps the real hotel supplier and adds our markup, less any running
+// promotion, to every price it returns (search, rooms, review). Everything after it sees selling prices; the net
 // price stays in the review's `markup` record and the supplier's own context.
 export class PricedHotelSupplier implements HotelSupplier {
   constructor(
@@ -23,20 +23,20 @@ export class PricedHotelSupplier implements HotelSupplier {
   }
 
   async searchHotels(request: HotelSearchRequest, context: SupplierCallContext, options?: HotelSearchOptions): Promise<SupplierSearchResult> {
-    const [found, rule] = await Promise.all([this.inner.searchHotels(request, context, options), this.pricing.hotelRule(request)]);
+    const [found, { rule, promotion }] = await Promise.all([this.inner.searchHotels(request, context, options), this.pricing.hotelPricing(request)]);
     const nights = nightsOf(request);
-    return { ...found, results: found.results.map((result) => this.pricing.markHotelResult(result, rule, nights)) };
+    return { ...found, results: found.results.map((result) => this.pricing.markHotelResult(result, rule, nights, promotion)) };
   }
 
   async hotelRooms(request: HotelSearchRequest, supplierHotelId: string, context: SupplierCallContext, options?: { searchRef?: string | null }): Promise<SupplierRoomsResult> {
-    const [rooms, rule] = await Promise.all([this.inner.hotelRooms(request, supplierHotelId, context, options), this.pricing.hotelRule(request)]);
+    const [rooms, { rule, promotion }] = await Promise.all([this.inner.hotelRooms(request, supplierHotelId, context, options), this.pricing.hotelPricing(request)]);
     const nights = nightsOf(request);
-    return { ...rooms, options: rooms.options.map((option) => this.pricing.markRoom(option, rule, nights).option) };
+    return { ...rooms, options: rooms.options.map((option) => this.pricing.markRoom(option, rule, nights, promotion).option) };
   }
 
   async reviewRoom(request: HotelSearchRequest, roomsContext: unknown, optionId: string, context: SupplierCallContext): Promise<SupplierReviewResult> {
-    const [review, rule] = await Promise.all([this.inner.reviewRoom(request, roomsContext, optionId, context), this.pricing.hotelRule(request)]);
-    const { option, applied } = this.pricing.markRoom(review.option, rule, nightsOf(request));
+    const [review, { rule, promotion }] = await Promise.all([this.inner.reviewRoom(request, roomsContext, optionId, context), this.pricing.hotelPricing(request)]);
+    const { option, applied } = this.pricing.markRoom(review.option, rule, nightsOf(request), promotion);
     return { ...review, option, markup: applied };
   }
 

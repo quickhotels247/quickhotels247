@@ -56,7 +56,7 @@ export default function DevicesCard({ token }: { token: string }) {
         <Box key={session.id} sx={styles.row}>
           <DevicesOutlined sx={styles.icon} />
           <Box sx={styles.text}>
-            <Typography sx={styles.device}>
+            <Typography component="div" sx={styles.device}>
               {session.device ?? "Unknown device"}
               {session.current && <Chip label="This device" size="small" color="success" variant="outlined" sx={styles.chip} />}
             </Typography>

@@ -89,7 +89,7 @@ export default function StayCard({ booking }: { booking: BookingDetails }) {
       ))}
       {booking.specialRequests && (
         <Typography sx={styles.requests}>
-          <strong>Your requests:</strong> {booking.specialRequests} (passed to the hotel; not guaranteed)
+          <strong>Your requests:</strong> {booking.specialRequests} (on your voucher; mention them at check-in, not guaranteed)
         </Typography>
       )}
     </Box>

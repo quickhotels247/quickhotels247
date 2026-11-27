@@ -8,6 +8,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
+import PasswordField from "@/components/forms/PasswordField";
 import type { AdminSetupStatus } from "@quickhotels/types/admin";
 import AdminAuthCard from "@/components/admin/AdminAuthCard";
 import { routes } from "@/config/navigation";
@@ -70,8 +71,8 @@ export default function AdminSetupPage() {
         {error && <Alert severity="error">{error}</Alert>}
         <TextField label="Your name" autoComplete="name" required value={form.name} onChange={(event) => set({ name: event.target.value })} disabled={busy} />
         <TextField label="Email" type="email" autoComplete="username" required value={form.email} onChange={(event) => set({ email: event.target.value })} disabled={busy} />
-        <TextField label="Password" type="password" autoComplete="new-password" required value={form.password} onChange={(event) => set({ password: event.target.value })} helperText="At least 12 characters." disabled={busy} />
-        <TextField label="Confirm password" type="password" autoComplete="new-password" required value={form.confirm} onChange={(event) => set({ confirm: event.target.value })} disabled={busy} />
+        <PasswordField label="Password" autoComplete="new-password" required value={form.password} onChange={(event) => set({ password: event.target.value })} helperText="At least 12 characters." disabled={busy} />
+        <PasswordField label="Confirm password" autoComplete="new-password" required value={form.confirm} onChange={(event) => set({ confirm: event.target.value })} disabled={busy} />
         {setup?.tokenRequired && (
           <TextField label="Setup token" required value={form.setupToken} onChange={(event) => set({ setupToken: event.target.value })} helperText="ADMIN_SETUP_TOKEN from the server's settings." disabled={busy} />
         )}

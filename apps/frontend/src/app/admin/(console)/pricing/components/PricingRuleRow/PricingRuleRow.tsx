@@ -22,7 +22,7 @@ export default function PricingRuleRow({ rule, onEdit, onDelete }: PricingRuleRo
   return (
     <Box sx={[styles.root, rule.status !== "ACTIVE" && styles.muted]}>
       <Box sx={styles.main}>
-        <Typography sx={styles.name}>
+        <Typography component="div" sx={styles.name}>
           {rule.name}
           <Chip label={status.label} color={status.color} size="small" variant="outlined" sx={styles.chip} />
         </Typography>

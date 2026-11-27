@@ -16,6 +16,17 @@ describe("TripJack hotel booking mapping", () => {
     });
   });
 
+  it("adds our GST details when the rate needs them", () => {
+    const request = toTripjackHotelBook(
+      "TGS2",
+      1000,
+      { rooms: [{ guests: [{ title: "Ms", firstName: "Asha", lastName: "Rao", child: false }] }], contact: { email: "a@b.co", phoneCode: "+91", phone: "9876543210" } },
+      { gstNumber: "29ABCDE1234F1Z5", registeredName: "QUICKHOTELS" },
+    );
+    expect(request.gstInfo).toEqual({ gstNumber: "29ABCDE1234F1Z5", registeredName: "QUICKHOTELS" });
+    expect(request.roomTravellerInfo[0]!.travellerInfo[0]).not.toHaveProperty("pan");
+  });
+
   it("reads the status and the hotel's confirmation number", () => {
     expect(toHotelBooking({ order: { bookingId: "TJ9", status: "SUCCESS" }, hotelConfirmationNumber: "HCN123" })).toEqual({ status: "SUCCESS", confirmation: "HCN123", supplierReference: "TJ9" });
     expect(toHotelBooking({ order: { status: "in_progress" } })).toMatchObject({ status: "IN_PROGRESS", confirmation: null });

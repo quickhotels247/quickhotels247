@@ -14,14 +14,15 @@ interface PriceBreakdownProps {
   payable: Money;
 }
 
-// Itemised price (spec §4.4): room, taxes, the supplier's service fee and its
-// tax as separate lines (TripJack's rule), any discount, and the total.
+// Itemised price (spec §4.4): room price before GST, the GST amount, the
+// supplier's service fee and its tax as separate lines (TripJack's rule), any
+// discount, and the total.
 export default function PriceBreakdown({ room, nights, rooms, coupon, payable }: PriceBreakdownProps) {
   const { priceBreakup: p, totalPrice } = room;
   const money = (amount: number) => formatPrice({ amount, currency: totalPrice.currency });
   const lines: [string, number][] = [
-    [`${rooms > 1 ? `${rooms} rooms × ` : ""}${nights} night${nights === 1 ? "" : "s"}`, p.base],
-    ["Taxes", p.taxes],
+    [`Room price · ${rooms > 1 ? `${rooms} rooms × ` : ""}${nights} night${nights === 1 ? "" : "s"}`, p.base],
+    ["GST", p.taxes],
     ["Service fee", p.managementFee],
     ["Tax on service fee", p.managementFeeTax],
   ];
@@ -49,6 +50,16 @@ export default function PriceBreakdown({ room, nights, rooms, coupon, payable }:
           </Typography>
         </Box>
       )}
+      {p.promotion ? (
+        <Box sx={styles.row}>
+          <Typography component="dt" sx={styles.label}>
+            {room.promotion?.name ?? "Promotion"}
+          </Typography>
+          <Typography component="dd" sx={[styles.value, styles.discount]}>
+            −{money(p.promotion)}
+          </Typography>
+        </Box>
+      ) : null}
       {coupon && (
         <Box sx={styles.row}>
           <Typography component="dt" sx={styles.label}>
@@ -68,7 +79,9 @@ export default function PriceBreakdown({ room, nights, rooms, coupon, payable }:
           {formatPrice(payable)}
         </Typography>
       </Box>
-      <Typography sx={styles.note}>Includes taxes and fees. Charges paid at the hotel, if any, are listed below.</Typography>
+      <Typography sx={styles.note}>
+        Includes GST{p.gstWorkedOut ? " (worked out at the hotel GST rate: 5% up to ₹7,500 a room-night, 18% above)" : ""}. Charges paid at the hotel, if any, are listed below.
+      </Typography>
     </Box>
   );
 }

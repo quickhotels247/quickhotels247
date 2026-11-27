@@ -8,6 +8,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
+import PasswordField from "@/components/forms/PasswordField";
 import MenuItem from "@mui/material/MenuItem";
 import type { AdminAccount, AdminRole } from "@quickhotels/types/admin";
 import { ROLE_INFO, ROLES } from "@/lib/admin/roles";
@@ -51,9 +52,8 @@ export default function AddAdminDialog({ open, token, onClose, onAdded }: AddAdm
             </MenuItem>
           ))}
         </TextField>
-        <TextField
+        <PasswordField
           label="Starting password"
-          type="password"
           autoComplete="new-password"
           required
           value={form.password}

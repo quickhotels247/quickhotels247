@@ -7,6 +7,7 @@ import type { PaymentsService } from "../../payments/payments.service.js";
 import type { CheckoutRepository, StoredCheckout } from "../checkout.repository.js";
 import type { BookingsRepository } from "../../bookings/bookings.repository.js";
 import type { HotelBookingsRepository } from "./hotel-bookings.repository.js";
+import { CompanySettingsService } from "../../../settings/company-settings.service.js";
 import { HotelBookingService } from "./hotel-booking.service.js";
 
 const money = (amount: number) => ({ amount, currency: "INR" });
@@ -54,6 +55,7 @@ function setup(book: () => Promise<void>, state: { status: string; confirmation?
     supplier as unknown as HotelSupplier, checkouts as unknown as CheckoutRepository, bookings as unknown as HotelBookingsRepository,
     payments as unknown as PaymentsService, coupons as unknown as CouponsService, mail as unknown as MailService,
     { findByReference: vi.fn(async () => null) } as unknown as BookingsRepository,
+    { gst: vi.fn(async () => ({ gstNumber: "29ABCDE1234F1Z5", registeredName: "QUICKHOTELS" })) } as unknown as CompanySettingsService,
   );
   return { service, supplier, payments, mail, coupons, bookings, statuses, current: () => row, set: (status: string) => void (row = { ...row, status } as StoredCheckout) };
 }
@@ -74,6 +76,8 @@ describe("HotelBookingService", () => {
     // Adults then children, in room order.
     const guests = (t.supplier.bookRoom.mock.calls[0] as unknown[])[2] as { rooms: { guests: { child: boolean }[] }[] };
     expect(guests.rooms[0]!.guests.map((g) => g.child)).toEqual([false, false, true]);
+    // Our GST from Admin → Settings goes with the booking.
+    expect((guests as { gst?: unknown }).gst).toEqual({ gstNumber: "29ABCDE1234F1Z5", registeredName: "QUICKHOTELS" });
     expect(t.current().status).toBe("CONFIRMED");
     expect(t.bookings.setStatus).toHaveBeenLastCalledWith("b1", "CONFIRMED", "supplier", expect.any(String), expect.objectContaining({ supplierConfirmation: "HC-998" }));
     expect(t.mail.sendInBackground).toHaveBeenCalledWith(expect.objectContaining({ to: "a@example.com" }), expect.objectContaining({ template: "hotel-confirmed" }));

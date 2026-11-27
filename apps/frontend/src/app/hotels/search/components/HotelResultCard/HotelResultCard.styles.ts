@@ -60,5 +60,8 @@ export const styles = {
   stay: { fontSize: "0.8125rem", color: "text.secondary" },
   total: { fontFamily: HEADING_FONT, fontSize: { xs: "1.3rem", md: "1.45rem" }, fontWeight: 800, lineHeight: 1.2 },
   perNight: { fontSize: "0.75rem", color: "text.secondary" },
+  was: { display: "flex", alignItems: "center", gap: 0.75 },
+  strike: { fontSize: "0.875rem", color: "text.secondary", textDecoration: "line-through" },
+  off: { fontSize: "0.75rem", fontWeight: 700, color: "success.dark", bgcolor: "success.light", borderRadius: 1, px: 0.75, py: 0.125 },
   cta: { mt: 1.25, whiteSpace: "nowrap", alignSelf: { xs: "stretch", md: "flex-end" } },
 };

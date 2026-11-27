@@ -11,6 +11,7 @@ import { HOTEL_SUPPLIER, type HotelSupplier, type SupplierHotelBooking, type Sup
 import { SupplierError } from "../../../suppliers/supplier-error.js";
 import { frontendUrlFromEnv } from "../../auth/auth.config.js";
 import { CouponsService } from "../../coupons/coupons.service.js";
+import { CompanySettingsService } from "../../../settings/company-settings.service.js";
 import { PaymentsService } from "../../payments/payments.service.js";
 import { CheckoutRepository, payableOf, type StoredCheckout } from "../checkout.repository.js";
 import { HotelBookingsRepository, type StoredHotelBooking } from "./hotel-bookings.repository.js";
@@ -43,6 +44,7 @@ export class HotelBookingService implements OnModuleInit {
     private readonly coupons: CouponsService,
     private readonly mail: MailService,
     private readonly bookingDetails: BookingsRepository,
+    private readonly settings: CompanySettingsService,
   ) {}
 
   onModuleInit() {
@@ -67,7 +69,8 @@ export class HotelBookingService implements OnModuleInit {
     checkout = (await this.checkouts.find(id))!;
     const net = checkout.quote!.markup?.net.amount ?? checkout.quote!.room.totalPrice.amount;
     try {
-      await this.supplier.bookRoom(checkout.supplierContext, net, this.guests(checkout), { correlationId: randomUUID() });
+      const guests = { ...this.guests(checkout), gst: await this.settings.gst() };
+      await this.supplier.bookRoom(checkout.supplierContext, net, guests, { correlationId: randomUUID() });
     } catch (error) {
       const definite = error instanceof SupplierError && (error.code === "BAD_REQUEST" || error.code === "SOLD_OUT");
       this.logger.warn(`Hotel book for ${id} ${definite ? "rejected" : "unclear"}: ${(error as Error).message}`);

@@ -138,6 +138,7 @@ model AdminUser {
   refundsInitiated    Refund[]
   couponsCreated      Coupon[]
   pricingRulesCreated PricingRule[]
+  promotions Promotion[]
   ticketsAssigned     SupportTicket[]
   supportNotes        SupportNote[]
 
@@ -769,6 +770,30 @@ model PricingRule {
   @@map("pricing_rules")
 }
 
+// Automatic hotel discounts (admin → Promotions): taken off the selling price
+// of every hotel, no code needed. Only ever out of our markup, so a price never
+// drops below the supplier's net. The newest active one applies.
+model Promotion {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  discountType     DiscountType @map("discount_type")
+  value            Decimal      @db.Decimal(12, 2)
+  // Caps a percentage discount (₹ per booking).
+  maxDiscount      Decimal?     @map("max_discount") @db.Decimal(12, 2)
+  validFrom        DateTime?    @map("valid_from") @db.Timestamptz
+  validTo          DateTime?    @map("valid_to") @db.Timestamptz
+  version          Int          @default(1)
+  status           RuleStatus   @default(DRAFT)
+  createdByAdminId String?      @map("created_by_admin_id") @db.Uuid
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  createdByAdmin AdminUser? @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("promotions")
+}
+
 // ─── Operations ────────────────────────────────────────────────────────────
 
 // One supplier API call: safe metadata only, never keys or guest details.
@@ -919,4 +944,15 @@ model SavedHotel {
 
   @@unique([userId, hotelId])
   @@map("saved_hotels")
+}
+
+// Business settings admins change from the console, one row per key
+// (e.g. "company.gst"). Secrets and hosts stay in .env.
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedBy String?  @map("updated_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("app_settings")
 }

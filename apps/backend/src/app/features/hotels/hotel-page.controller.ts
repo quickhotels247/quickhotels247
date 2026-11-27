@@ -21,7 +21,11 @@ export class HotelPageController {
   @Throttle(LIMITS.search)
   rooms(@Param("id", new ParseUUIDPipe()) id: string, @Query() query: HotelRoomsQueryDto) {
     const { checkIn, checkOut } = query.checkIn && query.checkOut ? { checkIn: query.checkIn, checkOut: query.checkOut } : defaultSearchStay();
-    const { rooms, adults, children, childAges, searchId } = query;
-    return this.hotelPage.rooms(id, { destination: "", checkIn, checkOut, rooms, adults, children, ...(childAges?.length ? { childAges } : {}) }, searchId);
+    const { rooms, adults, children, childAges, searchId, nationality } = query;
+    return this.hotelPage.rooms(
+      id,
+      { destination: "", checkIn, checkOut, rooms, adults, children, ...(childAges?.length ? { childAges } : {}), ...(nationality ? { nationality } : {}) },
+      searchId,
+    );
   }
 }

@@ -165,6 +165,40 @@ const money = (amount: number, currency: string): Money => ({ amount: Math.round
 // TripJack's penalty times are India time without a zone; compare them as such.
 const indiaNow = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 19);
 
+// Some rates put the hotel's policy text into `inclusions` as a JSON object
+// cut into pieces ('{"know_before_you_go":"…"}', '{"Special Instructions":"…'
+// … '…cannot be guaranteed. "}'). That text isn't an inclusion and is already
+// shown from the hotel's policies, so drop every piece from "{" to "}".
+function realInclusions(items: string[] | undefined): string[] {
+  let inBlob = false;
+  return (items ?? []).flatMap((raw) => {
+    const item = raw.trim();
+    if (item.startsWith("{")) inBlob = true;
+    if (inBlob) {
+      if (item.endsWith("}")) inBlob = false;
+      return [];
+    }
+    return item ? [item] : [];
+  });
+}
+
+// Hotel GST slabs (India): up to ₹7,500 per room-night before GST → 5%, above → 18%.
+const GST_SLAB_LIMIT = 7_500;
+const gstRateFor = (tariffExcludingGst: number) => (tariffExcludingGst <= GST_SLAB_LIMIT ? 0.05 : 0.18);
+
+// TripJack sends GST as `taxes`, or 0 on net rates where it's folded into
+// basePrice. Then the GST inside the rate is worked out from the slabs and
+// shown on its own line; the total never changes.
+export function gstBreakup(pricing: TripjackOption["pricing"], nights: number, rooms: number): RoomOption["priceBreakup"] {
+  const breakup = { base: pricing.basePrice, taxes: pricing.taxes, managementFee: pricing.mf, managementFeeTax: pricing.mft, discount: pricing.discount };
+  if (pricing.taxes > 0 || pricing.basePrice <= 0) return breakup;
+  const perRoomNight = pricing.basePrice / Math.max(1, nights) / Math.max(1, rooms);
+  // The slab is decided on the tariff before GST: try 5% first.
+  const rate = gstRateFor(perRoomNight / 1.05);
+  const base = Math.round((pricing.basePrice / (1 + rate)) * 100) / 100;
+  return { ...breakup, base, taxes: Math.round((pricing.basePrice - base) * 100) / 100, gstWorkedOut: true };
+}
+
 export function toRoomOption(option: TripjackOption, nights: number): RoomOption {
   const { pricing } = option;
   const currency = pricing.currency || "INR";
@@ -178,7 +212,7 @@ export function toRoomOption(option: TripjackOption, nights: number): RoomOption
     roomTypeId: option.roomInfo[0]?.id ? String(option.roomInfo[0].id) : null,
     roomName: roomNames.join(" + ") || "Room",
     mealPlan: option.mealBasis && option.mealBasis !== "Room Only" ? option.mealBasis : null,
-    inclusions: (option.inclusions ?? []).map((item) => item.trim()).filter(Boolean),
+    inclusions: realInclusions(option.inclusions),
     notes: htmlToParagraphs(option.bookingNotes).join("\n") || null,
     freeCancellation: Boolean(freeSlab),
     freeCancellationUntil: freeSlab?.to ?? null,
@@ -186,13 +220,7 @@ export function toRoomOption(option: TripjackOption, nights: number): RoomOption
     totalPrice: money(pricing.totalPrice, currency),
     pricePerNight: money(pricing.totalPrice / Math.max(1, nights), currency),
     strikethroughPrice: pricing.strikethrough && pricing.strikethrough > pricing.totalPrice ? money(pricing.strikethrough, currency) : null,
-    priceBreakup: {
-      base: pricing.basePrice,
-      taxes: pricing.taxes,
-      managementFee: pricing.mf,
-      managementFeeTax: pricing.mft,
-      discount: pricing.discount,
-    },
+    priceBreakup: gstBreakup(pricing, nights, Math.max(1, option.roomInfo.length)),
     panRequired: option.compliance?.panRequired ?? false,
     passportRequired: option.compliance?.passportRequired ?? false,
   };

@@ -30,6 +30,7 @@ import type {
   TripjackEnvelope,
   TripjackHotelContentResponse,
   TripjackListingResponse,
+  TripjackNationalitiesResponse,
   TripjackPricingResponse,
   TripjackReviewResponse,
 } from "./tripjack.types.js";
@@ -40,6 +41,9 @@ const LISTING_TIMEOUT_MS = 13_000; // TripJack's suggested search timeout
 // TripJack keeps a search session for about 15 minutes; stop a little early.
 const SESSION_TTL_MS = 14 * 60 * 1000;
 const CENTRE_TTL_MS = 24 * 60 * 60 * 1000;
+const NATIONALITIES_TTL_MS = 24 * 60 * 60 * 1000;
+// Guests are Indian unless the search says otherwise.
+const DEFAULT_NATIONALITY = "IN";
 
 const nightsBetween = (checkIn: string, checkOut: string) =>
   Math.round((Date.parse(`${checkOut}T00:00:00Z`) - Date.parse(`${checkIn}T00:00:00Z`)) / 86_400_000);
@@ -76,6 +80,8 @@ export class TripjackHotelSupplier implements HotelSupplier {
   private readonly logger = new Logger(TripjackHotelSupplier.name);
   // Each region's centre point; hotel lists change slowly.
   private readonly centres = new TtlCache<(SearchCentre & LatLng) | null>();
+  // TripJack's nationality list (ISO code → its countryId); changes rarely.
+  private readonly nationalities = new TtlCache<Map<string, string>>();
 
   constructor(
     private readonly client: TripjackClient,
@@ -91,6 +97,7 @@ export class TripjackHotelSupplier implements HotelSupplier {
 
     const rooms = toTripjackRooms(request);
     if (!rooms) throw fail("BAD_REQUEST", "The rooms and guests don't fit TripJack's limits (1–6 adults and up to 4 children per room).");
+    const nationality = await this.nationalityId(request.nationality, context);
 
     const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
     const empty = { supplierSearchId: null, expiresAt, results: [], context: null, nextCursor: null };
@@ -120,7 +127,7 @@ export class TripjackHotelSupplier implements HotelSupplier {
           rooms,
           currency: this.config.currency,
           correlationId,
-          nationality: this.config.nationalityId,
+          nationality,
           timeoutMs: LISTING_TIMEOUT_MS,
           hids: hotels.map((hotel) => Number(hotel.supplierHotelId)),
         },
@@ -136,7 +143,7 @@ export class TripjackHotelSupplier implements HotelSupplier {
     const nights = nightsBetween(request.checkIn, request.checkOut);
     const centre = await this.centreFor(regionId);
     const results: HotelSearchResult[] = [];
-    const searchContext: TripjackSearchContext = { nationality: this.config.nationalityId, currency: this.config.currency, batches: [] };
+    const searchContext: TripjackSearchContext = { nationality, currency: this.config.currency, batches: [] };
     for (const { batch, response } of succeeded) {
       const listedIds: string[] = [];
       for (const listed of response.hotels ?? []) {
@@ -197,7 +204,8 @@ export class TripjackHotelSupplier implements HotelSupplier {
       throw new SupplierError("BAD_REQUEST", "The rooms and guests don't fit TripJack's limits (1–6 adults and up to 4 children per room).", this.name, context.correlationId);
     }
     const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
-    const stay = { checkIn: request.checkIn, checkOut: request.checkOut, rooms, currency: this.config.currency, nationality: this.config.nationalityId };
+    const nationality = await this.nationalityId(request.nationality, context);
+    const stay = { checkIn: request.checkIn, checkOut: request.checkOut, rooms, currency: this.config.currency, nationality };
     const nights = nightsBetween(request.checkIn, request.checkOut);
 
     const price = (correlationId: string) =>
@@ -238,7 +246,7 @@ export class TripjackHotelSupplier implements HotelSupplier {
         correlationId: priced.session,
         hid: supplierHotelId,
         reviewHash: priced.pricing.reviewHash ?? null,
-        nationality: this.config.nationalityId,
+        nationality,
         currency: this.config.currency,
       },
     };
@@ -271,8 +279,24 @@ export class TripjackHotelSupplier implements HotelSupplier {
         holdDeadline: review.option.cancellation?.deadlineDateTime ?? null,
         holdAllowed: String(review.onholdAllowed) === "true",
         totalPrice: review.option.pricing.totalPrice,
+        // RESELLER / PASSTHROUGH rates must be booked with our GST details.
+        gstType: review.option.compliance?.gstType ?? "NA",
       },
     };
+  }
+
+  // TripJack's countryId for a nationality (ISO code). India uses the
+  // configured id without a call; others come from TripJack's list.
+  private async nationalityId(iso: string | undefined, context: SupplierCallContext): Promise<string> {
+    const code = (iso ?? DEFAULT_NATIONALITY).toUpperCase();
+    if (code === DEFAULT_NATIONALITY) return this.config.nationalityId;
+    const list = await this.nationalities.getOrLoad("all", NATIONALITIES_TTL_MS, async () => {
+      const response = await this.client.request<TripjackNationalitiesResponse>("nationalities", { correlationId: context.correlationId });
+      return new Map((response.nationalityInfos ?? []).map((info) => [info.code.toUpperCase(), String(info.countryId)]));
+    });
+    const id = list.get(code);
+    if (!id) throw new SupplierError("NATIONALITY_RESTRICTED", `TripJack has no nationality ${code}.`, this.name, context.correlationId);
+    return id;
   }
 
   refForHotel(searchContext: unknown, supplierHotelId: string): string | null {
@@ -325,10 +349,17 @@ export class TripjackHotelSupplier implements HotelSupplier {
   }
 
   async bookRoom(reviewContext: unknown, amount: number, guests: SupplierHotelGuests, context: SupplierCallContext): Promise<void> {
-    const review = reviewContext as { bookingId?: string; totalPrice?: number } | null;
+    const review = reviewContext as { bookingId?: string; totalPrice?: number; gstType?: string } | null;
     if (!review?.bookingId) throw new SupplierError("BAD_REQUEST", "No TripJack bookingId from Review.", this.name, context.correlationId);
+    const needsGst = review.gstType === "RESELLER" || review.gstType === "PASSTHROUGH";
+    if (needsGst && !guests.gst) {
+      this.logger.error(`Booking ${review.bookingId} is a ${review.gstType} GST rate, but no company GST is set (Admin → Settings); TripJack may reject it.`);
+    }
     // TripJack wants exactly its own total from Review.
-    await this.client.request("book", { correlationId: context.correlationId, body: toTripjackHotelBook(review.bookingId, review.totalPrice ?? amount, guests) });
+    await this.client.request("book", {
+      correlationId: context.correlationId,
+      body: toTripjackHotelBook(review.bookingId, review.totalPrice ?? amount, guests, needsGst ? (guests.gst ?? null) : null),
+    });
   }
 
   async hotelBooking(reviewContext: unknown, context: SupplierCallContext): Promise<SupplierHotelBooking> {

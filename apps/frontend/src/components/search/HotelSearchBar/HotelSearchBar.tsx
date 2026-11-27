@@ -102,6 +102,7 @@ export default function HotelSearchBar({ initialCriteria = emptyCriteria, live =
           adults={criteria.adults}
           childCount={criteria.children}
           childAges={criteria.childAges ?? []}
+          nationality={criteria.nationality ?? "IN"}
           invalid={Boolean(errors.guests)}
           onChange={(guests) => update(guests)}
         />

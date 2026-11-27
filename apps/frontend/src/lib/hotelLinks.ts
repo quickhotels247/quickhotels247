@@ -1,7 +1,7 @@
 import type { HotelSearchCriteria } from "@quickhotels/types/hotels";
 import { searchDefaults } from "@/config/searchDefaults";
 
-type Stay = Pick<HotelSearchCriteria, "checkIn" | "checkOut"> & Partial<Pick<HotelSearchCriteria, "rooms" | "adults" | "children" | "childAges">>;
+type Stay = Pick<HotelSearchCriteria, "checkIn" | "checkOut"> & Partial<Pick<HotelSearchCriteria, "rooms" | "adults" | "children" | "childAges" | "nationality">>;
 
 // Link to a hotel's page with the stay already chosen. From search results,
 // pass the searchId so its rooms are priced in the same supplier session.
@@ -16,6 +16,7 @@ export function hotelUrl(hotelId: string, stay?: Stay, searchId?: string) {
     children: String(children),
   });
   if (children > 0 && stay.childAges?.length) params.set("childAges", stay.childAges.join(","));
+  if (stay.nationality && stay.nationality !== "IN") params.set("nationality", stay.nationality);
   if (searchId) params.set("searchId", searchId);
   return `/hotels/${encodeURIComponent(hotelId)}?${params}`;
 }

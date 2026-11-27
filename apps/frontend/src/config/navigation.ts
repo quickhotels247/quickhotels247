@@ -49,6 +49,7 @@ export const routes = {
   adminPricing: "/admin/pricing",
   adminSupport: "/admin/support",
   adminCoupons: "/admin/coupons",
+  adminPromotions: "/admin/promotions",
   adminBookings: "/admin/bookings",
   adminPayments: "/admin/payments",
 } as const;

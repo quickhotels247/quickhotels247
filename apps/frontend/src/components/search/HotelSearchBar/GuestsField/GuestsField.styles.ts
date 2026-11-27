@@ -15,4 +15,6 @@ export const styles = {
   agesHint: { fontSize: "0.8125rem", color: "text.secondary", mb: 1.5 },
   agesGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 },
   done: { mt: 2 },
+  nationality: { mt: 2 },
+  nationalityMenu: { maxHeight: 320 },
 };

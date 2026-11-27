@@ -4,16 +4,18 @@ import { useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
+import PasswordField from "@/components/forms/PasswordField";
 import Typography from "@mui/material/Typography";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { adminApi } from "@/lib/api/admin";
 import { useAdminAuth } from "@/lib/admin/AdminAuthProvider";
 import { useRequest } from "@/lib/hooks/useRequest";
+import CompanyGstCard from "../components/CompanyGstCard";
 import EmailTestCard from "../components/EmailTestCard";
 import { styles } from "./AdminSettingsPage.styles";
 
-// The signed-in admin's account: change password.
+// The signed-in admin's account (change password), plus company GST and the
+// email check for admins allowed to manage them.
 export default function AdminSettingsPage() {
   const { admin, token } = useAdminAuth();
   const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirm: "" });
@@ -43,13 +45,14 @@ export default function AdminSettingsPage() {
         </Typography>
         {error && <Alert severity="error">{error}</Alert>}
         {saved && <Alert severity="success">Password changed.</Alert>}
-        <TextField label="Current password" type="password" autoComplete="current-password" required value={form.currentPassword} onChange={(event) => set({ currentPassword: event.target.value })} disabled={busy} />
-        <TextField label="New password" type="password" autoComplete="new-password" required value={form.newPassword} onChange={(event) => set({ newPassword: event.target.value })} helperText="At least 12 characters." disabled={busy} />
-        <TextField label="Confirm new password" type="password" autoComplete="new-password" required value={form.confirm} onChange={(event) => set({ confirm: event.target.value })} disabled={busy} />
+        <PasswordField label="Current password" autoComplete="current-password" required value={form.currentPassword} onChange={(event) => set({ currentPassword: event.target.value })} disabled={busy} />
+        <PasswordField label="New password" autoComplete="new-password" required value={form.newPassword} onChange={(event) => set({ newPassword: event.target.value })} helperText="At least 12 characters." disabled={busy} />
+        <PasswordField label="Confirm new password" autoComplete="new-password" required value={form.confirm} onChange={(event) => set({ confirm: event.target.value })} disabled={busy} />
         <Button type="submit" variant="contained" disabled={busy} sx={styles.submit}>
           {busy ? "Saving…" : "Change password"}
         </Button>
       </Box>
+      {token && admin?.permissions.includes("company") && <CompanyGstCard token={token} />}
       {token && admin?.permissions.includes("email") && <EmailTestCard token={token} defaultTo={admin.email} />}
     </>
   );

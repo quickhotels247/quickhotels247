@@ -102,9 +102,15 @@ export default function HotelResultCard({ hotel, criteria, nights, centre, searc
           {plural(nights, "night")}, {guests}
           {criteria.rooms > 1 ? `, ${plural(criteria.rooms, "room")}` : ""}
         </Typography>
+        {hotel.strikethroughPrice && (
+          <Typography component="div" sx={styles.was}>
+            {hotel.percentOff ? <Box component="span" sx={styles.off}>{hotel.percentOff}% off</Box> : null}
+            <Box component="span" sx={styles.strike}>{formatPrice(hotel.strikethroughPrice)}</Box>
+          </Typography>
+        )}
         <Typography sx={styles.total}>{formatPrice(hotel.totalPrice)}</Typography>
         <Typography sx={styles.perNight}>
-          {formatPrice(hotel.pricePerNight)} per night{hotel.taxesIncluded ? " · incl. taxes & fees" : ""}
+          {formatPrice(hotel.pricePerNight)} per night{hotel.taxesIncluded ? " · incl. GST & fees" : ""}
         </Typography>
         <Button component={Link} href={href} variant="contained" endIcon={<ChevronRightRounded />} sx={styles.cta}>
           See availability

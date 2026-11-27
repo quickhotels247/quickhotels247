@@ -28,6 +28,10 @@ export interface CouponInput {
 export interface Coupon extends CouponInput {
   id: string;
   redemptions: number;
+  // Total taken off bookings that used it (₹).
+  discountGiven: number;
+  // Past its end time (including "End now").
+  expired: boolean;
   createdBy: string | null;
   updatedAt: string;
 }
@@ -57,3 +61,37 @@ export interface PublicOffer {
   validTo: string;
   eligibleDestinations: string[];
 }
+
+// Admin → Coupons → a coupon's report (GET /api/admin/coupons/:id/report).
+export interface CouponRedemptionRow {
+  id: string;
+  usedAt: string;
+  product: "hotel" | "flight";
+  // Opens the booking in the admin console; null if it's gone.
+  bookingId: string | null;
+  reference: string | null;
+  // Hotel name or flight route.
+  title: string | null;
+  customer: { name: string | null; email: string | null; signedIn: boolean };
+  // What the customer paid, after the discount.
+  paid: number | null;
+  discount: number;
+  // Booking status (hotel BookingStatus or flight checkout status).
+  status: string | null;
+}
+
+export interface CouponReport {
+  coupon: Coupon;
+  totals: {
+    uses: number;
+    discountGiven: number;
+    // What customers paid on those bookings, after the discount.
+    bookingValue: number;
+    customers: number;
+  };
+  // Newest first, up to 500.
+  redemptions: CouponRedemptionRow[];
+}
+
+// POST /api/admin/coupons/:id/action: pause, resume, or end it now.
+export type CouponAction = "pause" | "resume" | "end";

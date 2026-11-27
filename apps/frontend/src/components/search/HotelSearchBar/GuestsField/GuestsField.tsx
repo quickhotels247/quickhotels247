@@ -5,10 +5,13 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Divider from "@mui/material/Divider";
+import MenuItem from "@mui/material/MenuItem";
 import Popover from "@mui/material/Popover";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import PersonOutlineRounded from "@mui/icons-material/PersonOutlineRounded";
 import SearchFieldShell from "@/components/search/SearchFieldShell";
+import { countries } from "@/lib/countries";
 import { AGE_NOT_SET, GUEST_LIMITS, resizeAges } from "../searchCriteria";
 import CounterRow from "@/components/common/CounterRow";
 import ChildAgeSelect from "./ChildAgeSelect";
@@ -19,6 +22,8 @@ interface Guests {
   adults: number;
   children: number;
   childAges: number[];
+  // Leaving it out keeps the current one.
+  nationality?: string;
 }
 
 interface GuestsFieldProps {
@@ -27,6 +32,8 @@ interface GuestsFieldProps {
   // Named childCount because `children` is React's own prop.
   childCount: number;
   childAges: number[];
+  // The guests' nationality (ISO code); India when not set.
+  nationality?: string;
   // Set after a search attempt with a guest problem (e.g. a child's age missing).
   invalid?: boolean;
   onChange: (guests: Guests) => void;
@@ -36,7 +43,7 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
 
 // "2 Guests" button opening counters for rooms, adults and children, plus an
 // age dropdown per child (suppliers price rooms by age).
-export default function GuestsField({ rooms, adults, childCount, childAges, invalid = false, onChange }: GuestsFieldProps) {
+export default function GuestsField({ rooms, adults, childCount, childAges, nationality = "IN", invalid = false, onChange }: GuestsFieldProps) {
   // The button the panel opens under; null while it's closed.
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const open = anchor !== null;
@@ -48,7 +55,7 @@ export default function GuestsField({ rooms, adults, childCount, childAges, inva
   const setAge = (child: number) => (age: number) =>
     onChange({ ...guests, childAges: ages.map((value, i) => (i === child ? age : value)) });
 
-  const label = `${plural(adults + childCount, "Guest")}${rooms > 1 ? ` · ${plural(rooms, "Room")}` : ""}`;
+  const label = `${plural(adults + childCount, "Guest")}${rooms > 1 ? ` · ${plural(rooms, "Room")}` : ""}${nationality !== "IN" ? ` · ${nationality}` : ""}`;
   const missingAge = ages.includes(AGE_NOT_SET);
 
   return (
@@ -86,6 +93,24 @@ export default function GuestsField({ rooms, adults, childCount, childAges, inva
             </Box>
           </Box>
         )}
+        <Divider />
+        <TextField
+          select
+          size="small"
+          fullWidth
+          label="Guests' nationality"
+          value={nationality}
+          onChange={(event) => onChange({ ...guests, nationality: event.target.value })}
+          helperText="As on their passport. Prices and ID rules can differ by nationality."
+          sx={styles.nationality}
+          slotProps={{ select: { MenuProps: { slotProps: { paper: { sx: styles.nationalityMenu } } } } }}
+        >
+          {countries().map((country) => (
+            <MenuItem key={country.code} value={country.code}>
+              {country.name}
+            </MenuItem>
+          ))}
+        </TextField>
         <Button variant="contained" fullWidth onClick={() => setAnchor(null)} sx={styles.done}>
           {missingAge ? "Done (ages needed)" : "Done"}
         </Button>

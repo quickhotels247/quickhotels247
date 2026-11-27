@@ -1,8 +1,11 @@
-import type { Coupon, CouponInput } from "@quickhotels/types/coupons";
+import type { Coupon, CouponAction, CouponInput, CouponReport } from "@quickhotels/types/coupons";
 import type { AdminTicket, AdminTicketList, TicketNoteRequest, TicketStatus, TicketUpdateRequest } from "@quickhotels/types/support";
-import type { PricingRule, PricingRuleInput } from "@quickhotels/types/pricing";
+import type { PricingRule, PricingRuleInput, Promotion, PromotionInput } from "@quickhotels/types/pricing";
 import type {
   AdminAccount,
+  AdminDashboard,
+  CompanyGst,
+  CompanyGstSetting,
   AdminAuthResponse,
   AdminLoginRequest,
   AdminOverview,
@@ -41,6 +44,13 @@ export const adminApi = {
   changePassword: (token: string, request: ChangeAdminPasswordRequest) =>
     apiRequest<void>("/admin/auth/password", { method: "PUT", body: JSON.stringify(request), headers: bearer(token) }),
   // Markup rules; every change returns the whole updated list.
+  promotions: (token: string, signal?: AbortSignal) => apiRequest<Promotion[]>("/admin/promotions", { signal, headers: bearer(token) }),
+  createPromotion: (token: string, promotion: PromotionInput) =>
+    apiRequest<Promotion[]>("/admin/promotions", { method: "POST", body: JSON.stringify(promotion), headers: bearer(token) }),
+  updatePromotion: (token: string, id: string, promotion: PromotionInput) =>
+    apiRequest<Promotion[]>(`/admin/promotions/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(promotion), headers: bearer(token) }),
+  deletePromotion: (token: string, id: string) =>
+    apiRequest<Promotion[]>(`/admin/promotions/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
   pricingRules: (token: string, signal?: AbortSignal) => apiRequest<PricingRule[]>("/admin/pricing-rules", { signal, headers: bearer(token) }),
   createPricingRule: (token: string, rule: PricingRuleInput) =>
     apiRequest<PricingRule[]>("/admin/pricing-rules", { method: "POST", body: JSON.stringify(rule), headers: bearer(token) }),
@@ -75,6 +85,10 @@ export const adminApi = {
     apiRequest<Coupon[]>("/admin/coupons", { method: "POST", body: JSON.stringify(coupon), headers: bearer(token) }),
   updateCoupon: (token: string, id: string, coupon: CouponInput) =>
     apiRequest<Coupon[]>(`/admin/coupons/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(coupon), headers: bearer(token) }),
+  couponReport: (token: string, id: string, signal?: AbortSignal) =>
+    apiRequest<CouponReport>(`/admin/coupons/${encodeURIComponent(id)}/report`, { signal, headers: bearer(token) }),
+  couponAction: (token: string, id: string, action: CouponAction) =>
+    apiRequest<CouponReport>(`/admin/coupons/${encodeURIComponent(id)}/action`, { method: "POST", body: JSON.stringify({ action }), headers: bearer(token) }),
   deleteCoupon: (token: string, id: string) =>
     apiRequest<Coupon[]>(`/admin/coupons/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) }),
   // Support inbox (tickets from /help).
@@ -92,6 +106,13 @@ export const adminApi = {
   testEmail: (token: string, to: string) =>
     apiRequest<void>("/admin/mail/test", { method: "POST", body: JSON.stringify({ to }), headers: bearer(token) }),
 
+  companyGst: (token: string, signal?: AbortSignal) => apiRequest<CompanyGstSetting>("/admin/company/gst", { signal, headers: bearer(token) }),
+  saveCompanyGst: (token: string, gst: CompanyGst) =>
+    apiRequest<CompanyGstSetting>("/admin/company/gst", { method: "PUT", body: JSON.stringify(gst), headers: bearer(token) }),
+  clearCompanyGst: (token: string) => apiRequest<CompanyGstSetting>("/admin/company/gst", { method: "DELETE", headers: bearer(token) }),
+
+  dashboard: (token: string, range: { from: string; to: string }, signal?: AbortSignal) =>
+    apiRequest<AdminDashboard>(`/admin/dashboard?${new URLSearchParams(range)}`, { signal, headers: bearer(token) }),
   overview: (token: string, signal?: AbortSignal) => apiRequest<AdminOverview>("/admin/overview", { signal, headers: bearer(token) }),
   users: (token: string, search: string, page: number, signal?: AbortSignal) => {
     const params = new URLSearchParams({ page: String(page), pageSize: "25" });

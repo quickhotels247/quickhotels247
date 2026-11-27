@@ -68,6 +68,8 @@ export function criteriaParams(criteria: HotelSearchCriteria) {
     children: String(criteria.children),
   });
   if (criteria.children > 0) params.set("childAges", resizeAges(criteria.childAges, criteria.children).join(","));
+  // India is the default, so it's left out of links.
+  if (criteria.nationality && criteria.nationality !== "IN") params.set("nationality", criteria.nationality);
   return params;
 }
 
@@ -95,5 +97,12 @@ export function criteriaFromParams(params: URLSearchParams): HotelSearchCriteria
     adults: whole(params.get("adults"), searchDefaults.adults, GUEST_LIMITS.adults),
     children,
     childAges: resizeAges(ages, children),
+    ...nationalityFrom(params),
   };
+}
+
+// The guests' nationality from a URL (2-letter code); India when missing.
+function nationalityFrom(params: URLSearchParams): { nationality?: string } {
+  const code = params.get("nationality")?.trim().toUpperCase();
+  return code && /^[A-Z]{2}$/.test(code) && code !== "IN" ? { nationality: code } : {};
 }

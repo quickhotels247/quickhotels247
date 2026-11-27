@@ -12,4 +12,5 @@ export const styles = {
   policyText: { fontSize: "0.875rem", color: "text.secondary", lineHeight: 1.6 },
   terms: { alignItems: "flex-start", "& .MuiCheckbox-root": { pt: 0.5 } },
   submit: { mt: 2, width: { xs: "100%", sm: "auto" }, px: 5 },
+  notice: { mb: 2 },
 };

@@ -5,6 +5,8 @@ import type { FlightOption, FlightSearchCriteria } from "@quickhotels/types/flig
 import type { AppliedMarkup } from "@quickhotels/types/pricing";
 import { markupOn, pickRule, placeOf, type MarkupRule } from "./markup.js";
 import { PricingRulesRepository } from "./pricing-rules.repository.js";
+import { percentOff, pickPromotion, promotionOn, type ActivePromotion } from "./promotions.js";
+import { PromotionsRepository } from "./promotions.repository.js";
 
 // Active rules are re-read at most this often (and right after an admin edit).
 const CACHE_MS = 60_000;
@@ -20,11 +22,16 @@ const airlinesOf = (option: FlightOption) => [...new Set(option.legs.flatMap((le
 export class PricingService {
   private readonly logger = new Logger(PricingService.name);
   private cache: { rules: MarkupRule[]; at: number } | null = null;
+  private promotionsCache: { promotions: ActivePromotion[]; at: number } | null = null;
 
-  constructor(private readonly rules: PricingRulesRepository) {}
+  constructor(
+    private readonly rules: PricingRulesRepository,
+    private readonly promotions: PromotionsRepository,
+  ) {}
 
   invalidate() {
     this.cache = null;
+    this.promotionsCache = null;
   }
 
   async activeRules(): Promise<MarkupRule[]> {
@@ -39,37 +46,69 @@ export class PricingService {
     return this.cache!.rules;
   }
 
-  // ---- Hotels (one rule per search: by the searched destination) ----
+  async activePromotion(): Promise<ActivePromotion | null> {
+    if (!this.promotionsCache || Date.now() - this.promotionsCache.at >= CACHE_MS) {
+      try {
+        this.promotionsCache = { promotions: await this.promotions.active(), at: Date.now() };
+      } catch (error) {
+        // Never block selling on a promotions read; keep the last known ones.
+        this.logger.error(`Could not load promotions: ${(error as Error).message}`);
+        if (!this.promotionsCache) return null;
+      }
+    }
+    return pickPromotion(this.promotionsCache!.promotions);
+  }
+
+  // ---- Hotels: one markup rule per search (by the searched destination) and
+  // the running promotion, which applies to all hotels ----
 
   async hotelRule(request: HotelSearchRequest): Promise<MarkupRule | null> {
     return pickRule(await this.activeRules(), { product: "HOTEL", ...placeOf(request.destination) });
   }
 
-  markHotelResult(result: HotelSearchResult, rule: MarkupRule | null, nights: number): HotelSearchResult {
-    const extra = markupOn(result.totalPrice.amount, rule);
-    if (!extra) return result;
-    const total = add(result.totalPrice, extra);
-    return { ...result, totalPrice: total, pricePerNight: { amount: cents(total.amount / Math.max(1, nights)), currency: total.currency } };
+  async hotelPricing(request: HotelSearchRequest): Promise<{ rule: MarkupRule | null; promotion: ActivePromotion | null }> {
+    const [rule, promotion] = await Promise.all([this.hotelRule(request), this.activePromotion()]);
+    return { rule, promotion };
   }
 
-  // The room's price with markup (folded into the base rate), and the record of it.
-  markRoom(option: RoomOption, rule: MarkupRule | null, nights: number): { option: RoomOption; applied: AppliedMarkup } {
+  markHotelResult(result: HotelSearchResult, rule: MarkupRule | null, nights: number, promotion: ActivePromotion | null = null): HotelSearchResult {
+    const extra = markupOn(result.totalPrice.amount, rule);
+    if (!extra) return result;
+    const regular = add(result.totalPrice, extra);
+    const off = promotionOn(regular.amount, extra, promotion);
+    const total = add(regular, -off);
+    return {
+      ...result,
+      totalPrice: total,
+      pricePerNight: { amount: cents(total.amount / Math.max(1, nights)), currency: total.currency },
+      ...(off ? { strikethroughPrice: regular, percentOff: percentOff(off, regular.amount) } : {}),
+    };
+  }
+
+  // The room's price with markup (folded into the base rate) less any
+  // promotion (its own line), and the record of both.
+  markRoom(option: RoomOption, rule: MarkupRule | null, nights: number, promotion: ActivePromotion | null = null): { option: RoomOption; applied: AppliedMarkup } {
     const extra = markupOn(option.totalPrice.amount, rule);
+    const regular = add(option.totalPrice, extra);
+    const off = promotionOn(regular.amount, extra, promotion);
     const applied: AppliedMarkup = {
       ruleId: extra ? rule!.id : null,
       ruleVersion: extra ? rule!.version : null,
       net: option.totalPrice,
       markup: { amount: extra, currency: option.totalPrice.currency },
+      promotion: off ? { id: promotion!.id, version: promotion!.version, name: promotion!.name, amount: { amount: off, currency: regular.currency } } : null,
     };
     if (!extra) return { option, applied };
-    const total = add(option.totalPrice, extra);
+    const total = add(regular, -off);
     return {
       option: {
         ...option,
         totalPrice: total,
         pricePerNight: { amount: cents(total.amount / Math.max(1, nights)), currency: total.currency },
-        strikethroughPrice: option.strikethroughPrice ? add(option.strikethroughPrice, extra) : null,
-        priceBreakup: { ...option.priceBreakup, base: cents(option.priceBreakup.base + extra) },
+        // While a promotion runs, the crossed-out price is our regular price.
+        strikethroughPrice: off ? regular : option.strikethroughPrice ? add(option.strikethroughPrice, extra) : null,
+        promotion: off ? { name: promotion!.name, percentOff: percentOff(off, regular.amount) } : null,
+        priceBreakup: { ...option.priceBreakup, base: cents(option.priceBreakup.base + extra), ...(off ? { promotion: off } : {}) },
         // A charged period keeps our markup too (never more than the total);
         // free periods stay free. Refund = what the supplier refunds us.
         cancellationCharges: (option.cancellationCharges ?? []).map((charge) => ({

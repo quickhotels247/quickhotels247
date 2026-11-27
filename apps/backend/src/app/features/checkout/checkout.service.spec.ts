@@ -116,9 +116,11 @@ describe("CheckoutService", () => {
     // Two guests for a room of three.
     await expect(service.saveGuests(checkoutId, KEY, details())).rejects.toThrow(/needs 3 guests/);
     await expect(service.saveGuests(checkoutId, KEY, details({ rooms: [{ guests: adultsAndChild() }] }))).rejects.toThrow(/PAN/);
-    const childAsMr = adultsAndChild("ABCDE1234F").map((guest, i) => (i === 2 ? { ...guest, title: "Mr" as const } : guest));
+    const childAsMr = adultsAndChild("ABCPR1234F").map((guest, i) => (i === 2 ? { ...guest, title: "Mr" as const } : guest));
     await expect(service.saveGuests(checkoutId, KEY, details({ rooms: [{ guests: childAsMr }] }))).rejects.toThrow(/Master or Miss/);
-    await expect(service.saveGuests(checkoutId, KEY, details({ rooms: [{ guests: adultsAndChild("ABCDE1234F") }] }))).resolves.toMatchObject({ status: "payment" });
+    // TripJack needs the main guest's PAN only.
+    const mainGuestPan = adultsAndChild().map((guest, i) => (i === 0 ? { ...guest, pan: "ABCPR1234F" } : guest));
+    await expect(service.saveGuests(checkoutId, KEY, details({ rooms: [{ guests: mainGuestPan }] }))).resolves.toMatchObject({ status: "payment" });
   });
 
   it("wants a 10-digit Indian mobile for +91", async () => {

@@ -120,6 +120,14 @@ export default function GuestDetailsForm({ checkout, onSubmit, disabled }: Guest
           Who&apos;s staying?
         </Typography>
         <Typography sx={styles.hint}>Enter names exactly as on each guest&apos;s photo ID. The main guest checks in.</Typography>
+        {checkout.stay.nationality && checkout.stay.nationality !== "IN" && checkout.requirements.pan && (
+          <Alert severity="info" sx={styles.notice}>
+            This rate needs an <b>Indian PAN card</b> for the main guest. If they don&apos;t have one, go back and choose another rate or hotel.
+          </Alert>
+        )}
+        {checkout.requirements.passport && (
+          <Typography sx={styles.hint}>This hotel asks for each guest&apos;s passport number, as on the passport they&apos;ll travel with.</Typography>
+        )}
         {checkout.rooms.map((room, r) => (
           <RoomGuests
             key={r}
@@ -151,7 +159,7 @@ export default function GuestDetailsForm({ checkout, onSubmit, disabled }: Guest
           value={details.specialRequests ?? ""}
           onChange={(event) => update({ specialRequests: event.target.value })}
           error={Boolean(errors[fieldId("requests")])}
-          helperText={errors[fieldId("requests")] ?? "We'll pass these on to the hotel. They depend on availability and aren't guaranteed."}
+          helperText={errors[fieldId("requests")] ?? "We'll print these on your booking voucher. They aren't sent to the hotel automatically, so mention them at check-in. Not guaranteed."}
           slotProps={{ htmlInput: { maxLength: 500, "aria-label": "Special requests" } }}
         />
       </Box>
