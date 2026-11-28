@@ -52,6 +52,9 @@ describe("filterHotels", () => {
     expect(ids(filterHotels(list, { name: "Wild, secunderabad" }))).toEqual(["y"]);
     expect(ids(filterHotels(list, { name: "banjara" }))).toEqual(["z"]);
     expect(ids(filterHotels(list, { name: "sky secunderabad" }))).toEqual([]);
+    // Any case, and a typo in a longer word.
+    expect(ids(filterHotels(list, { name: "SHAMSABAD" }))).toEqual(["x"]);
+    expect(ids(filterHotels(list, { name: "secundrabad" }))).toEqual(["y"]);
   });
 
   it("keeps hotels within a distance, leaving out those without a known location", () => {
@@ -69,7 +72,24 @@ describe("hotelFacets", () => {
       amenities: { pool: 2, spa: 1, wifi: 3 },
       distanceKm: { max: 13 },
       pricePerNight: { min: 1000, max: 10000 },
+      areas: [],
+      hotelNames: ["a", "b", "Sea View Homestay", "d"],
     });
+  });
+
+  it("suggests areas from addresses, busiest first, without numbers, city, state or country", () => {
+    const list = [
+      hotel("x", { city: "Hyderabad", address: "1-156/1 Madhura Nagar, Shamshabad, Hyderabad, Telangana, India, 501218" }),
+      hotel("y", { city: "Hyderabad", address: "Rajiv Gandhi International Airport, SHAMSHABAD, RR District, Hyderabad, India" }),
+      hotel("z", { city: "Hyderabad", address: "Plot No: 13, S No: 498, Brindavan Colony, Secunderabad, Hyderabad, TS, India" }),
+    ];
+    expect(hotelFacets(list).areas).toEqual([
+      { name: "Shamshabad", count: 2 },
+      { name: "Brindavan Colony", count: 1 },
+      { name: "Madhura Nagar", count: 1 },
+      { name: "Rajiv Gandhi International Airport", count: 1 },
+      { name: "Secunderabad", count: 1 },
+    ]);
   });
 
   it("starts the price range at ₹0 when there are cheaper rooms", () => {

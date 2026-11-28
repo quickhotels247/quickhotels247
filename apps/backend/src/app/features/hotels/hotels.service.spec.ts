@@ -171,6 +171,17 @@ describe("HotelsService paging", () => {
     expect(supplier.searchHotels).toHaveBeenCalled();
   });
 
+  it("prices more batches for a new search that already has filters (a shared or reloaded link)", async () => {
+    const supplier = pagedSupplier();
+    const { service, sessions } = setup(supplier);
+    // Only h2 of the first batch matches; h20–h29 come in the third.
+    const page = await service.search(request(), null, { page: 1, pageSize: 10, sort: "recommended", filters: { name: "h2" } });
+    expect(page.results).toHaveLength(10);
+    expect(page.total).toBe(11);
+    expect(supplier.searchHotels).toHaveBeenCalledTimes(3);
+    expect(sessions.saveMore).toHaveBeenCalledTimes(2);
+  });
+
   it("refuses pages of an expired search", async () => {
     const { service, sessions } = setup(pagedSupplier());
     sessions.find.mockResolvedValue({

@@ -151,6 +151,11 @@ export interface HotelFacets {
   // cheaper hotels exist) up to what 95% of hotels cost or less, rounded up to
   // a thousand (the top end means "or more"); null with no hotels.
   pricePerNight: { min: number; max: number } | null;
+  // Suggestions for the "Property name or area" box: areas taken from the
+  // hotels' addresses (most hotels first) and the hotels' names. Optional so
+  // results saved before they existed still read.
+  areas?: { name: string; count: number }[];
+  hotelNames?: string[];
 }
 
 // One page of a hotel search: POST /api/v1/searches returns page 1, and

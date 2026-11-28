@@ -28,6 +28,9 @@ interface FiltersPanelProps {
 const STAR_LEVELS = [5, 4, 3, 2, 1, 0];
 // Amenities shown before "Show all".
 const AMENITIES_SHOWN = 6;
+// Stable empty lists, so the name box doesn't redo its suggestions each render.
+const NO_AREAS: { name: string; count: number }[] = [];
+const NO_NAMES: string[] = [];
 
 // Toggles one value in an optional list, dropping the list when it empties.
 function toggle<T>(list: T[] | undefined, value: T, on: boolean): T[] | undefined {
@@ -67,7 +70,12 @@ export default function FiltersPanel({ facets, filters, centre, currency, onChan
       </Box>
 
       <FilterGroup title="Property name or area">
-        <NameFilter value={filters.name ?? ""} onChange={setName} />
+        <NameFilter
+          value={filters.name ?? ""}
+          onChange={setName}
+          areas={facets?.areas ?? NO_AREAS}
+          hotelNames={facets?.hotelNames ?? NO_NAMES}
+        />
       </FilterGroup>
 
       {facets?.pricePerNight && (

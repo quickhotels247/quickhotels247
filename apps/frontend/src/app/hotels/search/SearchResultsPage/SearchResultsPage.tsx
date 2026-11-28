@@ -173,6 +173,8 @@ export default function SearchResultsPage() {
           <Box sx={styles.main} ref={listTop}>
             <ResultsHeader
               destination={place || "Hotels"}
+              nameFilter={filters.name}
+              areas={data?.facets.areas}
               found={data && !problems.length ? { total: data.total, complete: data.complete } : null}
               sort={view.sort}
               centre={data?.centre ?? null}

@@ -70,15 +70,15 @@ export class HotelsService {
       centre: found.centre ?? null,
       expiresAt: found.expiresAt,
     });
+    // A search opened with filters already set (a shared or reloaded link)
+    // prices on until page 1 is full, the same as filtering after searching.
+    const { results, nextCursor } = await this.priceMore(
+      searchId,
+      { request, results: found.results, nextCursor: found.nextCursor ?? null, supplierContext: found.context ?? null },
+      paging,
+    );
     return this.page(
-      {
-        id: searchId,
-        request,
-        results: found.results,
-        nextCursor: found.nextCursor ?? null,
-        centre: found.centre ?? null,
-        expiresAt: found.expiresAt,
-      },
+      { id: searchId, request, results, nextCursor, centre: found.centre ?? null, expiresAt: found.expiresAt },
       nights,
       paging,
     );
@@ -94,20 +94,29 @@ export class HotelsService {
     }
     if (stored.supplier !== this.supplier.name) throw new GoneException("Please search again.");
 
-    let { results, nextCursor, supplierContext } = stored;
+    const { results, nextCursor } = await this.priceMore(searchId, stored, paging);
+    return this.page({ ...stored, results, nextCursor }, nightsOf(stored.request), paging);
+  }
+
+  // Prices further supplier batches while the page asked for isn't full of
+  // matching hotels (each batch may bring few available or matching ones),
+  // until the supplier runs out or after a few batches; saves what it adds.
+  private async priceMore(
+    searchId: string,
+    search: { request: HotelSearchRequest; results: HotelSearchResult[]; nextCursor: unknown; supplierContext: unknown },
+    paging: Paging,
+  ): Promise<{ results: HotelSearchResult[]; nextCursor: unknown }> {
+    let { results, nextCursor, supplierContext } = search;
     const needed = paging.page * paging.pageSize;
-    // Each supplier batch may come back with few available (or matching)
-    // hotels; keep going until the page is full or the supplier runs out (a
-    // few batches at most).
     for (let batches = 0; filterHotels(results, paging.filters).length < needed && nextCursor && batches < MAX_EXTRA_BATCHES; batches++) {
-      const more = await this.callSupplier(stored.request, nextCursor);
+      const more = await this.callSupplier(search.request, nextCursor);
       const seen = new Set(results.map((hotel) => hotel.id));
       results = [...results, ...more.results.filter((hotel) => !seen.has(hotel.id))];
       nextCursor = more.nextCursor ?? null;
       supplierContext = mergeContexts(supplierContext, more.context);
       await this.sessions.saveMore(searchId, results, nextCursor, supplierContext);
     }
-    return this.page({ ...stored, results, nextCursor }, nightsOf(stored.request), paging);
+    return { results, nextCursor };
   }
 
   private page(
