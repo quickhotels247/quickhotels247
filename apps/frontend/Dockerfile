@@ -2,12 +2,14 @@
 # NEXT_PUBLIC_* values are baked into the browser code, so pass them at build time:
 #   --build-arg NEXT_PUBLIC_API_URL=https://api.quickhotels247.com
 #   --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
+#   --build-arg NEXT_PUBLIC_SITE_URL=https://quickhotels247.com
 
 FROM node:22-alpine AS build
 WORKDIR /repo
 RUN corepack enable
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json yarn.lock .yarnrc.yml nx.json ./
 COPY packages ./packages

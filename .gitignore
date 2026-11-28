@@ -18,6 +18,7 @@ next-env.d.ts
 .env
 .env.*
 !.env.example
+!.env.*.example
 
 # Prisma client, made by `prisma generate`
 apps/backend/src/generated/

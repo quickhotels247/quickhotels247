@@ -1,0 +1,16 @@
+# HTTPS for the site. Caddy gets and renews the certificates by itself, as long
+# as these names point at this server (Cloudflare DNS, "DNS only" grey cloud).
+
+quickhotels247.com {
+	encode zstd gzip
+	reverse_proxy frontend:3000
+}
+
+www.quickhotels247.com {
+	redir https://quickhotels247.com{uri} permanent
+}
+
+api.quickhotels247.com {
+	encode zstd gzip
+	reverse_proxy backend:8080
+}
