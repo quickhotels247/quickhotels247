@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   title: { default: `${SITE_NAME} — Hotels and flights`, template: `%s | ${SITE_NAME}` },
   description: DESCRIPTION,
   applicationName: SITE_NAME,
+  // Added to an iPhone home screen, it opens full screen with this name.
+  appleWebApp: { capable: true, title: "QuickHotels", statusBarStyle: "default" },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

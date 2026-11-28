@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Box from "@mui/material/Box";
 import { routes } from "@/config/navigation";
 import BottomNav from "../BottomNav";
+import InstallAppPrompt from "../InstallAppPrompt";
 import SiteFooter from "../SiteFooter";
 import SiteHeader from "../SiteHeader";
 import { styles } from "./SiteLayout.styles";
@@ -22,6 +23,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
       </Box>
       <SiteFooter />
       <BottomNav />
+      <InstallAppPrompt />
     </Box>
   );
 }
