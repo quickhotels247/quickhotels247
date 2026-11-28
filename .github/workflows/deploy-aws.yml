@@ -27,6 +27,8 @@ jobs:
     # Builds natively on Arm, the same as the server.
     runs-on: ubuntu-24.04-arm
     strategy:
+      # One image failing doesn't stop the other, so both errors show at once.
+      fail-fast: false
       matrix:
         app: [backend, frontend]
     steps:

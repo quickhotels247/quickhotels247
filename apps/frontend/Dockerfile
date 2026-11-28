@@ -14,8 +14,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json yarn.lock .yarnrc.yml nx.json ./
 COPY packages ./packages
 COPY apps/frontend ./apps/frontend
-RUN yarn install --immutable
-RUN yarn nx run @quickhotels/frontend:build
+# yarn.lock lists every workspace, so each one's package.json must be here for
+# the lockfile to match; only the website's dependencies are installed.
+COPY apps/backend/package.json ./apps/backend/package.json
+RUN yarn workspaces focus @quickhotels/frontend
+RUN yarn workspace @quickhotels/frontend build
 RUN yarn workspaces focus @quickhotels/frontend --production
 
 FROM node:22-alpine
