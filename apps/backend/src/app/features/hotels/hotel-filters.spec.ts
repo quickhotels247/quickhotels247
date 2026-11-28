@@ -42,6 +42,18 @@ describe("filterHotels", () => {
     expect(ids(filterHotels(hotels, { name: "  sea VIEW " }))).toEqual(["c"]);
   });
 
+  it("finds an area in the address, with every word typed", () => {
+    const list = [
+      hotel("x", { name: "Hotel Sky Park", address: "1-156/1 Madhura Nagar, Shamshabad, Hyderabad" }),
+      hotel("y", { name: "Fabhotel Wild Wings", address: "Brindavan Colony, Secunderabad" }),
+      hotel("z", { name: "Banjara Inn", address: null }),
+    ];
+    expect(ids(filterHotels(list, { name: "shamshabad" }))).toEqual(["x"]);
+    expect(ids(filterHotels(list, { name: "Wild, secunderabad" }))).toEqual(["y"]);
+    expect(ids(filterHotels(list, { name: "banjara" }))).toEqual(["z"]);
+    expect(ids(filterHotels(list, { name: "sky secunderabad" }))).toEqual([]);
+  });
+
   it("keeps hotels within a distance, leaving out those without a known location", () => {
     expect(ids(filterHotels(hotels, { maxDistanceKm: 5 }))).toEqual(["b", "d"]);
   });

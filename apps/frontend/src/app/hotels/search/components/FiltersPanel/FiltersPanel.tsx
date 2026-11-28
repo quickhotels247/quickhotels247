@@ -66,7 +66,7 @@ export default function FiltersPanel({ facets, filters, centre, currency, onChan
         )}
       </Box>
 
-      <FilterGroup title="Property name">
+      <FilterGroup title="Property name or area">
         <NameFilter value={filters.name ?? ""} onChange={setName} />
       </FilterGroup>
 

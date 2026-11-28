@@ -16,7 +16,8 @@ interface NameFilterProps {
 // Wait for a pause in typing before reloading the results.
 const DEBOUNCE_MS = 400;
 
-// "Property name" box: narrows the results to names containing the text.
+// "Property name or area" box: narrows the results to hotels whose name or
+// address has every word typed (matched by the server).
 export default function NameFilter({ value, onChange }: NameFilterProps) {
   const [text, setText] = useState(value);
 
@@ -33,13 +34,13 @@ export default function NameFilter({ value, onChange }: NameFilterProps) {
     <TextField
       size="small"
       fullWidth
-      placeholder="e.g. Taj, Marriott"
+      placeholder="e.g. Taj, Banjara Hills"
       value={text}
       onChange={(event) => setText(event.target.value)}
       onKeyDown={(event) => event.key === "Enter" && onChange(text.trim())}
       sx={styles.root}
       slotProps={{
-        htmlInput: { "aria-label": "Property name", maxLength: 60 },
+        htmlInput: { "aria-label": "Property name or area", maxLength: 60 },
         input: {
           startAdornment: (
             <InputAdornment position="start">
@@ -48,7 +49,7 @@ export default function NameFilter({ value, onChange }: NameFilterProps) {
           ),
           endAdornment: text ? (
             <InputAdornment position="end">
-              <IconButton size="small" aria-label="Clear property name" onClick={() => (setText(""), onChange(""))}>
+              <IconButton size="small" aria-label="Clear property name or area" onClick={() => (setText(""), onChange(""))}>
                 <CloseRounded fontSize="small" />
               </IconButton>
             </InputAdornment>

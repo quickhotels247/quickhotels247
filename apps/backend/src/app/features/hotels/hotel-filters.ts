@@ -4,12 +4,16 @@ const stars = (hotel: HotelSearchResult) => Math.round(hotel.starRating ?? 0);
 // Results saved before amenities and distances existed have neither.
 const amenitiesOf = (hotel: HotelSearchResult) => hotel.amenities ?? [];
 const distanceOf = (hotel: HotelSearchResult) => hotel.distanceKm ?? null;
+// The "Property name or area" box: every word typed must appear in the hotel's
+// name or address, so "taj" and "banjara hills" both work.
+const searchText = (hotel: HotelSearchResult) => `${hotel.name} ${hotel.address ?? ""}`.toLowerCase();
+const words = (text: string | undefined) => text?.toLowerCase().split(/[\s,]+/).filter(Boolean) ?? [];
 
 // Keeps the hotels that pass every filter given; no filters keeps them all.
 export function filterHotels(results: HotelSearchResult[], filters: HotelFilters = {}): HotelSearchResult[] {
   const { stars: wanted, freeCancellation, mealIncluded, minPrice, maxPrice, propertyTypes, amenities, name, maxDistanceKm } = filters;
   const types = propertyTypes?.length ? new Set(propertyTypes.map((type) => type.toLowerCase())) : null;
-  const named = name?.trim().toLowerCase();
+  const named = words(name);
   return results.filter(
     (hotel) =>
       (!wanted?.length || wanted.includes(stars(hotel))) &&
@@ -19,7 +23,7 @@ export function filterHotels(results: HotelSearchResult[], filters: HotelFilters
       (maxPrice === undefined || hotel.pricePerNight.amount <= maxPrice) &&
       (!types || types.has((hotel.propertyType ?? "").toLowerCase())) &&
       (!amenities?.length || amenities.every((amenity) => amenitiesOf(hotel).includes(amenity))) &&
-      (!named || hotel.name.toLowerCase().includes(named)) &&
+      (!named.length || named.every((word) => searchText(hotel).includes(word))) &&
       // Hotels without a known location can't be shown as "within" a distance.
       (maxDistanceKm === undefined || (distanceOf(hotel) !== null && distanceOf(hotel)! <= maxDistanceKm)),
   );
