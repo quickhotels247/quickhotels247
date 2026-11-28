@@ -8,6 +8,7 @@ import PopularDestinations from "../components/PopularDestinations";
 import PopularLinks from "../components/PopularLinks";
 import PropertyTypes from "../components/PropertyTypes";
 import RecentSearches from "../components/RecentSearches";
+import SeasonalPicks from "../components/SeasonalPicks";
 import TopRatedHotels from "../components/TopRatedHotels";
 import TripPlanner from "../components/TripPlanner";
 import TrustHighlights from "../components/TrustHighlights";
@@ -16,6 +17,7 @@ import { popularDestinations } from "../data/destinations";
 import { indiaDestinations, tripThemes } from "../data/indiaDestinations";
 import { popularLinkGroups } from "../data/popularLinks";
 import { propertyTypes } from "../data/propertyTypes";
+import { seasonFor } from "../data/seasons";
 import { styles } from "./HomePage.styles";
 
 // Home (spec §4.1), laid out like a large OTA home page: search first, then
@@ -23,12 +25,15 @@ import { styles } from "./HomePage.styles";
 // and deals (live TripJack prices from the backend), then sign-in, trust and
 // SEO links. Every section hides itself when it has nothing to show.
 export default function HomePage() {
+  // The time of year in India picks the hero photos and the seasonal picks.
+  const season = seasonFor(new Date());
   return (
     <>
-      <HeroSection />
+      <HeroSection season={season} />
       <Container>
         <Stack sx={styles.sections}>
           <RecentSearches />
+          <SeasonalPicks season={season} />
           <OffersSection />
           <PopularDestinations destinations={popularDestinations} />
           <ExploreIndia destinations={indiaDestinations} />

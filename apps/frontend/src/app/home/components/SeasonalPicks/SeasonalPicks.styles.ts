@@ -1,0 +1,26 @@
+export const styles = {
+  card: {
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    borderRadius: 3,
+    overflow: "hidden",
+    bgcolor: "background.paper",
+    border: "1px solid",
+    borderColor: "divider",
+  },
+  media: {
+    position: "relative",
+    display: "block",
+    aspectRatio: "16 / 10",
+    overflow: "hidden",
+    "& img": { transition: "transform 0.35s ease" },
+    "&:hover img": { transform: "scale(1.05)" },
+  },
+  body: { p: 2, display: "flex", flexDirection: "column", gap: 0.75, flex: 1 },
+  name: { fontWeight: 800, fontSize: "1.05rem" },
+  nameLink: { color: "inherit", textDecoration: "none", "&:hover": { color: "primary.main" } },
+  why: { fontSize: "0.875rem", color: "text.secondary" },
+  areas: { display: "flex", flexWrap: "wrap", gap: 0.75, mt: "auto", pt: 1 },
+  area: { fontWeight: 600, "& .MuiChip-icon": { fontSize: "1rem" } },
+};
