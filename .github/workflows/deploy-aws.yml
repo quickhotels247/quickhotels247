@@ -97,9 +97,10 @@ jobs:
           docker compose up -d --remove-orphans
           docker logout ghcr.io
           docker image prune -f
-          # The backend runs migrations, then answers on /api/health.
+          # The backend runs migrations, then answers on /api/health (which
+          # checks the database). </dev/null keeps exec from eating this script.
           for i in $(seq 1 30); do
-            if docker compose exec -T backend wget -qO- http://127.0.0.1:8080/api/health >/dev/null 2>&1; then
+            if docker compose exec -T backend wget -qO- http://127.0.0.1:8080/api/health >/dev/null 2>&1 </dev/null; then
               echo "Backend healthy"; exit 0
             fi
             sleep 5

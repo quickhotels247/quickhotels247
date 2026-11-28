@@ -17,6 +17,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: "8080"
+      # Amazon's certificate authorities, so the database connection is
+      # encrypted and verified (Node doesn't trust RDS certificates by itself).
+      NODE_EXTRA_CA_CERTS: /etc/ssl/rds-ca.pem
+    volumes:
+      - ./rds-ca.pem:/etc/ssl/rds-ca.pem:ro
     logging: *logging
 
   frontend:

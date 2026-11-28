@@ -34,6 +34,8 @@ sudo systemctl enable --now docker
 echo "== App folder"
 sudo mkdir -p "$APP_DIR"
 sudo chown ubuntu:ubuntu "$APP_DIR"
+# Amazon RDS certificate authorities, for a verified database connection.
+curl -fsSL -o "$APP_DIR/rds-ca.pem" https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 if [ ! -f "$APP_DIR/.env.backend" ]; then
   touch "$APP_DIR/.env.backend"
   chmod 600 "$APP_DIR/.env.backend"
